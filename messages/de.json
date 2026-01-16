@@ -1,0 +1,415 @@
+{
+  "Common": {
+    "loading": "Lädt...",
+    "seconds": "Sekunden",
+    "time": {
+      "daysUnit": "T",
+      "hoursUnit": "Std",
+      "minutesUnit": "Min",
+      "secondsUnit": "Sek"
+    },
+    "theme": {
+      "lightMode": "Hell",
+      "darkMode": "Dunkel",
+      "toggleAria": "Thema umschalten"
+    },
+    "buttons": {
+      "cancel": "Abbrechen",
+      "loadingButton": "Wird geladen...",
+      "verifyButton": "Prüfen",
+      "deleteAccount": "Konto löschen",
+      "changePassword": "Passwort ändern",
+      "activateButton": "Aktivieren",
+      "disableButton": "Deaktivieren",
+      "enableAppButton": "Aktivieren (App)",
+      "enableEmailButton": "Aktivieren (E-Mail)",
+      "resendButton": "Code erneut senden",
+      "updateEmail": "E-Mail aktualisieren",
+      "updateProfile": "Profil aktualisieren"
+    },
+    "accessDenied": "Zugriff verweigert",
+    "errorPrefix": "Fehler"
+  },
+  "Errors": {
+    "UNEXPECTED_ERROR": "Ein unerwarteter Fehler ist aufgetreten.",
+    "INVALID_REQUEST": "Ungültige Anfragedaten.",
+    "INTERNAL_SERVER_ERROR": "Interner Serverfehler.",
+    "USER_NOT_FOUND": "Benutzer nicht gefunden.",
+    "EMAIL_REQUIRED": "E-Mail erforderlich.",
+    "UNAUTHORIZED": "Nicht autorisiert.",
+    "IP_BANNED": "Zu viele fehlgeschlagene Versuche. Versuchen Sie es später.",
+    "SEND_CODE_ERROR": "Code konnte nicht gesendet werden.",
+    "INVALID_CREDENTIALS": "Ungültige Anmeldedaten.",
+    "RESEND_FAILED": "Erneutes Senden fehlgeschlagen.",
+    "RESET_FAILED": "Zurücksetzen fehlgeschlagen.",
+    "ALL_FIELDS_REQUIRED": "Alle Felder sind erforderlich.",
+    "PASSWORD_TOO_WEAK": "Passwort ist zu schwach.",
+    "REGISTRATION_FAILED": "Registrierung fehlgeschlagen.",
+    "FORGOT_PASSWORD_FAILED": "Zurücksetz-E-Mail konnte nicht gesendet werden.",
+    "INVALID_CODE_LENGTH": "Der Verifizierungscode muss 6 Stellen haben.",
+    "VERIFICATION_FAILED": "Verifizierung fehlgeschlagen.",
+    "UNEXPECTED_ERROR_RESEND": "Unerwarteter Fehler beim erneuten Senden des Codes.",
+    "MISSING_TOKEN": "Fehlender oder ungültiger Reset-Token.",
+    "PASSWORDS_DO_NOT_MATCH": "Passwörter stimmen nicht überein."
+  },
+  "Emails": {
+    "verification": {
+      "subject": "E-Mail verifizieren",
+      "welcome": "E-Mail verifizieren",
+      "body1": "Verwenden Sie den untenstehenden Code, um Ihre E-Mail zu verifizieren.",
+      "textPlain": "Ihr Verifizierungscode ist {code}. Er ist {minutes} Minuten gültig.",
+      "button": "E-Mail verifizieren",
+      "expiry": "Der Code ist in {minutes} Minuten abgelaufen.",
+      "ignore": "Wenn Sie dies nicht angefordert haben, können Sie diese E-Mail ignorieren."
+    },
+    "passwordReset": {
+      "subject": "Passwort zurücksetzen",
+      "greeting": "Passwort zurücksetzen",
+      "body1": "Klicken Sie auf den Button, um Ihr Passwort zurückzusetzen.",
+      "body2": "Wenn Sie dies nicht angefordert haben, ignorieren Sie diese E-Mail.",
+      "textPlain": "Setzen Sie Ihr Passwort zurück: {link}",
+      "button": "Passwort zurücksetzen",
+      "expiry": "Der Link ist {hours} Stunde(n) gültig.",
+      "ignore": "Wenn Sie dies nicht angefordert haben, ignorieren Sie diese E-Mail."
+    },
+    "oauthNotice": {
+      "subject": "Konto nutzt externe Anmeldung",
+      "textPlain": "Dieses Konto wurde über eine externe Anmeldung erstellt. Bitte melden Sie sich mit dem Anbieter an, um auf Ihr Konto zuzugreifen.",
+      "html": "Dieses Konto wurde über eine externe Anmeldung erstellt. Bitte melden Sie sich mit dem Anbieter an, um auf Ihr Konto zuzugreifen."
+    }
+  },
+  "TwoFactorModal": {
+    "invalidCode": "Ungültiger 2FA-Code.",
+    "codeLengthError": "Der Code muss 6 Ziffern haben.",
+    "successMessage": "Erfolg.",
+    "header": "Zwei-Faktor-Authentifizierung",
+    "headerFinalize": "2FA Einrichtung abschließen",
+    "description": "Bitte geben Sie den Code ein, um {action}.",
+    "descriptionFinalize": "Geben Sie den Code ein, um die Einrichtung abzuschließen.",
+    "stepUpTitle": "Step-up Verifikation für {purpose}",
+    "buttons": {
+      "cancel": "Abbrechen",
+      "loadingButton": "Überprüfe...",
+      "verifyButton": "Prüfen"
+    }
+  },
+  "2FA": {
+    "header": "Zwei-Faktor-Authentifizierung",
+    "status": "Status",
+    "enabled": "Aktiviert",
+    "disabled": "Deaktiviert",
+    "methodApp": "Authenticator-App",
+    "methodEmail": "E-Mail-Code",
+    "setupTitle": {
+      "app": "Mit Authenticator-App einrichten",
+      "email": "Mit E-Mail-Code einrichten"
+    },
+    "setupAppDescription": "Scannen Sie den QR-Code mit Ihrer Authenticator-App und verifizieren.",
+    "setupEmailDescription": "Ein Code wird an Ihre E-Mail gesendet.",
+    "scanInstruction": "Scannen Sie den QR-Code mit Ihrer Authenticator-App.",
+    "missingCodeOrSecret": "Code oder Secret fehlt.",
+    "missingCode": "Bitte geben Sie den Code ein.",
+    "activationSuccess": "2FA aktiviert.",
+    "activationFailed": "Aktivierung fehlgeschlagen.",
+    "setupError": "Einrichtungsfehler.",
+    "emailCodeSent": "Verifizierungscode an Ihre E-Mail gesendet.",
+    "disableSuccess": "2FA deaktiviert.",
+    "disableFailed": "2FA konnte nicht deaktiviert werden.",
+    "errors": {
+      "notConfigured": "2FA nicht eingerichtet.",
+      "invalidMethod": "Ungültige 2FA-Methode.",
+      "invalidOrExpiredCode": "Ungültiger oder abgelaufener 2FA-Code.",
+      "codeInvalidOrExpired": "Code ungültig oder abgelaufen.",
+      "notEmailMethod": "Dieser Benutzer nutzt keine E-Mail-2FA.",
+      "setupInvalid": "Setup ungültig oder nicht gestartet."
+    },
+    "emails": {
+      "subject": "Ihr 2FA-Code",
+      "textPlain": "Ihr 2FA-Code ist {code} (gültig für {minutes} Minuten).",
+      "html": "Ihr 2FA-Code ist <strong>{code}</strong> (gültig für {minutes} Minuten)."
+    },
+    "messages": {
+      "qrGenerated": "QR-Code erstellt. Bitte scannen.",
+      "emailCodeSent": "Ein Code wurde an {email} gesendet."
+    },
+    "notEnabledError": "Zwei-Faktor-Authentifizierung ist nicht aktiviert.",
+    "buttons": {
+      "disableButton": "2FA deaktivieren"
+    }
+  },
+  "ForgotPassword": {
+    "title": "Passwort zurücksetzen",
+    "description": "Geben Sie Ihre E-Mail ein, um Anweisungen zum Zurücksetzen zu erhalten.",
+    "form": {
+      "emailLabel": "E-Mail",
+      "loadingButton": "Sende...",
+      "cooldownButton": "Erneut versuchen in {cooldown} {seconds}",
+      "sendButton": "Reset-E-Mail senden"
+    },
+    "messages": {
+      "success": "Falls die E-Mail existiert, wurde eine Reset-E-Mail gesendet.",
+      "cooldown": "Bitte warten Sie {cooldown} {seconds}."
+    }
+  },
+  "VerifyEmail": {
+    "title": "E-Mail verifizieren",
+    "description": "Wir haben einen Code an {email} gesendet. Geben Sie ihn ein, um zu verifizieren.",
+    "form": {
+      "codeInputLabel": "Verifizierungscode",
+      "loadingButton": "Überprüfe...",
+      "verifyButton": "Verifizieren"
+    },
+    "messages": {
+      "resendSuccess": "Verifizierungscode gesendet.",
+      "cooldownError": "Bitte warten Sie {cooldown} {seconds} bevor Sie erneut senden.",
+      "success": "E-Mail verifiziert."
+    },
+      "resend": {
+        "noCodeReceived": "Keinen Code erhalten?",
+        "resendButton": "Code erneut senden",
+        "resendingButton": "Sende...",
+        "cooldownButton": "Warten {cooldown} {seconds}"
+      },
+    "backToRegister": "Zurück zur Registrierung"
+  },
+  "Register": {
+    "title": "Konto erstellen",
+    "description": "Geben Sie Ihre Daten ein, um ein Konto zu erstellen.",
+    "form": {
+      "nameLabel": "Name",
+      "emailLabel": "E-Mail",
+      "passwordLabel": "Passwort",
+      "togglePassword": "Passwort anzeigen/ausblenden",
+      "passwordStrength": "Passwortstärke",
+      "strengthStrong": "Stark",
+      "strengthModerate": "Mittel",
+      "strengthWeak": "Schwach",
+      "loadingButton": "Registrieren...",
+      "registerButton": "Registrieren"
+    },
+    "errors": {
+      "userExists": "Ein Benutzer mit dieser E-Mail existiert bereits.",
+      "userExistsUnverified": "Benutzer existiert, aber E-Mail nicht verifiziert. Bitte E-Mails prüfen."
+    },
+    "messages": {
+      "success": "Konto erstellt. Bitte verifizieren Sie Ihre E-Mail.",
+      "successNoVerify": "Konto erstellt. Weiterleitung zur Anmeldung..."
+    },
+    "footer": {
+      "haveAccount": "Bereits ein Konto? <loginLink>Jetzt anmelden</loginLink>"
+    }
+  },
+  "Login": {
+    "title": "Anmelden",
+    "description": "Melden Sie sich an.",
+    "form": {
+      "emailLabel": "E-Mail",
+      "passwordLabel": "Passwort",
+      "rememberMe": "Angemeldet bleiben",
+      "forgotPassword": "Passwort vergessen?",
+      "loadingButton": "Anmeldung...",
+      "loginButton": "Anmelden",
+      "orContinueWith": "oder fortfahren mit",
+      "githubButton": "Mit GitHub anmelden",
+      "discordButton": "Mit Discord anmelden"
+    },
+    "passkeys": {
+      "button": "Mit Passkey anmelden",
+      "loading": "Passkey wird verwendet..."
+    },
+    "messages": {
+      "signupSuccess": "Konto erstellt — bitte E-Mail verifizieren.",
+      "verificationSuccess": "E-Mail verifiziert — Sie können sich jetzt anmelden.",
+      "versionOutdated": "Ihre Anwendung ist veraltet! Bitte aktualisieren (<link>GitHub</link>)."
+    },
+    "footer": {
+      "noAccount": "Noch kein Konto? <registerLink>Jetzt registrieren</registerLink>"
+    }
+  },
+  "ProfilePage": {
+    "profilePageHeader": "Profil",
+    "updateProfileSettingsHeader": "Profileinstellungen",
+    "userName": "Name",
+    "theme": "Theme",
+    "themes": {
+      "system": "System",
+      "light": "Hell",
+      "dark": "Dunkel"
+    },
+    "profileUpdateError": "Profil konnte nicht aktualisiert werden.",
+    "buttons": {
+      "updateProfile": "Profil aktualisieren"
+    },
+    "emailChangeHeader": "E-Mail ändern",
+    "emailChangeWarning": "Beim Ändern der E-Mail ist ggf. eine erneute Verifizierung erforderlich.",
+    "emailAddress": "E-Mail-Adresse",
+    "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+    "sameEmailError": "Die neue E-Mail muss sich unterscheiden.",
+    "emailUpdateFailed": "E-Mail konnte nicht aktualisiert werden.",
+    "messageWillLogout": " Sie werden in Kürze ausgeloggt.",
+    "oauthAccount": {
+      "cannotChangeEmail": "E-Mail-Änderungen sind für OAuth-Konten deaktiviert.",
+      "emailReadOnly": "E-Mail ist für OAuth-Konten schreibgeschützt."
+    },
+    "upload": {
+      "title": "Profilbild aktualisieren",
+      "onlyTypes": "Nur PNG, JPG, JPEG und WEBP erlaubt.",
+      "maxSize": "Maximale Dateigröße: {max}MB.",
+      "dragActive": "Bild hier ablegen...",
+      "dragIdle": "Bild ziehen & ablegen oder klicken zum Hochladen.",
+      "hint": "Unterstützt: {types} (max {max}MB)",
+      "uploading": "Lade hoch...",
+      "saveButton": "Speichern",
+      "success": "Profilbild gespeichert.",
+      "error": "Profilbild konnte nicht gespeichert werden."
+    },
+    "messages": {
+      "emailUpdated": "E-Mail erfolgreich aktualisiert.",
+      "profileUpdated": "Profil aktualisiert."
+    }
+  },
+  "ChangePassword": {
+    "changePassword": "Passwort ändern",
+    "changePasswordDescription": "Aktualisieren Sie Ihr Passwort für mehr Sicherheit.",
+    "currentPassword": "Aktuelles Passwort",
+    "newPassword": "Neues Passwort",
+    "form": {
+      "passwordStrength": "Passwortstärke",
+      "strengthStrong": "Stark",
+      "strengthModerate": "Mittel",
+      "strengthWeak": "Schwach",
+      "togglePassword": "Passwort anzeigen/ausblenden"
+    },
+    "oauthAccount": {
+      "cannotChangePassword": "Dieses Konto verwendet externe Anmeldung. Passwort kann hier nicht geändert werden.",
+      "cannotChangeEmail": "E-Mail-Änderungen sind für OAuth-Konten deaktiviert.",
+      "emailReadOnly": "E-Mail ist für OAuth-Konten schreibgeschützt."
+    },
+    "errors": {
+      "passwordNotSet": "Für dieses Konto ist kein Passwort gesetzt.",
+      "incorrectPassword": "Aktuelles Passwort ist falsch."
+    },
+    "messages": {
+      "passwordChangeError": "Passwort konnte nicht geändert werden."
+    },
+    "buttons": {
+      "changePassword": "Passwort ändern"
+    }
+  },
+  "DeleteProfile": {
+    "confirmDeleteAccount": "Sind Sie sicher, dass Sie Ihr Konto löschen möchten? Diese Aktion ist unwiderruflich.",
+    "dangerZone": "Gefahrenzone",
+    "dangerZoneDescription": "Das Löschen Ihres Kontos entfernt alle Ihre Daten.",
+    "errors": {
+      "accountDeleteError": "Konto konnte nicht gelöscht werden."
+    }
+  },
+  "ResetPassword": {
+    "title": "Passwort zurücksetzen",
+    "description": "Wählen Sie ein neues Passwort.",
+    "form": {
+      "newPasswordLabel": "Neues Passwort",
+      "confirmPasswordLabel": "Passwort bestätigen",
+      "togglePassword": "Passwort anzeigen/ausblenden",
+      "passwordStrength": "Passwortstärke",
+      "strengthStrong": "Stark",
+      "strengthModerate": "Mittel",
+      "strengthWeak": "Schwach",
+      "loadingButton": "Setze zurück...",
+      "resetButton": "Passwort zurücksetzen"
+    },
+    "messages": {
+      "success": "Passwort erfolgreich zurückgesetzt. Sie können sich jetzt anmelden."
+    }
+  },
+  "Messages": {
+    "PASSWORD_RESET_SUCCESS": "Passwort erfolgreich zurückgesetzt.",
+    "PASSWORD_CHANGED": "Passwort erfolgreich geändert.",
+    "EMAIL_VERIFIED": "E-Mail erfolgreich verifiziert.",
+    "VERIFICATION_SENT": "Verifizierungs-E-Mail gesendet."
+  },
+  "Api": {
+    "INVALID_OR_EXPIRED_TOKEN": "Ungültiges oder abgelaufenes Token.",
+    "INVALID_OR_EXPIRED_CODE": "Ungültiger oder abgelaufener Code."
+  },
+  "ActiveSessions": {
+    "activeSessions": "Ihre aktiven Sitzungen",
+    "activeSessionsDescription": "Verwalten Sie Geräte und aktuell angemeldete Sitzungen.",
+    "unknownLocation": "Unbekannt",
+    "buttons": {
+      "logoutThisDevice": "Dieses Gerät abmelden"
+    },
+    "errors": {
+      "fetchError": "Sitzungen konnten nicht geladen werden.",
+      "deleteError": "Sitzung konnte nicht gelöscht werden."
+    },
+    "table": {
+      "currentSession": "Aktuell",
+      "role": "Rolle",
+      "loginTime": "Login-Zeit",
+      "expiresAt": "Läuft ab",
+      "timeLeft": "Verbleibende Zeit",
+      "ipAddress": "IP-Adresse",
+      "location": "Standort",
+      "userAgent": "User Agent",
+      "actions": "Aktionen",
+      "logoutButton": "Abmelden"
+    }
+  },
+  "Passkeys": {
+    "title": "Passkeys",
+    "buttons": {
+      "add": "Passkey hinzufügen",
+      "loading": "Wird ausgeführt...",
+      "remove": "Entfernen"
+    },
+    "prompts": {
+      "nameOptional": "Passkey benennen (optional):"
+    },
+    "emptyState": "Noch keine Passkeys registriert.",
+    "itemLabelFallback": "Passkey",
+    "createdAt": "Erstellt am {date}",
+    "errors": {
+      "generic": "Anfrage konnte nicht ausgeführt werden.",
+      "stepUpRequired": "Zusätzliche Verifizierung erforderlich.",
+      "unsupported": "Passkeys werden in diesem Browser nicht unterstützt.",
+      "startFailed": "Passkey-Vorgang konnte nicht gestartet werden.",
+      "finishFailed": "Passkey-Vorgang konnte nicht abgeschlossen werden.",
+      "cancelled": "Passkey-Vorgang wurde abgebrochen."
+    },
+    "stepUpActionLabel": "Passkey-Verwaltung"
+  },
+  "AccessDenied": {
+    "title": "Zugriff verweigert",
+    "description": "Sie haben keine Berechtigung, diese Seite zu sehen.",
+    "home": "Zur Startseite",
+    "login": "Anmelden"
+  },
+  "LogoutPage": {
+    "loggingOutMessage": "Sie werden abgemeldet...",
+    "deleteError": "Sitzung konnte nicht beendet werden."
+  },
+  "Home": {
+    "title": "Willkommen beim Next.js Template",
+    "subtitle": "Erkunden Sie Authentifizierung, Sitzungen und Sicherheitsflows mit dem Go-Backend.",
+    "session": {
+      "loggedInAs": "Angemeldet als",
+      "roleLabel": "Rolle: {role}",
+      "detailsTitle": "Sitzungsdetails",
+      "detailsCta": "Sitzungsdetails anzeigen",
+      "detailsLoading": "Lädt...",
+      "loginTime": "Login-Zeit:",
+      "expiresAt": "Läuft ab:",
+      "signOut": "Abmelden"
+    },
+    "cta": {
+      "notLoggedIn": "Sie sind nicht angemeldet.",
+      "login": "Anmelden",
+      "register": "Registrieren"
+    },
+    "errors": {
+      "invalidSession": "Ihre Sitzung ist abgelaufen oder ungültig. Bitte erneut anmelden.",
+      "sessionDetails": "Sitzungsdetails konnten nicht geladen werden."
+    }
+  }
+}
