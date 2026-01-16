@@ -13,10 +13,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  experimental: {
-    proxyClientMaxBodySize: "100mb",
-    proxyTimeout: 5 * 60 * 1000,
-  },
   async headers() {
     const connectSrc = ["'self'"];
     if (goOrigin) {
