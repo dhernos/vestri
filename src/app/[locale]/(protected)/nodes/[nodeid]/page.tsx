@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import HealthBlob from "@/components/nodes/health";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,7 @@ type NodeGuest = {
 };
 
 export default function NodeDetailsPage() {
+  const router = useRouter();
   const params = useParams<{ nodeid: string }>();
   const nodeRef = typeof params?.nodeid === "string" ? params.nodeid : "";
 
@@ -65,6 +66,8 @@ export default function NodeDetailsPage() {
   >("operator");
   const [inviteSubmitting, setInviteSubmitting] = useState(false);
   const [inviteError, setInviteError] = useState("");
+  const [deletingNode, setDeletingNode] = useState(false);
+  const [deleteNodeError, setDeleteNodeError] = useState("");
 
   const canManageInvites = useMemo(() => {
     if (!node) return false;
@@ -231,6 +234,35 @@ export default function NodeDetailsPage() {
     }
   };
 
+  const deleteNode = async () => {
+    if (!node || deletingNode) return;
+    const confirmed = window.confirm(
+      `Delete node "${node.name}" and all game servers on it?`
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingNode(true);
+    setDeleteNodeError("");
+    try {
+      const res = await fetch(`/api/nodes/${encodeURIComponent(node.id)}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setDeleteNodeError(data?.message || "Failed to delete node.");
+        return;
+      }
+      router.push("/nodes");
+    } catch {
+      setDeleteNodeError("Failed to delete node.");
+    } finally {
+      setDeletingNode(false);
+    }
+  };
+
   if (loading) {
     return <p className="p-6">Loading...</p>;
   }
@@ -260,7 +292,7 @@ export default function NodeDetailsPage() {
         <CardHeader>
           <CardTitle>Node information</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm">
+        <CardContent className="space-y-3 text-sm">
           <p>
             <span className="font-medium">ID:</span> {node.id}
           </p>
@@ -287,6 +319,20 @@ export default function NodeDetailsPage() {
             <span className="font-medium">Updated:</span>{" "}
             {new Date(node.updatedAt).toLocaleString()}
           </p>
+          {canManageInvites ? (
+            <div className="pt-2">
+              <Button
+                variant="destructive"
+                onClick={deleteNode}
+                disabled={deletingNode}
+              >
+                {deletingNode ? "Deleting node..." : "Delete node"}
+              </Button>
+              {deleteNodeError ? (
+                <p className="pt-2 text-sm text-red-600">{deleteNodeError}</p>
+              ) : null}
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 

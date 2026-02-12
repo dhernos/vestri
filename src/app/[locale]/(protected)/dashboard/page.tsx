@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import GameServerPanel from "@/components/dashboard/game-server-panel";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "@/i18n/navigation";
 
@@ -385,6 +386,11 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       ) : null}
+
+      <GameServerPanel
+        nodeRef={selectedNodeRef}
+        nodeRole={selectedNode ? selectedNode.accessRole : null}
+      />
 
       <Card>
         <CardHeader>
