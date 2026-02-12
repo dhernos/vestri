@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,13 +14,23 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
+import { Link } from "@/i18n/navigation";
 
 type HttpMethod = "GET" | "POST";
+
+type WorkerNode = {
+  id: string;
+  slug: string;
+  name: string;
+  baseUrl: string;
+  accessRole: "owner" | "admin" | "operator" | "viewer";
+};
 
 type RequestLog = {
   id: string;
   time: string;
   userId: string;
+  nodeRef: string;
   method: HttpMethod;
   path: string;
   status: number | "error";
@@ -39,7 +50,11 @@ type RequestOptions = {
 
 export default function DashboardPage() {
   const { data: session, status } = useAuth();
-  const [baseUrl, setBaseUrl] = useState("/api/worker");
+  const searchParams = useSearchParams();
+  const [nodes, setNodes] = useState<WorkerNode[]>([]);
+  const [nodesLoading, setNodesLoading] = useState(false);
+  const [nodesError, setNodesError] = useState("");
+  const [selectedNodeRef, setSelectedNodeRef] = useState("");
   const [fsReadPath, setFsReadPath] = useState("mc-01/server.properties");
   const [fsListPath, setFsListPath] = useState("mc-01");
   const [fsListRootPath, setFsListRootPath] = useState("");
@@ -63,22 +78,68 @@ export default function DashboardPage() {
   const [logs, setLogs] = useState<RequestLog[]>([]);
 
   const userId = session?.user?.id || "unknown";
-  const canCall = status === "authenticated";
+  const requestedNode = searchParams.get("node") || "";
+  const canCall = status === "authenticated" && selectedNodeRef !== "";
+  const proxyBaseUrl = selectedNodeRef
+    ? `/api/nodes/${encodeURIComponent(selectedNodeRef)}/worker`
+    : "";
+  const selectedNode = nodes.find((node) => node.id === selectedNodeRef) || null;
 
-  if (status === "loading") {
-    return <p className="p-6">Loading...</p>;
-  }
+  const loadNodes = useCallback(async () => {
+    setNodesLoading(true);
+    setNodesError("");
+    try {
+      const res = await fetch("/api/nodes", {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setNodes([]);
+        setNodesError(data?.message || "Failed to load nodes.");
+        return;
+      }
+      const loadedNodes: WorkerNode[] = Array.isArray(data?.nodes)
+        ? data.nodes
+        : [];
+      setNodes(loadedNodes);
+    } catch {
+      setNodes([]);
+      setNodesError("Failed to load nodes.");
+    } finally {
+      setNodesLoading(false);
+    }
+  }, []);
 
-  if (status === "unauthenticated") {
-    return (
-      <div className="p-6">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          You must be authenticated to use the API test tools.
-        </p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (status !== "authenticated") {
+      return;
+    }
+    loadNodes();
+  }, [status, loadNodes]);
+
+  useEffect(() => {
+    if (status !== "authenticated") {
+      return;
+    }
+
+    if (nodes.length === 0) {
+      setSelectedNodeRef("");
+      return;
+    }
+
+    if (requestedNode && nodes.some((node) => node.id === requestedNode)) {
+      if (selectedNodeRef !== requestedNode) {
+        setSelectedNodeRef(requestedNode);
+      }
+      return;
+    }
+
+    if (!selectedNodeRef || !nodes.some((node) => node.id === selectedNodeRef)) {
+      setSelectedNodeRef(nodes[0].id);
+    }
+  }, [nodes, requestedNode, selectedNodeRef, status]);
 
   const updateResult = (id: string, value: string) => {
     setResults((prev) => ({ ...prev, [id]: value }));
@@ -87,9 +148,6 @@ export default function DashboardPage() {
   const addLog = (entry: RequestLog) => {
     setLogs((prev) => [entry, ...prev].slice(0, 50));
   };
-
-  const normalizeBaseUrl = (value: string) =>
-    value.trim().replace(/\/+$/, "");
 
   const ensureLeadingSlash = (value: string) =>
     value.startsWith("/") ? value : `/${value}`;
@@ -144,16 +202,19 @@ export default function DashboardPage() {
   }: RequestOptions) => {
     updateResult(id, "Running...");
     if (!canCall) {
-      updateResult(id, "You must be authenticated to call this endpoint.");
+      updateResult(
+        id,
+        "You must be authenticated and select a node to call this endpoint."
+      );
       return;
     }
-    if (!baseUrl.trim()) {
-      updateResult(id, "Missing base URL.");
+    if (!proxyBaseUrl) {
+      updateResult(id, "Missing node selection.");
       return;
     }
 
     const normalizedPath = ensureLeadingSlash(path);
-    const url = `${normalizeBaseUrl(baseUrl)}${normalizedPath}`;
+    const url = `${proxyBaseUrl}${normalizedPath}`;
     const startedAt = performance.now();
 
     try {
@@ -191,6 +252,7 @@ export default function DashboardPage() {
         id: createNonce(),
         time: new Date().toLocaleTimeString(),
         userId,
+        nodeRef: selectedNodeRef,
         method,
         path: normalizedPath,
         status: res.status,
@@ -204,6 +266,7 @@ export default function DashboardPage() {
         id: createNonce(),
         time: new Date().toLocaleTimeString(),
         userId,
+        nodeRef: selectedNodeRef,
         method,
         path: normalizedPath,
         status: "error",
@@ -230,6 +293,21 @@ export default function DashboardPage() {
   const fsDownloadRequestPath = `/fs/download?path=${fsDownloadPath}`;
   const stackStatusPath = `/stack/status?stack=${stackName}`;
 
+  if (status === "loading") {
+    return <p className="p-6">Loading...</p>;
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="p-6">
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          You must be authenticated to use the API test tools.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="space-y-2">
@@ -245,24 +323,68 @@ export default function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Connection</CardTitle>
-          <CardDescription>Base settings shared by all calls.</CardDescription>
+          <CardDescription>Node selection shared by all calls.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="base-url">Base URL</Label>
-            <Input
-              id="base-url"
-              value={baseUrl}
-              onChange={(event) => setBaseUrl(event.target.value)}
-              placeholder="/api/worker"
-            />
+            <Label htmlFor="node-select">Node</Label>
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                id="node-select"
+                className="h-9 min-w-64 rounded-md border bg-transparent px-3 text-sm"
+                value={selectedNodeRef}
+                onChange={(event) => setSelectedNodeRef(event.target.value)}
+                disabled={nodesLoading || nodes.length === 0}
+              >
+                {nodes.length === 0 ? (
+                  <option value="">No nodes available</option>
+                ) : (
+                  nodes.map((node) => (
+                    <option key={node.id} value={node.id}>
+                      {node.name} ({node.slug})
+                    </option>
+                  ))
+                )}
+              </select>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={loadNodes}
+                disabled={nodesLoading}
+              >
+                Refresh
+              </Button>
+              <Button asChild type="button" variant="outline" size="sm">
+                <Link href="/nodes">Manage nodes</Link>
+              </Button>
+            </div>
+            {nodesError && <p className="text-xs text-red-600">{nodesError}</p>}
             <p className="text-xs text-muted-foreground">
-              Use /api/worker to proxy via the backend (auth + signing handled
-              server-side).
+              Requests are proxied via /api/nodes/[nodeId]/worker.
             </p>
+            {selectedNode ? (
+              <p className="text-xs text-muted-foreground">
+                Active role on this node: {selectedNode.accessRole}
+              </p>
+            ) : null}
           </div>
         </CardContent>
       </Card>
+
+      {!nodesLoading && nodes.length === 0 ? (
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-muted-foreground">
+              No node available. Create one in{" "}
+              <Link className="underline" href="/nodes">
+                /nodes
+              </Link>{" "}
+              first.
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader>
@@ -742,7 +864,9 @@ export default function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Request Log</CardTitle>
-          <CardDescription>User id is captured with each call.</CardDescription>
+          <CardDescription>
+            User id and node id are captured with each call.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {logs.length === 0 ? (
@@ -765,7 +889,8 @@ export default function DashboardPage() {
                     </span>
                   </div>
                   <div className="text-muted-foreground">
-                    User: {entry.userId} | {entry.durationMs}ms
+                    User: {entry.userId} | Node: {entry.nodeRef} |{" "}
+                    {entry.durationMs}ms
                   </div>
                   {entry.error && (
                     <div className="text-red-600">{entry.error}</div>

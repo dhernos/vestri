@@ -18,8 +18,9 @@ export const pageAccess: RouteAccess[] = [
   { path: "/access-denied", roles: ["PUBLIC"] },
   { path: "/dashboard", roles: ["USER", "ADMIN", "EDITOR"] },
   { path: "/profile", roles: ["USER", "ADMIN", "EDITOR"] },
+  { path: "/nodes", roles: ["USER", "ADMIN", "EDITOR"] },
 ];
 
 export const protectedRoutes = pageAccess.filter(
-  (route) => !route.roles.includes(PUBLIC_ROLE)
+  (route) => !route.roles.includes(PUBLIC_ROLE),
 );
