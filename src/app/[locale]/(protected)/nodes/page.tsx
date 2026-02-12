@@ -26,6 +26,9 @@ type IncomingInvite = {
   nodeId: string;
   nodeName: string;
   nodeSlug: string;
+  serverId: string;
+  serverName: string;
+  serverSlug: string;
   inviterMail: string;
   permission: "admin" | "operator" | "viewer";
   expiresAt: string;
@@ -154,7 +157,7 @@ export default function NodesPage() {
       <div>
         <h1 className="text-3xl font-bold">Nodes</h1>
         <p className="text-sm text-muted-foreground">
-          Create nodes, accept invites and manage access.
+          Create nodes and accept server invites.
         </p>
       </div>
 
@@ -221,7 +224,10 @@ export default function NodesPage() {
               >
                 <div className="space-y-1">
                   <p className="font-medium">
-                    {invite.nodeName} ({invite.nodeSlug})
+                    {invite.nodeName} / {invite.serverName}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Node: {invite.nodeSlug} | Server: {invite.serverSlug}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Role: {invite.permission} | Invited by: {invite.inviterMail}

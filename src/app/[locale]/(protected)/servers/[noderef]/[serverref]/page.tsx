@@ -16,6 +16,7 @@ type GameServerPermissions = {
   canControl: boolean;
   canManageFiles: boolean;
   canReadConsole: boolean;
+  canManage: boolean;
 };
 
 type GameServerConfigFile = {
@@ -46,6 +47,35 @@ type WorkerListEntry = {
   name: string;
   type: "dir" | "file" | "symlink" | "other";
   size: number;
+};
+
+type ServerInvite = {
+  id: string;
+  nodeId: string;
+  nodeName: string;
+  nodeSlug: string;
+  serverId: string;
+  serverName: string;
+  serverSlug: string;
+  inviterMail: string;
+  email: string;
+  permission: "admin" | "operator" | "viewer";
+  expiresAt: string;
+  createdAt: string;
+};
+
+type ServerGuest = {
+  nodeId: string;
+  nodeName: string;
+  nodeSlug: string;
+  serverId: string;
+  serverName: string;
+  serverSlug: string;
+  userId: string;
+  name?: string | null;
+  email: string;
+  permission: "admin" | "operator" | "viewer";
+  createdAt: string;
 };
 
 type ConfigRow = {
@@ -85,15 +115,6 @@ const parentRelativePath = (value: string) => {
   const parts = clean.split("/");
   parts.pop();
   return parts.join("/");
-};
-
-const joinRootPath = (rootPath: string, relativePath: string) => {
-  const cleanRoot = rootPath.replaceAll("\\", "/").replace(/\/+$/, "");
-  const cleanRelative = normalizeRelativePath(relativePath);
-  if (!cleanRelative) {
-    return cleanRoot;
-  }
-  return `${cleanRoot}/${cleanRelative}`;
 };
 
 const sortEntries = (entries: WorkerListEntry[]) =>
@@ -261,6 +282,17 @@ export default function ServerControlsPage() {
   const [configSaving, setConfigSaving] = useState(false);
   const [configError, setConfigError] = useState("");
 
+  const [invites, setInvites] = useState<ServerInvite[]>([]);
+  const [invitesLoading, setInvitesLoading] = useState(false);
+  const [revokingInviteId, setRevokingInviteId] = useState("");
+  const [guests, setGuests] = useState<ServerGuest[]>([]);
+  const [guestsLoading, setGuestsLoading] = useState(false);
+  const [removingGuestUserId, setRemovingGuestUserId] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [invitePermission, setInvitePermission] = useState<"admin" | "operator" | "viewer">("operator");
+  const [inviteSubmitting, setInviteSubmitting] = useState(false);
+  const [inviteError, setInviteError] = useState("");
+
   const basePath = useMemo(() => {
     if (!nodeRef || !serverRef) {
       return "";
@@ -410,7 +442,7 @@ export default function ServerControlsPage() {
   };
 
   const loadBrowserEntries = useCallback(async () => {
-    if (!server || !server.permissions.canManageFiles || !nodeRef) {
+    if (!server || !server.permissions.canManageFiles || !basePath) {
       setBrowserEntries([]);
       setBrowserError("");
       return;
@@ -419,14 +451,10 @@ export default function ServerControlsPage() {
     setBrowserLoading(true);
     setBrowserError("");
     try {
-      const fullPath = joinRootPath(server.rootPath, browserPath);
-      const res = await fetch(
-        `/api/nodes/${encodeURIComponent(nodeRef)}/worker/fs/list?path=${encodeURIComponent(fullPath)}`,
-        {
-          credentials: "include",
-          cache: "no-store",
-        }
-      );
+      const res = await fetch(`${basePath}/files/list?path=${encodeURIComponent(browserPath)}`, {
+        credentials: "include",
+        cache: "no-store",
+      });
       if (!res.ok) {
         const message = await res.text().catch(() => "");
         setBrowserEntries([]);
@@ -444,14 +472,14 @@ export default function ServerControlsPage() {
     } finally {
       setBrowserLoading(false);
     }
-  }, [browserPath, nodeRef, server]);
+  }, [basePath, browserPath, server]);
 
   useEffect(() => {
     loadBrowserEntries();
   }, [loadBrowserEntries]);
 
   const openFile = async (relativePath: string) => {
-    if (!server || !nodeRef) {
+    if (!server || !basePath) {
       return;
     }
     const cleanPath = normalizeRelativePath(relativePath);
@@ -463,14 +491,10 @@ export default function ServerControlsPage() {
     setFileLoading(true);
     setFileError("");
     try {
-      const fullPath = joinRootPath(server.rootPath, cleanPath);
-      const res = await fetch(
-        `/api/nodes/${encodeURIComponent(nodeRef)}/worker/fs/read?path=${encodeURIComponent(fullPath)}`,
-        {
-          credentials: "include",
-          cache: "no-store",
-        }
-      );
+      const res = await fetch(`${basePath}/files/read?path=${encodeURIComponent(cleanPath)}`, {
+        credentials: "include",
+        cache: "no-store",
+      });
       if (!res.ok) {
         const message = await res.text().catch(() => "");
         setFileContent("");
@@ -488,19 +512,18 @@ export default function ServerControlsPage() {
   };
 
   const saveFile = async () => {
-    if (!server || !nodeRef || !filePath) {
+    if (!server || !basePath || !filePath) {
       return;
     }
     setFileSaving(true);
     setFileError("");
     try {
-      const fullPath = joinRootPath(server.rootPath, filePath);
-      const res = await fetch(`/api/nodes/${encodeURIComponent(nodeRef)}/worker/fs/write`, {
+      const res = await fetch(`${basePath}/files/write`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          path: fullPath,
+          path: filePath,
           content: fileContent,
         }),
       });
@@ -523,7 +546,7 @@ export default function ServerControlsPage() {
 
   useEffect(() => {
     const loadConfig = async () => {
-      if (!server || !selectedConfigFile || !server.permissions.canManageFiles || !nodeRef) {
+      if (!server || !selectedConfigFile || !server.permissions.canManageFiles || !basePath) {
         setConfigContent("");
         setConfigRows([]);
         setUseKeyValueEditor(false);
@@ -533,14 +556,10 @@ export default function ServerControlsPage() {
       setConfigLoading(true);
       setConfigError("");
       try {
-        const fullPath = joinRootPath(server.rootPath, selectedConfigFile.path);
-        const res = await fetch(
-          `/api/nodes/${encodeURIComponent(nodeRef)}/worker/fs/read?path=${encodeURIComponent(fullPath)}`,
-          {
-            credentials: "include",
-            cache: "no-store",
-          }
-        );
+        const res = await fetch(`${basePath}/files/read?path=${encodeURIComponent(selectedConfigFile.path)}`, {
+          credentials: "include",
+          cache: "no-store",
+        });
         if (!res.ok) {
           const message = await res.text().catch(() => "");
           setConfigContent("");
@@ -568,10 +587,10 @@ export default function ServerControlsPage() {
     };
 
     loadConfig();
-  }, [nodeRef, selectedConfigFile, server]);
+  }, [basePath, selectedConfigFile, server]);
 
   const saveConfig = async () => {
-    if (!server || !selectedConfigFile || !nodeRef) {
+    if (!server || !selectedConfigFile || !basePath) {
       return;
     }
     setConfigSaving(true);
@@ -580,13 +599,12 @@ export default function ServerControlsPage() {
       const finalContent = useKeyValueEditor
         ? serializeConfigRows(configRows)
         : configContent;
-      const fullPath = joinRootPath(server.rootPath, selectedConfigFile.path);
-      const res = await fetch(`/api/nodes/${encodeURIComponent(nodeRef)}/worker/fs/write`, {
+      const res = await fetch(`${basePath}/files/write`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          path: fullPath,
+          path: selectedConfigFile.path,
           content: finalContent,
         }),
       });
@@ -625,6 +643,140 @@ export default function ServerControlsPage() {
 
   const removeConfigRow = (id: string) => {
     setConfigRows((prev) => prev.filter((row) => row.id !== id));
+  };
+
+  const loadInvites = useCallback(async () => {
+    if (!server || !server.permissions.canManage || !basePath) {
+      setInvites([]);
+      return;
+    }
+
+    setInvitesLoading(true);
+    setInviteError("");
+    try {
+      const res = await fetch(`${basePath}/invites`, {
+        credentials: "include",
+        cache: "no-store",
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        invites?: ServerInvite[];
+      };
+      if (!res.ok) {
+        setInvites([]);
+        return;
+      }
+      setInvites(Array.isArray(data.invites) ? data.invites : []);
+    } catch {
+      setInvites([]);
+    } finally {
+      setInvitesLoading(false);
+    }
+  }, [basePath, server]);
+
+  const loadGuests = useCallback(async () => {
+    if (!server || !server.permissions.canManage || !basePath) {
+      setGuests([]);
+      return;
+    }
+
+    setGuestsLoading(true);
+    try {
+      const res = await fetch(`${basePath}/guests`, {
+        credentials: "include",
+        cache: "no-store",
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        guests?: ServerGuest[];
+      };
+      if (!res.ok) {
+        setGuests([]);
+        return;
+      }
+      setGuests(Array.isArray(data.guests) ? data.guests : []);
+    } catch {
+      setGuests([]);
+    } finally {
+      setGuestsLoading(false);
+    }
+  }, [basePath, server]);
+
+  useEffect(() => {
+    if (!server || !server.permissions.canManage) {
+      setInvites([]);
+      setGuests([]);
+      return;
+    }
+    loadInvites();
+    loadGuests();
+  }, [loadGuests, loadInvites, server]);
+
+  const createInvite = async () => {
+    if (!server || !basePath || inviteSubmitting) {
+      return;
+    }
+
+    setInviteSubmitting(true);
+    setInviteError("");
+    try {
+      const res = await fetch(`${basePath}/invites`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: inviteEmail.trim(),
+          permission: invitePermission,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { message?: string };
+      if (!res.ok) {
+        setInviteError(data.message || "Failed to create invite.");
+        return;
+      }
+      setInviteEmail("");
+      await Promise.all([loadInvites(), loadGuests()]);
+    } catch {
+      setInviteError("Failed to create invite.");
+    } finally {
+      setInviteSubmitting(false);
+    }
+  };
+
+  const revokeInvite = async (inviteId: string) => {
+    if (!basePath) {
+      return;
+    }
+    setRevokingInviteId(inviteId);
+    try {
+      const res = await fetch(`${basePath}/invites/${encodeURIComponent(inviteId)}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        return;
+      }
+      await loadInvites();
+    } finally {
+      setRevokingInviteId("");
+    }
+  };
+
+  const removeGuest = async (guestUserId: string) => {
+    if (!basePath) {
+      return;
+    }
+    setRemovingGuestUserId(guestUserId);
+    try {
+      const res = await fetch(`${basePath}/guests/${encodeURIComponent(guestUserId)}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        return;
+      }
+      await loadGuests();
+    } finally {
+      setRemovingGuestUserId("");
+    }
   };
 
   if (loading) {
@@ -688,7 +840,7 @@ export default function ServerControlsPage() {
             >
               Refresh status
             </Button>
-            {server.permissions.canCreate ? (
+            {server.permissions.canManage ? (
               <Button
                 variant="destructive"
                 onClick={deleteServer}
@@ -823,7 +975,7 @@ export default function ServerControlsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              File management is limited to owner/admin.
+              File management is limited to server owner/admin.
             </p>
           </CardContent>
         </Card>
@@ -917,6 +1069,122 @@ export default function ServerControlsPage() {
               </Button>
             </div>
             {configError ? <p className="text-sm text-red-600">{configError}</p> : null}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {server.permissions.canManage ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Access Management</CardTitle>
+            <CardDescription>
+              Invite users and manage server-specific permissions.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="invite-email">Email</Label>
+                <Input
+                  id="invite-email"
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(event) => setInviteEmail(event.target.value)}
+                  placeholder="friend@example.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="invite-permission">Role</Label>
+                <select
+                  id="invite-permission"
+                  className="h-9 w-full rounded-md border bg-transparent px-3 text-sm"
+                  value={invitePermission}
+                  onChange={(event) =>
+                    setInvitePermission(
+                      event.target.value as "admin" | "operator" | "viewer"
+                    )
+                  }
+                >
+                  <option value="admin">admin (full server access)</option>
+                  <option value="operator">operator (start/stop + status)</option>
+                  <option value="viewer">viewer (status only)</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={createInvite}
+                disabled={inviteSubmitting || inviteEmail.trim() === ""}
+              >
+                {inviteSubmitting ? "Sending invite..." : "Create invite"}
+              </Button>
+            </div>
+            {inviteError ? <p className="text-sm text-red-600">{inviteError}</p> : null}
+
+            <div className="space-y-2">
+              <h3 className="font-medium">Pending invites</h3>
+              {invitesLoading ? <p className="text-sm">Loading...</p> : null}
+              {!invitesLoading && invites.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No pending invites.</p>
+              ) : null}
+              {!invitesLoading &&
+                invites.map((invite) => (
+                  <div
+                    key={invite.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm"
+                  >
+                    <div>
+                      <p>
+                        {invite.email} - {invite.permission}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Inviter: {invite.inviterMail} | Expires:{" "}
+                        {new Date(invite.expiresAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => revokeInvite(invite.id)}
+                      disabled={revokingInviteId === invite.id}
+                    >
+                      {revokingInviteId === invite.id ? "Revoking..." : "Revoke"}
+                    </Button>
+                  </div>
+                ))}
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="font-medium">Guests</h3>
+              {guestsLoading ? <p className="text-sm">Loading...</p> : null}
+              {!guestsLoading && guests.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No guests assigned.</p>
+              ) : null}
+              {!guestsLoading &&
+                guests.map((guest) => (
+                  <div
+                    key={guest.userId}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm"
+                  >
+                    <div>
+                      <p>
+                        {guest.name || guest.email} - {guest.permission}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {guest.email} | Added: {new Date(guest.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => removeGuest(guest.userId)}
+                      disabled={removingGuestUserId === guest.userId}
+                    >
+                      {removingGuestUserId === guest.userId ? "Removing..." : "Remove"}
+                    </Button>
+                  </div>
+                ))}
+            </div>
           </CardContent>
         </Card>
       ) : null}
