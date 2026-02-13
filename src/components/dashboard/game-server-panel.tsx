@@ -6,6 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type NodeRole = "owner" | "admin" | "operator" | "viewer";
 
@@ -13,9 +21,31 @@ type GameServerPermissions = {
   canCreate: boolean;
 };
 
+type GameServerTemplateAgreement = {
+  required: boolean;
+  title?: string;
+  text?: string;
+  linkText?: string;
+  linkUrl?: string;
+};
+
+type GameServerTemplateVersionField = {
+  label?: string;
+  placeholder?: string;
+  defaultValue?: string;
+  options?: string[];
+};
+
+type GameServerTemplateVersionConfig = {
+  software?: GameServerTemplateVersionField;
+  game?: GameServerTemplateVersionField;
+};
+
 type GameServerTemplate = {
   id: string;
   name: string;
+  agreement?: GameServerTemplateAgreement;
+  versionConfig?: GameServerTemplateVersionConfig;
 };
 
 type GameServer = {
@@ -24,6 +54,8 @@ type GameServer = {
   name: string;
   templateName: string;
   templateId: string;
+  softwareVersion?: string;
+  gameVersion?: string;
   status: "up" | "down" | "unknown";
   permissions: GameServerPermissions;
 };
@@ -31,6 +63,53 @@ type GameServer = {
 type GameServerPanelProps = {
   nodeRef: string;
   nodeRole: NodeRole | null;
+};
+
+const normalizeFieldOptions = (field?: GameServerTemplateVersionField): string[] => {
+  if (!field || !Array.isArray(field.options)) {
+    return [];
+  }
+  return field.options
+    .map((option) => option.trim())
+    .filter((option) => option.length > 0);
+};
+
+const resolveFieldValue = (current: string, field?: GameServerTemplateVersionField): string => {
+  if (!field) {
+    return "";
+  }
+
+  const options = normalizeFieldOptions(field);
+  const trimmedCurrent = current.trim();
+
+  if (trimmedCurrent) {
+    if (options.length === 0) {
+      return trimmedCurrent;
+    }
+    const matched = options.find((option) => option.toLowerCase() === trimmedCurrent.toLowerCase());
+    if (matched) {
+      return matched;
+    }
+  }
+
+  const defaultValue = (field.defaultValue || "").trim();
+  if (defaultValue) {
+    if (options.length === 0) {
+      return defaultValue;
+    }
+    const matchedDefault = options.find(
+      (option) => option.toLowerCase() === defaultValue.toLowerCase()
+    );
+    if (matchedDefault) {
+      return matchedDefault;
+    }
+  }
+
+  if (options.length > 0) {
+    return options[0];
+  }
+
+  return "";
 };
 
 export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelProps) {
@@ -41,7 +120,9 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
 
   const [templateId, setTemplateId] = useState("");
   const [serverName, setServerName] = useState("");
-  const [serverSlug, setServerSlug] = useState("");
+  const [softwareVersion, setSoftwareVersion] = useState("");
+  const [gameVersion, setGameVersion] = useState("");
+  const [agreementOpen, setAgreementOpen] = useState(false);
   const [creating, setCreating] = useState(false);
 
   const canCreateByRole = nodeRole === "owner" || nodeRole === "admin";
@@ -52,6 +133,15 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
     () => (nodeRef ? `/api/nodes/${encodeURIComponent(nodeRef)}/servers` : ""),
     [nodeRef]
   );
+  const selectedTemplate = useMemo(
+    () => templates.find((template) => template.id === templateId) || null,
+    [templates, templateId]
+  );
+  const softwareField = selectedTemplate?.versionConfig?.software;
+  const gameField = selectedTemplate?.versionConfig?.game;
+  const selectedAgreement = selectedTemplate?.agreement;
+  const softwareOptions = useMemo(() => normalizeFieldOptions(softwareField), [softwareField]);
+  const gameOptions = useMemo(() => normalizeFieldOptions(gameField), [gameField]);
 
   const loadData = useCallback(async () => {
     if (!basePath || !nodeRef) {
@@ -119,7 +209,15 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
     loadData();
   }, [loadData]);
 
-  const createServer = async () => {
+  useEffect(() => {
+    setSoftwareVersion((current) => resolveFieldValue(current, softwareField));
+  }, [softwareField]);
+
+  useEffect(() => {
+    setGameVersion((current) => resolveFieldValue(current, gameField));
+  }, [gameField]);
+
+  const submitCreateServer = async (agreementAccepted: boolean) => {
     if (!basePath || !templateId) {
       return;
     }
@@ -134,7 +232,9 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
         body: JSON.stringify({
           templateId,
           name: serverName.trim(),
-          slug: serverSlug.trim(),
+          agreementAccepted,
+          softwareVersion: softwareField ? softwareVersion.trim() : "",
+          gameVersion: gameField ? gameVersion.trim() : "",
         }),
       });
 
@@ -145,13 +245,25 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
       }
 
       setServerName("");
-      setServerSlug("");
       await loadData();
     } catch {
       setError("Failed to create game server.");
     } finally {
       setCreating(false);
     }
+  };
+
+  const createServer = async () => {
+    if (selectedAgreement?.required) {
+      setAgreementOpen(true);
+      return;
+    }
+    await submitCreateServer(false);
+  };
+
+  const confirmAgreementAndCreate = async () => {
+    await submitCreateServer(true);
+    setAgreementOpen(false);
   };
 
   if (!nodeRef) {
@@ -179,7 +291,7 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="template-id">Template</Label>
               <select
@@ -209,15 +321,62 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
                 disabled={!canCreate}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="server-slug">Slug (optional)</Label>
-              <Input
-                id="server-slug"
-                value={serverSlug}
-                onChange={(event) => setServerSlug(event.target.value)}
-                disabled={!canCreate}
-              />
-            </div>
+            {softwareField ? (
+              <div className="space-y-2">
+                <Label htmlFor="server-software">{softwareField.label || "Server type"}</Label>
+                {softwareOptions.length > 0 ? (
+                  <select
+                    id="server-software"
+                    className="h-9 w-full rounded-md border bg-transparent px-3 text-sm"
+                    value={softwareVersion}
+                    onChange={(event) => setSoftwareVersion(event.target.value)}
+                    disabled={!canCreate}
+                  >
+                    {softwareOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <Input
+                    id="server-software"
+                    value={softwareVersion}
+                    onChange={(event) => setSoftwareVersion(event.target.value)}
+                    placeholder={softwareField.placeholder || ""}
+                    disabled={!canCreate}
+                  />
+                )}
+              </div>
+            ) : null}
+            {gameField ? (
+              <div className="space-y-2">
+                <Label htmlFor="server-game-version">{gameField.label || "Game version"}</Label>
+                {gameOptions.length > 0 ? (
+                  <select
+                    id="server-game-version"
+                    className="h-9 w-full rounded-md border bg-transparent px-3 text-sm"
+                    value={gameVersion}
+                    onChange={(event) => setGameVersion(event.target.value)}
+                    disabled={!canCreate}
+                  >
+                    {gameOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <Input
+                    id="server-game-version"
+                    value={gameVersion}
+                    onChange={(event) => setGameVersion(event.target.value)}
+                    placeholder={gameField.placeholder || ""}
+                    disabled={!canCreate}
+                  />
+                )}
+              </div>
+            ) : null}
           </div>
           <div className="flex flex-wrap gap-2">
             <Button onClick={createServer} disabled={!canCreate || creating || !templateId}>
@@ -230,6 +389,11 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
           {!canCreate ? (
             <p className="text-xs text-muted-foreground">
               Create permission is limited to owner/admin.
+            </p>
+          ) : null}
+          {selectedAgreement?.required ? (
+            <p className="text-xs text-muted-foreground">
+              This template requires agreement confirmation before the server can be created.
             </p>
           ) : null}
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
@@ -276,7 +440,41 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={agreementOpen} onOpenChange={setAgreementOpen}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>{selectedAgreement?.title || "Template agreement required"}</DialogTitle>
+            <DialogDescription>
+              {selectedAgreement?.text ||
+                "You must accept this agreement before creating the server."}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedAgreement?.linkUrl ? (
+            <a
+              href={selectedAgreement.linkUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="text-sm text-blue-600 underline"
+            >
+              {selectedAgreement.linkText || selectedAgreement.linkUrl}
+            </a>
+          ) : null}
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setAgreementOpen(false)}
+              disabled={creating}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={confirmAgreementAndCreate} disabled={creating}>
+              {creating ? "Creating..." : "I agree and create server"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-

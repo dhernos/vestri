@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/card";
 import GameServerPanel from "@/components/dashboard/game-server-panel";
 import { useAuth } from "@/hooks/useAuth";
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 
 type HttpMethod = "GET" | "POST";
 
@@ -51,6 +51,8 @@ type RequestOptions = {
 
 export default function DashboardPage() {
   const { data: session, status } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [nodes, setNodes] = useState<WorkerNode[]>([]);
   const [nodesLoading, setNodesLoading] = useState(false);
@@ -131,16 +133,33 @@ export default function DashboardPage() {
     }
 
     if (requestedNode && nodes.some((node) => node.id === requestedNode)) {
-      if (selectedNodeRef !== requestedNode) {
-        setSelectedNodeRef(requestedNode);
-      }
+      setSelectedNodeRef((current) =>
+        current === requestedNode ? current : requestedNode
+      );
       return;
     }
 
-    if (!selectedNodeRef || !nodes.some((node) => node.id === selectedNodeRef)) {
-      setSelectedNodeRef(nodes[0].id);
+    setSelectedNodeRef((current) => {
+      if (current && nodes.some((node) => node.id === current)) {
+        return current;
+      }
+      return nodes[0].id;
+    });
+  }, [nodes, requestedNode, status]);
+
+  const handleNodeChange = (nextNodeRef: string) => {
+    setSelectedNodeRef(nextNodeRef);
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextNodeRef) {
+      params.set("node", nextNodeRef);
+    } else {
+      params.delete("node");
     }
-  }, [nodes, requestedNode, selectedNodeRef, status]);
+
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  };
 
   const updateResult = (id: string, value: string) => {
     setResults((prev) => ({ ...prev, [id]: value }));
@@ -334,7 +353,7 @@ export default function DashboardPage() {
                 id="node-select"
                 className="h-9 min-w-64 rounded-md border bg-transparent px-3 text-sm"
                 value={selectedNodeRef}
-                onChange={(event) => setSelectedNodeRef(event.target.value)}
+                onChange={(event) => handleNodeChange(event.target.value)}
                 disabled={nodesLoading || nodes.length === 0}
               >
                 {nodes.length === 0 ? (
