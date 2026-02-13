@@ -1,12 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { Link, useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { FitAddon } from "@xterm/addon-fit";
+import type { Terminal } from "@xterm/xterm";
+import styles from "./page.module.css";
 
 type ServerStatus = "up" | "down" | "unknown";
 
@@ -87,7 +90,31 @@ type ConfigRow = {
   custom: boolean;
 };
 
+type ConnectionStatus =
+  | "idle"
+  | "connecting"
+  | "connected"
+  | "reconnecting"
+  | "disconnected"
+  | "error";
+
+type ExecMessage = {
+  type: string;
+  data?: string;
+  message?: string;
+  cols?: number;
+  rows?: number;
+  code?: number;
+};
+
+type XTermRuntime = {
+  TerminalCtor: typeof Terminal;
+  FitAddonCtor: typeof FitAddon;
+};
+
 const keyValueFormats = new Set(["properties", "env", "ini", "cfg", "config", "kv"]);
+const maxConsoleOutputChars = 250_000;
+let xtermRuntimePromise: Promise<XTermRuntime> | null = null;
 
 const normalizeRelativePath = (value: string) => {
   const parts = value
@@ -248,6 +275,25 @@ const serializeConfigRows = (rows: ConfigRow[]) => {
   return `${lines.join("\n")}\n`;
 };
 
+const loadXtermRuntime = async (): Promise<XTermRuntime> => {
+  if (!xtermRuntimePromise) {
+    xtermRuntimePromise = Promise.all([
+      import("@xterm/xterm"),
+      import("@xterm/addon-fit"),
+    ])
+      .then(([xterm, fit]) => ({
+        TerminalCtor: xterm.Terminal,
+        FitAddonCtor: fit.FitAddon,
+      }))
+      .catch((error) => {
+        xtermRuntimePromise = null;
+        throw error;
+      });
+  }
+
+  return xtermRuntimePromise;
+};
+
 export default function ServerControlsPage() {
   const router = useRouter();
   const params = useParams<{ noderef: string; serverref: string }>();
@@ -292,6 +338,24 @@ export default function ServerControlsPage() {
   const [invitePermission, setInvitePermission] = useState<"admin" | "operator" | "viewer">("operator");
   const [inviteSubmitting, setInviteSubmitting] = useState(false);
   const [inviteError, setInviteError] = useState("");
+  const [consoleOutput, setConsoleOutput] = useState("");
+  const [consoleStatus, setConsoleStatus] = useState<ConnectionStatus>("idle");
+  const [consoleError, setConsoleError] = useState("");
+  const [execStatus, setExecStatus] = useState<ConnectionStatus>("idle");
+  const [execError, setExecError] = useState("");
+  const [logStreamActive, setLogStreamActive] = useState(false);
+  const [execSessionActive, setExecSessionActive] = useState(false);
+
+  const consoleOutputRef = useRef<HTMLPreElement | null>(null);
+  const consoleAutoScrollRef = useRef(true);
+  const logsAbortRef = useRef<AbortController | null>(null);
+  const logsRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const terminalHostRef = useRef<HTMLDivElement | null>(null);
+  const terminalRef = useRef<Terminal | null>(null);
+  const fitAddonRef = useRef<FitAddon | null>(null);
+  const execSocketRef = useRef<WebSocket | null>(null);
+  const execRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const basePath = useMemo(() => {
     if (!nodeRef || !serverRef) {
@@ -299,6 +363,15 @@ export default function ServerControlsPage() {
     }
     return `/api/nodes/${encodeURIComponent(nodeRef)}/servers/${encodeURIComponent(serverRef)}`;
   }, [nodeRef, serverRef]);
+  const serverId = server?.id || "";
+  const isServerUp = server?.status === "up";
+  const canReadConsole = Boolean(server?.permissions.canReadConsole);
+  const canUseInteractiveConsole = Boolean(server?.permissions.canManage);
+  const canConnectLogStream = canReadConsole && isServerUp;
+  const canConnectInteractiveConsole = canUseInteractiveConsole && isServerUp;
+  const shouldConnectLogStream = canConnectLogStream && logStreamActive;
+  const shouldConnectInteractiveConsole =
+    canConnectInteractiveConsole && execSessionActive;
 
   const loadServer = useCallback(async () => {
     if (!basePath) {
@@ -337,6 +410,418 @@ export default function ServerControlsPage() {
     loadServer();
   }, [loadServer]);
 
+  const appendConsoleOutput = useCallback((chunk: string) => {
+    if (!chunk) {
+      return;
+    }
+    setConsoleOutput((prev) => {
+      const next = `${prev}${chunk}`;
+      if (next.length <= maxConsoleOutputChars) {
+        return next;
+      }
+      return next.slice(next.length - maxConsoleOutputChars);
+    });
+  }, []);
+
+  useEffect(() => {
+    setConsoleOutput("");
+    setLogStreamActive(false);
+    setExecSessionActive(false);
+  }, [serverId]);
+
+  useEffect(() => {
+    if (!canConnectLogStream && logStreamActive) {
+      setLogStreamActive(false);
+    }
+  }, [canConnectLogStream, logStreamActive]);
+
+  useEffect(() => {
+    if (!canConnectInteractiveConsole && execSessionActive) {
+      setExecSessionActive(false);
+    }
+  }, [canConnectInteractiveConsole, execSessionActive]);
+
+  useEffect(() => {
+    if (!consoleAutoScrollRef.current) {
+      return;
+    }
+    const node = consoleOutputRef.current;
+    if (!node) {
+      return;
+    }
+    node.scrollTop = node.scrollHeight;
+  }, [consoleOutput]);
+
+  useEffect(() => {
+    if (!basePath || !shouldConnectLogStream) {
+      setConsoleStatus("idle");
+      setConsoleError("");
+      logsAbortRef.current?.abort();
+      logsAbortRef.current = null;
+      if (logsRetryTimerRef.current) {
+        clearTimeout(logsRetryTimerRef.current);
+        logsRetryTimerRef.current = null;
+      }
+      return;
+    }
+
+    let cancelled = false;
+    let reconnectAttempt = 0;
+
+    const cleanup = () => {
+      logsAbortRef.current?.abort();
+      logsAbortRef.current = null;
+      if (logsRetryTimerRef.current) {
+        clearTimeout(logsRetryTimerRef.current);
+        logsRetryTimerRef.current = null;
+      }
+    };
+
+    const scheduleReconnect = () => {
+      if (cancelled) {
+        return;
+      }
+      reconnectAttempt += 1;
+      const delay = Math.min(8000, 1000 * reconnectAttempt);
+      setConsoleStatus("reconnecting");
+      logsRetryTimerRef.current = setTimeout(() => {
+        logsRetryTimerRef.current = null;
+        void connectLogs();
+      }, delay);
+    };
+
+    const connectLogs = async () => {
+      if (cancelled) {
+        return;
+      }
+
+      const controller = new AbortController();
+      logsAbortRef.current = controller;
+      setConsoleStatus(reconnectAttempt === 0 ? "connecting" : "reconnecting");
+      const connectedAt = Date.now();
+      let receivedAnyChunk = false;
+
+      try {
+        const res = await fetch(`${basePath}/console/logs/stream`, {
+          credentials: "include",
+          cache: "no-store",
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          const message = await res.text().catch(() => "");
+          setConsoleError(message || "Failed to connect to log stream.");
+          setConsoleStatus("error");
+          scheduleReconnect();
+          return;
+        }
+
+        if (!res.body) {
+          setConsoleError("Log stream did not provide a readable body.");
+          setConsoleStatus("error");
+          scheduleReconnect();
+          return;
+        }
+
+        setConsoleError("");
+        setConsoleStatus("connected");
+        appendConsoleOutput("[vestri] log stream connected\n");
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (!cancelled) {
+          const { done, value } = await reader.read();
+          if (done) {
+            break;
+          }
+          if (value && value.length > 0) {
+            receivedAnyChunk = true;
+          }
+          appendConsoleOutput(decoder.decode(value, { stream: true }));
+        }
+
+        if (!cancelled) {
+          const tail = decoder.decode();
+          if (tail) {
+            receivedAnyChunk = true;
+            appendConsoleOutput(tail);
+          }
+          if (receivedAnyChunk || Date.now() - connectedAt >= 10_000) {
+            reconnectAttempt = 0;
+          }
+          setConsoleStatus("disconnected");
+          scheduleReconnect();
+        }
+      } catch {
+        if (!cancelled && !controller.signal.aborted) {
+          setConsoleError("Log stream interrupted.");
+          setConsoleStatus("error");
+          scheduleReconnect();
+        }
+      } finally {
+        if (logsAbortRef.current === controller) {
+          logsAbortRef.current = null;
+        }
+      }
+    };
+
+    void connectLogs();
+
+    return () => {
+      cancelled = true;
+      cleanup();
+    };
+  }, [appendConsoleOutput, basePath, shouldConnectLogStream, serverId]);
+
+  useEffect(() => {
+    if (!basePath || !shouldConnectInteractiveConsole) {
+      setExecStatus("idle");
+      setExecError("");
+      execSocketRef.current?.close();
+      execSocketRef.current = null;
+      if (execRetryTimerRef.current) {
+        clearTimeout(execRetryTimerRef.current);
+        execRetryTimerRef.current = null;
+      }
+      terminalRef.current?.dispose();
+      terminalRef.current = null;
+      fitAddonRef.current = null;
+      return;
+    }
+
+    const host = terminalHostRef.current;
+    if (!host) {
+      return;
+    }
+
+    let cancelled = false;
+    let reconnectAttempt = 0;
+    let terminal: Terminal | null = null;
+    let fitAddon: FitAddon | null = null;
+    let dataSubscription: { dispose: () => void } | null = null;
+    let resizeSubscription: { dispose: () => void } | null = null;
+    let resizeObserver: ResizeObserver | null = null;
+    let receivedSessionEndSignal = false;
+    let connectedAtMs = 0;
+
+    const cleanupSocket = () => {
+      if (execSocketRef.current && execSocketRef.current.readyState <= WebSocket.OPEN) {
+        execSocketRef.current.close();
+      }
+      execSocketRef.current = null;
+    };
+
+    const disposeTerminal = () => {
+      resizeObserver?.disconnect();
+      resizeObserver = null;
+      dataSubscription?.dispose();
+      dataSubscription = null;
+      resizeSubscription?.dispose();
+      resizeSubscription = null;
+      terminal?.dispose();
+      terminal = null;
+      fitAddon = null;
+      terminalRef.current = null;
+      fitAddonRef.current = null;
+    };
+
+    const sendMessage = (message: ExecMessage) => {
+      const socket = execSocketRef.current;
+      if (!socket || socket.readyState !== WebSocket.OPEN) {
+        return;
+      }
+      socket.send(JSON.stringify(message));
+    };
+
+    const sendResize = () => {
+      if (!terminal || !fitAddon) {
+        return;
+      }
+      fitAddon.fit();
+      sendMessage({
+        type: "resize",
+        cols: terminal.cols,
+        rows: terminal.rows,
+      });
+    };
+
+    let connectExec = () => {};
+
+    const scheduleReconnect = () => {
+      if (cancelled) {
+        return;
+      }
+      reconnectAttempt += 1;
+      const delay = Math.min(8000, 1000 * reconnectAttempt);
+      setExecStatus("reconnecting");
+      execRetryTimerRef.current = setTimeout(() => {
+        execRetryTimerRef.current = null;
+        connectExec();
+      }, delay);
+    };
+
+    const handleIncoming = (payload: string) => {
+      let message: ExecMessage | null = null;
+      try {
+        message = JSON.parse(payload) as ExecMessage;
+      } catch {
+        terminal?.write(payload);
+        return;
+      }
+
+      if (!message || typeof message.type !== "string") {
+        return;
+      }
+
+      if (message.type === "output") {
+        if (typeof message.data === "string") {
+          terminal?.write(message.data);
+        }
+        return;
+      }
+
+      if (message.type === "error") {
+        receivedSessionEndSignal = true;
+        const text = message.message || "Interactive console error.";
+        setExecError(text);
+        setExecStatus("error");
+        terminal?.write(`\r\n[error] ${text}\r\n`);
+        return;
+      }
+
+      if (message.type === "exit") {
+        receivedSessionEndSignal = true;
+        const code = typeof message.code === "number" ? message.code : -1;
+        terminal?.write(`\r\n[session ended: exit ${code}]\r\n`);
+        setExecStatus("disconnected");
+      }
+    };
+
+    connectExec = () => {
+      if (cancelled) {
+        return;
+      }
+
+      cleanupSocket();
+      setExecStatus(reconnectAttempt === 0 ? "connecting" : "reconnecting");
+      connectedAtMs = 0;
+      receivedSessionEndSignal = false;
+
+      const proto = window.location.protocol === "https:" ? "wss" : "ws";
+      const socketURL = `${proto}://${window.location.host}${basePath}/console/exec/ws`;
+      const socket = new WebSocket(socketURL);
+      execSocketRef.current = socket;
+
+      socket.onopen = () => {
+        connectedAtMs = Date.now();
+        reconnectAttempt = 0;
+        setExecStatus("connected");
+        setExecError("");
+        terminal?.write("\r\n[interactive session connected]\r\n");
+        sendResize();
+      };
+
+      socket.onmessage = (event) => {
+        if (typeof event.data === "string") {
+          handleIncoming(event.data);
+        }
+      };
+
+      socket.onerror = () => {
+        if (!cancelled) {
+          setExecStatus("error");
+          setExecError("Interactive console connection failed.");
+        }
+      };
+
+      socket.onclose = () => {
+        if (cancelled) {
+          return;
+        }
+        if (execSocketRef.current === socket) {
+          execSocketRef.current = null;
+        }
+        terminal?.write("\r\n[interactive session disconnected]\r\n");
+        setExecStatus("disconnected");
+
+        const closedQuickly = connectedAtMs > 0 && Date.now() - connectedAtMs < 1500;
+        if (receivedSessionEndSignal || closedQuickly) {
+          if (closedQuickly && !receivedSessionEndSignal) {
+            setExecError(
+              "Interactive session closed immediately. Check worker logs/container state."
+            );
+          }
+          return;
+        }
+
+        scheduleReconnect();
+      };
+    };
+
+    const setupTerminal = async () => {
+      host.innerHTML = "";
+      setExecStatus("connecting");
+      setExecError("");
+
+      try {
+        const runtime = await loadXtermRuntime();
+        if (cancelled) {
+          return;
+        }
+
+        terminal = new runtime.TerminalCtor({
+          cursorBlink: true,
+          convertEol: true,
+          fontSize: 13,
+          scrollback: 5000,
+          theme: {
+            background: "#111111",
+          },
+        });
+        fitAddon = new runtime.FitAddonCtor();
+        terminal.loadAddon(fitAddon);
+        terminal.open(host);
+        fitAddon.fit();
+        terminal.write("Connecting to interactive console...\r\n");
+
+        terminalRef.current = terminal;
+        fitAddonRef.current = fitAddon;
+
+        dataSubscription = terminal.onData((data) => {
+          sendMessage({ type: "input", data });
+        });
+        resizeSubscription = terminal.onResize(({ cols, rows }) => {
+          sendMessage({ type: "resize", cols, rows });
+        });
+
+        resizeObserver = new ResizeObserver(() => {
+          sendResize();
+        });
+        resizeObserver.observe(host);
+
+        connectExec();
+      } catch {
+        if (!cancelled) {
+          setExecStatus("error");
+          setExecError("Failed to load xterm runtime.");
+        }
+      }
+    };
+
+    void setupTerminal();
+
+    return () => {
+      cancelled = true;
+      if (execRetryTimerRef.current) {
+        clearTimeout(execRetryTimerRef.current);
+        execRetryTimerRef.current = null;
+      }
+      cleanupSocket();
+      disposeTerminal();
+    };
+  }, [basePath, shouldConnectInteractiveConsole, serverId]);
+
   useEffect(() => {
     if (!server) {
       setSelectedConfigFileId("");
@@ -357,6 +842,10 @@ export default function ServerControlsPage() {
   const runStackAction = async (action: "start" | "stop") => {
     if (!server || !basePath) {
       return;
+    }
+    if (action === "stop") {
+      setLogStreamActive(false);
+      setExecSessionActive(false);
     }
     setStackActionLoading(action);
     setStackError("");
@@ -779,6 +1268,45 @@ export default function ServerControlsPage() {
     }
   };
 
+  const handleConsoleScroll = () => {
+    const node = consoleOutputRef.current;
+    if (!node) {
+      return;
+    }
+    const threshold = 24;
+    const distanceFromBottom = node.scrollHeight - node.scrollTop - node.clientHeight;
+    consoleAutoScrollRef.current = distanceFromBottom <= threshold;
+  };
+
+  const startLogStream = () => {
+    if (!canConnectLogStream) {
+      return;
+    }
+    setConsoleError("");
+    setLogStreamActive(true);
+  };
+
+  const stopLogStream = () => {
+    setLogStreamActive(false);
+  };
+
+  const clearLogOutput = () => {
+    consoleAutoScrollRef.current = true;
+    setConsoleOutput("");
+  };
+
+  const startExecSession = () => {
+    if (!canConnectInteractiveConsole) {
+      return;
+    }
+    setExecError("");
+    setExecSessionActive(true);
+  };
+
+  const stopExecSession = () => {
+    setExecSessionActive(false);
+  };
+
   if (loading) {
     return <p className="p-6">Loading...</p>;
   }
@@ -857,17 +1385,104 @@ export default function ServerControlsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Console (Read-Only)</CardTitle>
-          <CardDescription>
-            Command sending is still pending worker support.
-          </CardDescription>
+          <CardTitle>Console Logs (Read-Only)</CardTitle>
+          <CardDescription>Live stream for users with console read access.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-md border bg-muted/40 p-3 text-xs">
-            {server.statusOutput || server.statusError || "No status output available."}
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="secondary"
+              onClick={startLogStream}
+              disabled={!canConnectLogStream || logStreamActive}
+            >
+              {logStreamActive ? "Stream running..." : "Start log stream"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={stopLogStream}
+              disabled={!logStreamActive}
+            >
+              Stop stream
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={clearLogOutput}
+              disabled={consoleOutput.length === 0}
+            >
+              Clear output
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Stream status: {consoleStatus}
+          </p>
+          {!isServerUp ? (
+            <p className="text-xs text-muted-foreground">
+              Server is offline. Start the server to open a live stream.
+            </p>
+          ) : null}
+          {consoleError ? <p className="text-sm text-red-600">{consoleError}</p> : null}
+          <pre
+            ref={consoleOutputRef}
+            onScroll={handleConsoleScroll}
+            className="max-h-80 overflow-auto whitespace-pre-wrap rounded-md border bg-muted/40 p-3 text-xs"
+          >
+            {consoleOutput ||
+              (!logStreamActive
+                ? "Log stream not started. Click \"Start log stream\"."
+                : consoleStatus === "connected"
+                ? "Connected. Waiting for new log lines..."
+                : "Waiting for log stream...")}
           </pre>
         </CardContent>
       </Card>
+
+      {canUseInteractiveConsole ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Interactive Console</CardTitle>
+            <CardDescription>
+              Owner/Admin only. Session is proxied through backend and worker.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="secondary"
+                onClick={startExecSession}
+                disabled={!canConnectInteractiveConsole || execSessionActive}
+              >
+                {execSessionActive ? "Session running..." : "Start interactive session"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={stopExecSession}
+                disabled={!execSessionActive}
+              >
+                Stop session
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Session status: {execStatus}
+            </p>
+            {!isServerUp ? (
+              <p className="text-xs text-muted-foreground">
+                Interactive console is only available while the server is running.
+              </p>
+            ) : null}
+            {execError ? <p className="text-sm text-red-600">{execError}</p> : null}
+            {execSessionActive ? (
+              <div
+                ref={terminalHostRef}
+                className={`h-96 w-full overflow-hidden rounded-md border bg-black p-2 ${styles.terminalScope}`}
+              />
+            ) : (
+              <div className="flex h-32 items-center justify-center rounded-md border border-dashed text-xs text-muted-foreground">
+                Interactive session is idle. Click "Start interactive session".
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
 
       {server.permissions.canManageFiles ? (
         <div className="grid gap-6 lg:grid-cols-2">

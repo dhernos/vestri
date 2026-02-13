@@ -153,7 +153,7 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
     setLoading(true);
     setError("");
     try {
-      const [templatesRes, serversRes] = await Promise.all([
+      const [templatesResult, serversResult] = await Promise.allSettled([
         fetch(`/api/nodes/${encodeURIComponent(nodeRef)}/servers/templates`, {
           credentials: "include",
           cache: "no-store",
@@ -164,39 +164,58 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
         }),
       ]);
 
-      const templatesData = (await templatesRes.json().catch(() => ({}))) as {
-        templates?: GameServerTemplate[];
-        message?: string;
-      };
-      const serversData = (await serversRes.json().catch(() => ({}))) as {
-        servers?: GameServer[];
-        message?: string;
-      };
+      const errors: string[] = [];
+      let nextTemplates: GameServerTemplate[] = [];
+      let nextServers: GameServer[] = [];
 
-      if (!templatesRes.ok) {
-        setError(templatesData.message || "Failed to load game server templates.");
-        return;
-      }
-      if (!serversRes.ok) {
-        setError(serversData.message || "Failed to load game servers.");
-        return;
+      if (templatesResult.status === "fulfilled") {
+        const templatesRes = templatesResult.value;
+        const templatesData = (await templatesRes.json().catch(() => ({}))) as {
+          templates?: GameServerTemplate[];
+          message?: string;
+        };
+
+        if (templatesRes.ok) {
+          nextTemplates = Array.isArray(templatesData.templates) ? templatesData.templates : [];
+        } else {
+          errors.push(templatesData.message || "Failed to load game server templates.");
+        }
+      } else {
+        errors.push("Failed to load game server templates.");
       }
 
-      const nextTemplates = Array.isArray(templatesData.templates)
-        ? templatesData.templates
-        : [];
-      const nextServers = Array.isArray(serversData.servers) ? serversData.servers : [];
+      if (serversResult.status === "fulfilled") {
+        const serversRes = serversResult.value;
+        const serversData = (await serversRes.json().catch(() => ({}))) as {
+          servers?: GameServer[];
+          message?: string;
+        };
+
+        if (serversRes.ok) {
+          nextServers = Array.isArray(serversData.servers) ? serversData.servers : [];
+        } else {
+          errors.push(serversData.message || "Failed to load game servers.");
+        }
+      } else {
+        errors.push("Failed to load game servers.");
+      }
 
       setTemplates(nextTemplates);
       setServers(nextServers);
 
-      if (!templateId && nextTemplates.length > 0) {
+      if (nextTemplates.length === 0) {
+        setTemplateId("");
+      } else if (!templateId) {
         setTemplateId(nextTemplates[0].id);
       } else if (
         nextTemplates.length > 0 &&
         !nextTemplates.some((template) => template.id === templateId)
       ) {
         setTemplateId(nextTemplates[0].id);
+      }
+
+      if (errors.length > 0) {
+        setError(errors.join(" "));
       }
     } catch {
       setError("Failed to load game server data.");
