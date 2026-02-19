@@ -12,6 +12,7 @@ import type { Terminal } from "@xterm/xterm";
 import styles from "./page.module.css";
 
 type ServerStatus = "up" | "down" | "unknown";
+type GameServerKind = "standalone" | "velocity" | "velocity-backend";
 
 type GameServerPermissions = {
   canView: boolean;
@@ -34,8 +35,15 @@ type GameServer = {
   nodeId: string;
   slug: string;
   name: string;
+  kind: GameServerKind;
+  parentServerId?: string;
+  connectHost?: string;
+  connectPort?: number;
   templateId: string;
+  templateVersion?: string;
   templateName: string;
+  softwareVersion?: string;
+  gameVersion?: string;
   stackName: string;
   rootPath: string;
   composePath: string;
@@ -44,6 +52,25 @@ type GameServer = {
   statusOutput?: string;
   statusError?: string;
   permissions: GameServerPermissions;
+};
+
+type GameServerTemplateVersionField = {
+  label?: string;
+  placeholder?: string;
+  defaultValue?: string;
+  options?: string[];
+};
+
+type GameServerTemplateVersionConfig = {
+  software?: GameServerTemplateVersionField;
+  game?: GameServerTemplateVersionField;
+};
+
+type GameServerTemplate = {
+  id: string;
+  name: string;
+  game: string;
+  versionConfig?: GameServerTemplateVersionConfig;
 };
 
 type WorkerListEntry = {
@@ -116,6 +143,53 @@ const keyValueFormats = new Set(["properties", "env", "ini", "cfg", "config", "k
 const maxConsoleOutputChars = 250_000;
 const folderNavigationDelayMs = 180;
 let xtermRuntimePromise: Promise<XTermRuntime> | null = null;
+
+const normalizeFieldOptions = (field?: GameServerTemplateVersionField): string[] => {
+  if (!field || !Array.isArray(field.options)) {
+    return [];
+  }
+  return field.options
+    .map((option) => option.trim())
+    .filter((option) => option.length > 0);
+};
+
+const resolveFieldValue = (current: string, field?: GameServerTemplateVersionField): string => {
+  if (!field) {
+    return "";
+  }
+
+  const options = normalizeFieldOptions(field);
+  const trimmedCurrent = current.trim();
+
+  if (trimmedCurrent) {
+    if (options.length === 0) {
+      return trimmedCurrent;
+    }
+    const matched = options.find((option) => option.toLowerCase() === trimmedCurrent.toLowerCase());
+    if (matched) {
+      return matched;
+    }
+  }
+
+  const defaultValue = (field.defaultValue || "").trim();
+  if (defaultValue) {
+    if (options.length === 0) {
+      return defaultValue;
+    }
+    const matchedDefault = options.find(
+      (option) => option.toLowerCase() === defaultValue.toLowerCase()
+    );
+    if (matchedDefault) {
+      return matchedDefault;
+    }
+  }
+
+  if (options.length > 0) {
+    return options[0];
+  }
+
+  return "";
+};
 
 const normalizeRelativePath = (value: string) => {
   const parts = value
@@ -348,6 +422,16 @@ export default function ServerControlsPage() {
   const [server, setServer] = useState<GameServer | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [velocityTemplates, setVelocityTemplates] = useState<GameServerTemplate[]>([]);
+  const [velocityBackends, setVelocityBackends] = useState<GameServer[]>([]);
+  const [velocityLoading, setVelocityLoading] = useState(false);
+  const [velocityError, setVelocityError] = useState("");
+  const [velocityCreateError, setVelocityCreateError] = useState("");
+  const [velocityCreating, setVelocityCreating] = useState(false);
+  const [velocityTemplateId, setVelocityTemplateId] = useState("");
+  const [velocityBackendName, setVelocityBackendName] = useState("");
+  const [velocityBackendSoftwareVersion, setVelocityBackendSoftwareVersion] = useState("");
+  const [velocityBackendGameVersion, setVelocityBackendGameVersion] = useState("");
 
   const [stackActionLoading, setStackActionLoading] = useState<"" | "start" | "stop">("");
   const [stackError, setStackError] = useState("");
@@ -426,6 +510,21 @@ export default function ServerControlsPage() {
   const shouldConnectLogStream = canConnectLogStream && logStreamActive;
   const shouldConnectInteractiveConsole =
     canConnectInteractiveConsole && execSessionActive;
+  const isVelocityServer = server?.kind === "velocity";
+  const selectedVelocityTemplate = useMemo(
+    () => velocityTemplates.find((template) => template.id === velocityTemplateId) || null,
+    [velocityTemplateId, velocityTemplates]
+  );
+  const velocitySoftwareField = selectedVelocityTemplate?.versionConfig?.software;
+  const velocityGameField = selectedVelocityTemplate?.versionConfig?.game;
+  const velocitySoftwareOptions = useMemo(
+    () => normalizeFieldOptions(velocitySoftwareField),
+    [velocitySoftwareField]
+  );
+  const velocityGameOptions = useMemo(
+    () => normalizeFieldOptions(velocityGameField),
+    [velocityGameField]
+  );
 
   const loadServer = useCallback(async () => {
     if (!basePath) {
@@ -463,6 +562,114 @@ export default function ServerControlsPage() {
   useEffect(() => {
     loadServer();
   }, [loadServer]);
+
+  const loadVelocityData = useCallback(async () => {
+    if (!nodeRef || !server || server.kind !== "velocity") {
+      setVelocityTemplates([]);
+      setVelocityBackends([]);
+      setVelocityTemplateId("");
+      setVelocityError("");
+      return;
+    }
+
+    setVelocityLoading(true);
+    setVelocityError("");
+    try {
+      const [templatesResult, backendsResult] = await Promise.allSettled([
+        fetch(`/api/nodes/${encodeURIComponent(nodeRef)}/servers/templates`, {
+          credentials: "include",
+          cache: "no-store",
+        }),
+        fetch(
+          `/api/nodes/${encodeURIComponent(nodeRef)}/servers?parent=${encodeURIComponent(
+            server.id
+          )}&includeStatus=1`,
+          {
+            credentials: "include",
+            cache: "no-store",
+          }
+        ),
+      ]);
+
+      const nextErrors: string[] = [];
+      let nextTemplates: GameServerTemplate[] = [];
+      let nextBackends: GameServer[] = [];
+
+      if (templatesResult.status === "fulfilled") {
+        const templatesRes = templatesResult.value;
+        const templatesData = (await templatesRes.json().catch(() => ({}))) as {
+          templates?: GameServerTemplate[];
+          message?: string;
+        };
+        if (templatesRes.ok) {
+          const allTemplates = Array.isArray(templatesData.templates) ? templatesData.templates : [];
+          nextTemplates = allTemplates.filter(
+            (template) =>
+              template.game?.toLowerCase() === "minecraft" &&
+              template.id.toLowerCase() === "minecraft-vanilla"
+          );
+        } else {
+          nextErrors.push(templatesData.message || "Failed to load backend templates.");
+        }
+      } else {
+        nextErrors.push("Failed to load backend templates.");
+      }
+
+      if (backendsResult.status === "fulfilled") {
+        const backendsRes = backendsResult.value;
+        const backendsData = (await backendsRes.json().catch(() => ({}))) as {
+          servers?: GameServer[];
+          message?: string;
+        };
+        if (backendsRes.ok) {
+          nextBackends = Array.isArray(backendsData.servers) ? backendsData.servers : [];
+        } else {
+          nextErrors.push(backendsData.message || "Failed to load velocity backends.");
+        }
+      } else {
+        nextErrors.push("Failed to load velocity backends.");
+      }
+
+      setVelocityTemplates(nextTemplates);
+      setVelocityBackends(nextBackends);
+
+      if (nextTemplates.length === 0) {
+        setVelocityTemplateId("");
+      } else if (!velocityTemplateId) {
+        setVelocityTemplateId(nextTemplates[0].id);
+      } else if (!nextTemplates.some((template) => template.id === velocityTemplateId)) {
+        setVelocityTemplateId(nextTemplates[0].id);
+      }
+
+      if (nextErrors.length > 0) {
+        setVelocityError(nextErrors.join(" "));
+      }
+    } catch {
+      setVelocityError("Failed to load velocity backend data.");
+    } finally {
+      setVelocityLoading(false);
+    }
+  }, [nodeRef, server, velocityTemplateId]);
+
+  useEffect(() => {
+    if (!server || server.kind !== "velocity") {
+      setVelocityTemplates([]);
+      setVelocityBackends([]);
+      setVelocityTemplateId("");
+      setVelocityError("");
+      setVelocityCreateError("");
+      return;
+    }
+    void loadVelocityData();
+  }, [loadVelocityData, server]);
+
+  useEffect(() => {
+    setVelocityBackendSoftwareVersion((current) => resolveFieldValue(current, velocitySoftwareField));
+  }, [velocitySoftwareField]);
+
+  useEffect(() => {
+    setVelocityBackendGameVersion((current) => resolveFieldValue(current, velocityGameField));
+  }, [velocityGameField]);
 
   const appendConsoleOutput = useCallback((chunk: string) => {
     if (!chunk) {
@@ -958,7 +1165,7 @@ export default function ServerControlsPage() {
       return;
     }
     const confirmed = window.confirm(
-      `Delete server "${server.name}" (${server.slug})? This removes all files on the worker.`
+      `Delete server "${server.name}"? This removes all files on the worker.`
     );
     if (!confirmed) {
       return;
@@ -981,6 +1188,43 @@ export default function ServerControlsPage() {
       setDeleteError("Failed to delete server.");
     } finally {
       setServerDeleting(false);
+    }
+  };
+
+  const createVelocityBackend = async () => {
+    if (!nodeRef || !server || server.kind !== "velocity" || !velocityTemplateId) {
+      return;
+    }
+
+    setVelocityCreating(true);
+    setVelocityCreateError("");
+    try {
+      const res = await fetch(`/api/nodes/${encodeURIComponent(nodeRef)}/servers`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          templateId: velocityTemplateId,
+          name: velocityBackendName.trim(),
+          agreementAccepted: true,
+          softwareVersion: velocitySoftwareField ? velocityBackendSoftwareVersion.trim() : "",
+          gameVersion: velocityGameField ? velocityBackendGameVersion.trim() : "",
+          parentServerRef: server.id,
+        }),
+      });
+
+      const data = (await res.json().catch(() => ({}))) as { message?: string };
+      if (!res.ok) {
+        setVelocityCreateError(data.message || "Failed to create velocity backend server.");
+        return;
+      }
+
+      setVelocityBackendName("");
+      await loadVelocityData();
+    } catch {
+      setVelocityCreateError("Failed to create velocity backend server.");
+    } finally {
+      setVelocityCreating(false);
     }
   };
 
@@ -1572,9 +1816,7 @@ export default function ServerControlsPage() {
   return (
     <div className="container mx-auto space-y-6 p-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold">
-          {server.name} ({server.slug})
-        </h1>
+        <h1 className="text-3xl font-bold">{server.name}</h1>
         <p className="text-sm text-muted-foreground">
           Template: {server.templateName || server.templateId} | Stack: {server.stackName}
         </p>
@@ -1629,6 +1871,165 @@ export default function ServerControlsPage() {
           {deleteError ? <p className="text-sm text-red-600">{deleteError}</p> : null}
         </CardContent>
       </Card>
+
+      {isVelocityServer ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Velocity Backends</CardTitle>
+            <CardDescription>
+              Minecraft backend servers are attached to the same internal Docker network and are not
+              shown on the main server list.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="velocity-backend-template">Template</Label>
+                <select
+                  id="velocity-backend-template"
+                  className="h-9 w-full rounded-md border bg-transparent px-3 text-sm"
+                  value={velocityTemplateId}
+                  onChange={(event) => setVelocityTemplateId(event.target.value)}
+                  disabled={velocityCreating || velocityTemplates.length === 0}
+                >
+                  {velocityTemplates.length === 0 ? (
+                    <option value="">No backend templates available</option>
+                  ) : (
+                    velocityTemplates.map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.name}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="velocity-backend-name">Identifier</Label>
+                <Input
+                  id="velocity-backend-name"
+                  value={velocityBackendName}
+                  onChange={(event) => setVelocityBackendName(event.target.value)}
+                  placeholder="backend-1"
+                  disabled={velocityCreating}
+                />
+              </div>
+              {velocitySoftwareField ? (
+                <div className="space-y-2">
+                  <Label htmlFor="velocity-backend-software">
+                    {velocitySoftwareField.label || "Server type"}
+                  </Label>
+                  {velocitySoftwareOptions.length > 0 ? (
+                    <select
+                      id="velocity-backend-software"
+                      className="h-9 w-full rounded-md border bg-transparent px-3 text-sm"
+                      value={velocityBackendSoftwareVersion}
+                      onChange={(event) => setVelocityBackendSoftwareVersion(event.target.value)}
+                      disabled={velocityCreating}
+                    >
+                      {velocitySoftwareOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <Input
+                      id="velocity-backend-software"
+                      value={velocityBackendSoftwareVersion}
+                      onChange={(event) => setVelocityBackendSoftwareVersion(event.target.value)}
+                      placeholder={velocitySoftwareField.placeholder || ""}
+                      disabled={velocityCreating}
+                    />
+                  )}
+                </div>
+              ) : null}
+              {velocityGameField ? (
+                <div className="space-y-2">
+                  <Label htmlFor="velocity-backend-game-version">
+                    {velocityGameField.label || "Game version"}
+                  </Label>
+                  {velocityGameOptions.length > 0 ? (
+                    <select
+                      id="velocity-backend-game-version"
+                      className="h-9 w-full rounded-md border bg-transparent px-3 text-sm"
+                      value={velocityBackendGameVersion}
+                      onChange={(event) => setVelocityBackendGameVersion(event.target.value)}
+                      disabled={velocityCreating}
+                    >
+                      {velocityGameOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <Input
+                      id="velocity-backend-game-version"
+                      value={velocityBackendGameVersion}
+                      onChange={(event) => setVelocityBackendGameVersion(event.target.value)}
+                      placeholder={velocityGameField.placeholder || ""}
+                      disabled={velocityCreating}
+                    />
+                  )}
+                </div>
+              ) : null}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={createVelocityBackend}
+                disabled={velocityCreating || !velocityTemplateId}
+              >
+                {velocityCreating ? "Creating..." : "Create backend server"}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  void loadVelocityData();
+                }}
+                disabled={velocityLoading}
+              >
+                {velocityLoading ? "Refreshing..." : "Refresh backends"}
+              </Button>
+            </div>
+            {velocityError ? <p className="text-sm text-red-600">{velocityError}</p> : null}
+            {velocityCreateError ? <p className="text-sm text-red-600">{velocityCreateError}</p> : null}
+
+            {velocityBackends.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No backend servers attached yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {velocityBackends.map((backend) => (
+                  <div
+                    key={backend.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm"
+                  >
+                    <div>
+                      <p className="font-medium">{backend.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Connect from Velocity:{" "}
+                        {backend.connectHost || `vestri-${backend.slug}`}:
+                        {backend.connectPort || 25565}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded bg-muted px-2 py-0.5 text-xs">{backend.status}</span>
+                      <Button asChild size="sm" variant="secondary">
+                        <Link
+                          href={`/servers/${encodeURIComponent(nodeRef)}/${encodeURIComponent(
+                            backend.id
+                          )}`}
+                        >
+                          Open controls
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader>

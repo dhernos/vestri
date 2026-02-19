@@ -332,7 +332,7 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="server-name">Name</Label>
+              <Label htmlFor="server-name">Identifier</Label>
               <Input
                 id="server-name"
                 value={serverName}
@@ -433,9 +433,7 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
                 className="flex items-center justify-between gap-3 rounded-md border px-3 py-2"
               >
                 <div>
-                  <p className="text-sm font-medium">
-                    {server.name} ({server.slug})
-                  </p>
+                  <p className="text-sm font-medium">{server.name}</p>
                   <p className="text-xs text-muted-foreground">
                     Template: {server.templateName || server.templateId}
                   </p>
