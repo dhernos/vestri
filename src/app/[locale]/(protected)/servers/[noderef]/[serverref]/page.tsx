@@ -114,6 +114,7 @@ type XTermRuntime = {
 
 const keyValueFormats = new Set(["properties", "env", "ini", "cfg", "config", "kv"]);
 const maxConsoleOutputChars = 250_000;
+const folderNavigationDelayMs = 180;
 let xtermRuntimePromise: Promise<XTermRuntime> | null = null;
 
 const normalizeRelativePath = (value: string) => {
@@ -150,6 +151,50 @@ const sortEntries = (entries: WorkerListEntry[]) =>
     if (a.type !== "dir" && b.type === "dir") return 1;
     return a.name.localeCompare(b.name);
   });
+
+const downloadNameFromResponse = (contentDisposition: string | null, fallback: string) => {
+  if (!contentDisposition) {
+    return fallback;
+  }
+
+  const encodedMatch = /filename\*=UTF-8''([^;]+)/i.exec(contentDisposition);
+  if (encodedMatch?.[1]) {
+    try {
+      return decodeURIComponent(encodedMatch[1]);
+    } catch {
+      // fallback below
+    }
+  }
+
+  const plainMatch = /filename=\"?([^\";]+)\"?/i.exec(contentDisposition);
+  if (plainMatch?.[1]) {
+    return plainMatch[1];
+  }
+
+  return fallback;
+};
+
+const formatBytes = (bytes: number) => {
+  if (!Number.isFinite(bytes) || bytes < 0) {
+    return "-";
+  }
+  if (bytes < 1024) {
+    return `${Math.round(bytes)} B`;
+  }
+
+  const units = ["KB", "MB", "GB", "TB"];
+  let value = bytes / 1024;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+
+  const decimals = value >= 100 ? 0 : value >= 10 ? 1 : 2;
+  return `${value.toFixed(decimals)} ${units[unitIndex]}`;
+};
+
+const isZipArchiveName = (name: string) => name.trim().toLowerCase().endsWith(".zip");
 
 const decodeEscapedLineBreaks = (value: string) => {
   if (value.includes("\n") || value.includes("\r")) {
@@ -313,6 +358,13 @@ export default function ServerControlsPage() {
   const [browserEntries, setBrowserEntries] = useState<WorkerListEntry[]>([]);
   const [browserLoading, setBrowserLoading] = useState(false);
   const [browserError, setBrowserError] = useState("");
+  const [browserActionError, setBrowserActionError] = useState("");
+  const [browserUploadFile, setBrowserUploadFile] = useState<File | null>(null);
+  const [browserUploadInputKey, setBrowserUploadInputKey] = useState(0);
+  const [browserUploading, setBrowserUploading] = useState(false);
+  const [browserDownloadingPath, setBrowserDownloadingPath] = useState("");
+  const [browserDeletingPath, setBrowserDeletingPath] = useState("");
+  const [browserUnzippingPath, setBrowserUnzippingPath] = useState("");
 
   const [filePath, setFilePath] = useState("");
   const [fileContent, setFileContent] = useState("");
@@ -350,6 +402,8 @@ export default function ServerControlsPage() {
   const consoleAutoScrollRef = useRef(true);
   const logsAbortRef = useRef<AbortController | null>(null);
   const logsRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const folderNavigationLockedRef = useRef(false);
+  const folderNavigationUnlockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const terminalHostRef = useRef<HTMLDivElement | null>(null);
   const terminalRef = useRef<Terminal | null>(null);
@@ -934,6 +988,11 @@ export default function ServerControlsPage() {
     if (!server || !server.permissions.canManageFiles || !basePath) {
       setBrowserEntries([]);
       setBrowserError("");
+      folderNavigationLockedRef.current = false;
+      if (folderNavigationUnlockTimerRef.current) {
+        clearTimeout(folderNavigationUnlockTimerRef.current);
+        folderNavigationUnlockTimerRef.current = null;
+      }
       return;
     }
 
@@ -960,12 +1019,29 @@ export default function ServerControlsPage() {
       setBrowserError("Failed to load directory.");
     } finally {
       setBrowserLoading(false);
+      if (folderNavigationUnlockTimerRef.current) {
+        clearTimeout(folderNavigationUnlockTimerRef.current);
+        folderNavigationUnlockTimerRef.current = null;
+      }
+      folderNavigationUnlockTimerRef.current = setTimeout(() => {
+        folderNavigationLockedRef.current = false;
+        folderNavigationUnlockTimerRef.current = null;
+      }, folderNavigationDelayMs);
     }
   }, [basePath, browserPath, server]);
 
   useEffect(() => {
     loadBrowserEntries();
   }, [loadBrowserEntries]);
+
+  useEffect(() => {
+    return () => {
+      if (folderNavigationUnlockTimerRef.current) {
+        clearTimeout(folderNavigationUnlockTimerRef.current);
+        folderNavigationUnlockTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const openFile = async (relativePath: string) => {
     if (!server || !basePath) {
@@ -1026,6 +1102,177 @@ export default function ServerControlsPage() {
       setFileError("Failed to save file.");
     } finally {
       setFileSaving(false);
+    }
+  };
+
+  const downloadBrowserPath = async (
+    relativePath: string,
+    entryType: WorkerListEntry["type"]
+  ) => {
+    if (!server || !basePath) {
+      return;
+    }
+    const cleanPath = normalizeRelativePath(relativePath);
+    if (!cleanPath) {
+      return;
+    }
+
+    const fallbackBase = cleanPath.split("/").pop() || "download";
+    const fallbackName = entryType === "dir" ? `${fallbackBase}.zip` : fallbackBase;
+
+    setBrowserDownloadingPath(cleanPath);
+    setBrowserActionError("");
+    try {
+      const res = await fetch(`${basePath}/files/download?path=${encodeURIComponent(cleanPath)}`, {
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const message = await res.text().catch(() => "");
+        setBrowserActionError(message || "Failed to download path.");
+        return;
+      }
+
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = objectUrl;
+      anchor.download = downloadNameFromResponse(
+        res.headers.get("Content-Disposition"),
+        fallbackName
+      );
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      setBrowserActionError("Failed to download path.");
+    } finally {
+      setBrowserDownloadingPath("");
+    }
+  };
+
+  const uploadFileToCurrentFolder = async () => {
+    if (!server || !basePath || !browserUploadFile) {
+      return;
+    }
+
+    const uploadPath = normalizeRelativePath(
+      browserPath ? `${browserPath}/${browserUploadFile.name}` : browserUploadFile.name
+    );
+    if (!uploadPath) {
+      setBrowserActionError("Invalid upload path.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("path", uploadPath);
+    formData.append("file", browserUploadFile);
+
+    setBrowserUploading(true);
+    setBrowserActionError("");
+    try {
+      const res = await fetch(`${basePath}/files/upload`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      if (!res.ok) {
+        const message = await res.text().catch(() => "");
+        setBrowserActionError(message || "Failed to upload file.");
+        return;
+      }
+
+      setBrowserUploadFile(null);
+      setBrowserUploadInputKey((prev) => prev + 1);
+      await loadBrowserEntries();
+    } catch {
+      setBrowserActionError("Failed to upload file.");
+    } finally {
+      setBrowserUploading(false);
+    }
+  };
+
+  const deleteBrowserPath = async (
+    relativePath: string,
+    entryType: WorkerListEntry["type"]
+  ) => {
+    if (!server || !basePath) {
+      return;
+    }
+    const cleanPath = normalizeRelativePath(relativePath);
+    if (!cleanPath) {
+      return;
+    }
+
+    const label = entryType === "dir" ? "folder" : "file";
+    const confirmed = window.confirm(`Delete ${label} "${cleanPath}"?`);
+    if (!confirmed) {
+      return;
+    }
+
+    setBrowserDeletingPath(cleanPath);
+    setBrowserActionError("");
+    try {
+      const res = await fetch(`${basePath}/files/delete`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          path: cleanPath,
+          recursive: entryType === "dir",
+        }),
+      });
+      if (!res.ok) {
+        const message = await res.text().catch(() => "");
+        setBrowserActionError(message || "Failed to delete path.");
+        return;
+      }
+
+      if (filePath === cleanPath || filePath.startsWith(`${cleanPath}/`)) {
+        setFilePath("");
+        setFileContent("");
+      }
+      await loadBrowserEntries();
+    } catch {
+      setBrowserActionError("Failed to delete path.");
+    } finally {
+      setBrowserDeletingPath("");
+    }
+  };
+
+  const unzipArchiveInCurrentFolder = async (relativePath: string) => {
+    if (!server || !basePath) {
+      return;
+    }
+    const cleanPath = normalizeRelativePath(relativePath);
+    if (!cleanPath || !isZipArchiveName(cleanPath)) {
+      return;
+    }
+
+    const targetFolder = browserPath || ".";
+    setBrowserUnzippingPath(cleanPath);
+    setBrowserActionError("");
+    try {
+      const res = await fetch(`${basePath}/files/unzip`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source: cleanPath,
+          dest: targetFolder,
+        }),
+      });
+      if (!res.ok) {
+        const message = await res.text().catch(() => "");
+        setBrowserActionError(message || "Failed to unzip archive.");
+        return;
+      }
+
+      await loadBrowserEntries();
+    } catch {
+      setBrowserActionError("Failed to unzip archive.");
+    } finally {
+      setBrowserUnzippingPath("");
     }
   };
 
@@ -1495,13 +1742,6 @@ export default function ServerControlsPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex flex-wrap gap-2">
-                <Input
-                  value={browserPath}
-                  onChange={(event) =>
-                    setBrowserPath(normalizeRelativePath(event.target.value))
-                  }
-                  placeholder="data"
-                />
                 <Button
                   variant="secondary"
                   onClick={loadBrowserEntries}
@@ -1516,8 +1756,34 @@ export default function ServerControlsPage() {
                 >
                   Up one level
                 </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setBrowserPath("")}
+                  disabled={!browserPath}
+                >
+                  Go to root
+                </Button>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed p-3">
+                <Input
+                  key={browserUploadInputKey}
+                  type="file"
+                  className="max-w-xs"
+                  onChange={(event) =>
+                    setBrowserUploadFile(event.target.files?.[0] || null)
+                  }
+                />
+                <Button
+                  onClick={uploadFileToCurrentFolder}
+                  disabled={!browserUploadFile || browserUploading}
+                >
+                  {browserUploading ? "Uploading..." : "Upload to current folder"}
+                </Button>
               </div>
               {browserError ? <p className="text-sm text-red-600">{browserError}</p> : null}
+              {browserActionError ? (
+                <p className="text-sm text-red-600">{browserActionError}</p>
+              ) : null}
               <div className="max-h-72 space-y-2 overflow-auto">
                 {browserEntries.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No entries in this folder.</p>
@@ -1526,25 +1792,87 @@ export default function ServerControlsPage() {
                     const relativePath = normalizeRelativePath(
                       browserPath ? `${browserPath}/${entry.name}` : entry.name
                     );
+                    const sizeLabel =
+                      entry.type === "dir" ? "" : formatBytes(entry.size);
+                    const isDownloading = browserDownloadingPath === relativePath;
+                    const isDeleting = browserDeletingPath === relativePath;
+                    const canUnzip = entry.type === "file" && isZipArchiveName(entry.name);
+                    const isUnzipping = browserUnzippingPath === relativePath;
+                    const typeLabel =
+                      entry.type === "dir"
+                        ? "[DIR] "
+                        : entry.type === "file"
+                        ? "[FILE] "
+                        : entry.type === "symlink"
+                        ? "[SYMLINK] "
+                        : "[OTHER] ";
                     return (
-                      <button
+                      <div
                         key={`${entry.type}-${entry.name}`}
-                        type="button"
-                        className="flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-xs"
-                        onClick={() => {
-                          if (entry.type === "dir") {
-                            setBrowserPath(relativePath);
-                            return;
-                          }
-                          openFile(relativePath);
-                        }}
+                        className="flex items-center gap-2 rounded-md border px-3 py-2 text-xs"
                       >
-                        <span>
-                          {entry.type === "dir" ? "[DIR] " : "[FILE] "}
-                          {entry.name}
-                        </span>
-                        <span className="text-muted-foreground">{entry.size} B</span>
-                      </button>
+                        <button
+                          type="button"
+                          className="flex min-w-0 flex-1 items-center justify-between text-left"
+                          onClick={() => {
+                            if (entry.type === "dir") {
+                              if (folderNavigationLockedRef.current) {
+                                return;
+                              }
+                              folderNavigationLockedRef.current = true;
+                              setBrowserPath(relativePath);
+                              return;
+                            }
+                            if (entry.type !== "file") {
+                              setFileError("Only regular text files can be opened.");
+                              return;
+                            }
+                            openFile(relativePath);
+                          }}
+                        >
+                          <span className="truncate">
+                            {typeLabel}
+                            {entry.name}
+                          </span>
+                          {sizeLabel ? (
+                            <span className="ml-3 shrink-0 text-muted-foreground">
+                              {sizeLabel}
+                            </span>
+                          ) : null}
+                        </button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => {
+                            void downloadBrowserPath(relativePath, entry.type);
+                          }}
+                          disabled={isDownloading || isDeleting || isUnzipping}
+                        >
+                          {isDownloading ? "Downloading..." : "Download"}
+                        </Button>
+                        {canUnzip ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              void unzipArchiveInCurrentFolder(relativePath);
+                            }}
+                            disabled={isDeleting || isDownloading || isUnzipping}
+                          >
+                            {isUnzipping ? "Unzipping..." : "Unzip"}
+                          </Button>
+                        ) : null}
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => {
+                            void deleteBrowserPath(relativePath, entry.type);
+                          }}
+                          disabled={isDeleting || isDownloading || isUnzipping}
+                        >
+                          {isDeleting ? "Deleting..." : "Delete"}
+                        </Button>
+                      </div>
                     );
                   })
                 )}

@@ -5,6 +5,12 @@ const GO_API_URL = process.env.GO_API_URL || "http://localhost:8080";
 const goOrigin = safeOrigin(GO_API_URL);
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Avoid 10MB truncation in Next rewrite proxy for large file uploads.
+    proxyClientMaxBodySize: "1gb",
+    // Default proxy timeout is 30s; large uploads can exceed this.
+    proxyTimeout: 10 * 60 * 1000,
+  },
   images: {
     remotePatterns: [
       {
