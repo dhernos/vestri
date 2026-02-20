@@ -31,7 +31,7 @@ const nextConfig: NextConfig = {
           {
             key: "Content-Security-Policy",
             value: `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src ${connectSrc.join(
-              " "
+              " ",
             )}; img-src 'self' https://avatars.githubusercontent.com data:;`,
           },
           {
@@ -51,14 +51,12 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
-    return {
-      fallback: [
-        {
-          source: "/api/:path*",
-          destination: `${GO_API_URL}/api/:path*`,
-        },
-      ],
-    };
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${GO_API_URL}/api/:path*`,
+      },
+    ];
   },
 };
 

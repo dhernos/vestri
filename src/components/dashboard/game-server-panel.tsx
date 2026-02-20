@@ -34,6 +34,7 @@ type GameServerTemplateVersionField = {
   placeholder?: string;
   defaultValue?: string;
   options?: string[];
+  optionsBySoftware?: Record<string, string[]>;
 };
 
 type GameServerTemplateVersionConfig = {
@@ -65,21 +66,47 @@ type GameServerPanelProps = {
   nodeRole: NodeRole | null;
 };
 
-const normalizeFieldOptions = (field?: GameServerTemplateVersionField): string[] => {
-  if (!field || !Array.isArray(field.options)) {
+const normalizeFieldOptions = (
+  field?: GameServerTemplateVersionField,
+  software?: string
+): string[] => {
+  if (!field) {
     return [];
   }
-  return field.options
+
+  let sourceOptions: string[] | undefined;
+  const normalizedSoftware = software?.trim().toLowerCase() || "";
+  if (normalizedSoftware && field.optionsBySoftware) {
+    for (const [softwareKey, values] of Object.entries(field.optionsBySoftware)) {
+      if (softwareKey.trim().toLowerCase() !== normalizedSoftware) {
+        continue;
+      }
+      sourceOptions = Array.isArray(values) ? values : [];
+      break;
+    }
+  }
+  if (!sourceOptions && Array.isArray(field.options)) {
+    sourceOptions = field.options;
+  }
+  if (!Array.isArray(sourceOptions)) {
+    return [];
+  }
+
+  return sourceOptions
     .map((option) => option.trim())
     .filter((option) => option.length > 0);
 };
 
-const resolveFieldValue = (current: string, field?: GameServerTemplateVersionField): string => {
+const resolveFieldValue = (
+  current: string,
+  field?: GameServerTemplateVersionField,
+  software?: string
+): string => {
   if (!field) {
     return "";
   }
 
-  const options = normalizeFieldOptions(field);
+  const options = normalizeFieldOptions(field, software);
   const trimmedCurrent = current.trim();
 
   if (trimmedCurrent) {
@@ -141,7 +168,10 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
   const gameField = selectedTemplate?.versionConfig?.game;
   const selectedAgreement = selectedTemplate?.agreement;
   const softwareOptions = useMemo(() => normalizeFieldOptions(softwareField), [softwareField]);
-  const gameOptions = useMemo(() => normalizeFieldOptions(gameField), [gameField]);
+  const gameOptions = useMemo(
+    () => normalizeFieldOptions(gameField, softwareVersion),
+    [gameField, softwareVersion]
+  );
 
   const loadData = useCallback(async () => {
     if (!basePath || !nodeRef) {
@@ -233,8 +263,8 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
   }, [softwareField]);
 
   useEffect(() => {
-    setGameVersion((current) => resolveFieldValue(current, gameField));
-  }, [gameField]);
+    setGameVersion((current) => resolveFieldValue(current, gameField, softwareVersion));
+  }, [gameField, softwareVersion]);
 
   const submitCreateServer = async (agreementAccepted: boolean) => {
     if (!basePath || !templateId) {

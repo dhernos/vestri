@@ -59,6 +59,7 @@ type GameServerTemplateVersionField = {
   placeholder?: string;
   defaultValue?: string;
   options?: string[];
+  optionsBySoftware?: Record<string, string[]>;
 };
 
 type GameServerTemplateVersionConfig = {
@@ -145,21 +146,47 @@ const maxConsoleOutputChars = 250_000;
 const folderNavigationDelayMs = 180;
 let xtermRuntimePromise: Promise<XTermRuntime> | null = null;
 
-const normalizeFieldOptions = (field?: GameServerTemplateVersionField): string[] => {
-  if (!field || !Array.isArray(field.options)) {
+const normalizeFieldOptions = (
+  field?: GameServerTemplateVersionField,
+  software?: string
+): string[] => {
+  if (!field) {
     return [];
   }
-  return field.options
+
+  let sourceOptions: string[] | undefined;
+  const normalizedSoftware = software?.trim().toLowerCase() || "";
+  if (normalizedSoftware && field.optionsBySoftware) {
+    for (const [softwareKey, values] of Object.entries(field.optionsBySoftware)) {
+      if (softwareKey.trim().toLowerCase() !== normalizedSoftware) {
+        continue;
+      }
+      sourceOptions = Array.isArray(values) ? values : [];
+      break;
+    }
+  }
+  if (!sourceOptions && Array.isArray(field.options)) {
+    sourceOptions = field.options;
+  }
+  if (!Array.isArray(sourceOptions)) {
+    return [];
+  }
+
+  return sourceOptions
     .map((option) => option.trim())
     .filter((option) => option.length > 0);
 };
 
-const resolveFieldValue = (current: string, field?: GameServerTemplateVersionField): string => {
+const resolveFieldValue = (
+  current: string,
+  field?: GameServerTemplateVersionField,
+  software?: string
+): string => {
   if (!field) {
     return "";
   }
 
-  const options = normalizeFieldOptions(field);
+  const options = normalizeFieldOptions(field, software);
   const trimmedCurrent = current.trim();
 
   if (trimmedCurrent) {
@@ -526,8 +553,8 @@ export default function ServerControlsPage() {
     [velocitySoftwareField]
   );
   const velocityGameOptions = useMemo(
-    () => normalizeFieldOptions(velocityGameField),
-    [velocityGameField]
+    () => normalizeFieldOptions(velocityGameField, velocityBackendSoftwareVersion),
+    [velocityBackendSoftwareVersion, velocityGameField]
   );
 
   const loadServer = useCallback(async () => {
@@ -672,8 +699,10 @@ export default function ServerControlsPage() {
   }, [velocitySoftwareField]);
 
   useEffect(() => {
-    setVelocityBackendGameVersion((current) => resolveFieldValue(current, velocityGameField));
-  }, [velocityGameField]);
+    setVelocityBackendGameVersion((current) =>
+      resolveFieldValue(current, velocityGameField, velocityBackendSoftwareVersion)
+    );
+  }, [velocityBackendSoftwareVersion, velocityGameField]);
 
   const appendConsoleOutput = useCallback((chunk: string) => {
     if (!chunk) {
