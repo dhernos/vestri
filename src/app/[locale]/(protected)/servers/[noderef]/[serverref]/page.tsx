@@ -124,6 +124,7 @@ type ConnectionStatus =
   | "reconnecting"
   | "disconnected"
   | "error";
+type ConsoleRefreshMode = "auto" | "manual";
 
 type ExecMessage = {
   type: string;
@@ -477,15 +478,18 @@ export default function ServerControlsPage() {
   const [consoleOutput, setConsoleOutput] = useState("");
   const [consoleStatus, setConsoleStatus] = useState<ConnectionStatus>("idle");
   const [consoleError, setConsoleError] = useState("");
+  const [consoleRefreshMode, setConsoleRefreshMode] =
+    useState<ConsoleRefreshMode>("auto");
+  const [consoleSnapshotLoading, setConsoleSnapshotLoading] = useState(false);
   const [execStatus, setExecStatus] = useState<ConnectionStatus>("idle");
   const [execError, setExecError] = useState("");
-  const [logStreamActive, setLogStreamActive] = useState(false);
   const [execSessionActive, setExecSessionActive] = useState(false);
 
   const consoleOutputRef = useRef<HTMLPreElement | null>(null);
-  const consoleAutoScrollRef = useRef(true);
   const logsAbortRef = useRef<AbortController | null>(null);
   const logsRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const consoleSnapshotRequestRef = useRef(0);
+  const consoleHasOutputRef = useRef(false);
   const folderNavigationLockedRef = useRef(false);
   const folderNavigationUnlockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -507,7 +511,7 @@ export default function ServerControlsPage() {
   const canUseInteractiveConsole = Boolean(server?.permissions.canManage);
   const canConnectLogStream = canReadConsole && isServerUp;
   const canConnectInteractiveConsole = canUseInteractiveConsole && isServerUp;
-  const shouldConnectLogStream = canConnectLogStream && logStreamActive;
+  const shouldConnectLogStream = canConnectLogStream && consoleRefreshMode === "auto";
   const shouldConnectInteractiveConsole =
     canConnectInteractiveConsole && execSessionActive;
   const isVelocityServer = server?.kind === "velocity";
@@ -684,17 +688,120 @@ export default function ServerControlsPage() {
     });
   }, []);
 
+  const buildConsoleLogsURL = useCallback(
+    (follow: boolean, tail: string) => {
+      const params = new URLSearchParams();
+      params.set("follow", follow ? "1" : "0");
+      params.set("tail", tail);
+      return `${basePath}/console/logs/stream?${params.toString()}`;
+    },
+    [basePath]
+  );
+
+  const loadConsoleSnapshot = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!basePath || !canReadConsole || consoleRefreshMode !== "manual") {
+        return;
+      }
+
+      const requestID = ++consoleSnapshotRequestRef.current;
+      setConsoleSnapshotLoading(true);
+      setConsoleError("");
+      setConsoleOutput("");
+
+      try {
+        const res = await fetch(buildConsoleLogsURL(false, "all"), {
+          credentials: "include",
+          cache: "no-store",
+          signal,
+        });
+        if (requestID !== consoleSnapshotRequestRef.current) {
+          return;
+        }
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          setConsoleError(text || "Failed to load console logs.");
+          return;
+        }
+
+        if (!res.body) {
+          const text = await res.text().catch(() => "");
+          if (requestID !== consoleSnapshotRequestRef.current) {
+            return;
+          }
+          if (text.length <= maxConsoleOutputChars) {
+            setConsoleOutput(text);
+          } else {
+            setConsoleOutput(text.slice(text.length - maxConsoleOutputChars));
+          }
+          return;
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+          if (signal?.aborted || requestID !== consoleSnapshotRequestRef.current) {
+            try {
+              await reader.cancel();
+            } catch {
+              // ignore cancel errors
+            }
+            return;
+          }
+
+          const { done, value } = await reader.read();
+          if (done) {
+            break;
+          }
+          appendConsoleOutput(decoder.decode(value, { stream: true }));
+        }
+
+        const tail = decoder.decode();
+        if (tail) {
+          appendConsoleOutput(tail);
+        }
+      } catch {
+        if (requestID !== consoleSnapshotRequestRef.current || signal?.aborted) {
+          return;
+        }
+        setConsoleError("Failed to load console logs.");
+      } finally {
+        if (requestID === consoleSnapshotRequestRef.current) {
+          setConsoleSnapshotLoading(false);
+        }
+      }
+    },
+    [appendConsoleOutput, basePath, buildConsoleLogsURL, canReadConsole, consoleRefreshMode]
+  );
+
   useEffect(() => {
+    consoleSnapshotRequestRef.current += 1;
     setConsoleOutput("");
-    setLogStreamActive(false);
+    setConsoleStatus("idle");
+    setConsoleError("");
+    setConsoleSnapshotLoading(false);
     setExecSessionActive(false);
   }, [serverId]);
 
   useEffect(() => {
-    if (!canConnectLogStream && logStreamActive) {
-      setLogStreamActive(false);
+    if (!basePath || !canReadConsole) {
+      consoleSnapshotRequestRef.current += 1;
+      setConsoleOutput("");
+      setConsoleStatus("idle");
+      setConsoleError("");
+      setConsoleSnapshotLoading(false);
+      return;
     }
-  }, [canConnectLogStream, logStreamActive]);
+  }, [basePath, canReadConsole]);
+
+  useEffect(() => {
+    if (consoleRefreshMode === "auto") {
+      consoleSnapshotRequestRef.current += 1;
+      setConsoleSnapshotLoading(false);
+    }
+  }, [consoleRefreshMode]);
 
   useEffect(() => {
     if (!canConnectInteractiveConsole && execSessionActive) {
@@ -703,9 +810,6 @@ export default function ServerControlsPage() {
   }, [canConnectInteractiveConsole, execSessionActive]);
 
   useEffect(() => {
-    if (!consoleAutoScrollRef.current) {
-      return;
-    }
     const node = consoleOutputRef.current;
     if (!node) {
       return;
@@ -714,9 +818,12 @@ export default function ServerControlsPage() {
   }, [consoleOutput]);
 
   useEffect(() => {
+    consoleHasOutputRef.current = consoleOutput.length > 0;
+  }, [consoleOutput]);
+
+  useEffect(() => {
     if (!basePath || !shouldConnectLogStream) {
       setConsoleStatus("idle");
-      setConsoleError("");
       logsAbortRef.current?.abort();
       logsAbortRef.current = null;
       if (logsRetryTimerRef.current) {
@@ -728,6 +835,7 @@ export default function ServerControlsPage() {
 
     let cancelled = false;
     let reconnectAttempt = 0;
+    let initialHistoryLoaded = false;
 
     const cleanup = () => {
       logsAbortRef.current?.abort();
@@ -759,11 +867,11 @@ export default function ServerControlsPage() {
       const controller = new AbortController();
       logsAbortRef.current = controller;
       setConsoleStatus(reconnectAttempt === 0 ? "connecting" : "reconnecting");
-      const connectedAt = Date.now();
-      let receivedAnyChunk = false;
 
       try {
-        const res = await fetch(`${basePath}/console/logs/stream`, {
+        const tailMode =
+          initialHistoryLoaded || consoleHasOutputRef.current ? "0" : "all";
+        const res = await fetch(buildConsoleLogsURL(true, tailMode), {
           credentials: "include",
           cache: "no-store",
           signal: controller.signal,
@@ -786,7 +894,10 @@ export default function ServerControlsPage() {
 
         setConsoleError("");
         setConsoleStatus("connected");
-        appendConsoleOutput("[vestri] log stream connected\n");
+        reconnectAttempt = 0;
+        if (!initialHistoryLoaded) {
+          initialHistoryLoaded = true;
+        }
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -796,20 +907,13 @@ export default function ServerControlsPage() {
           if (done) {
             break;
           }
-          if (value && value.length > 0) {
-            receivedAnyChunk = true;
-          }
           appendConsoleOutput(decoder.decode(value, { stream: true }));
         }
 
         if (!cancelled) {
           const tail = decoder.decode();
           if (tail) {
-            receivedAnyChunk = true;
             appendConsoleOutput(tail);
-          }
-          if (receivedAnyChunk || Date.now() - connectedAt >= 10_000) {
-            reconnectAttempt = 0;
           }
           setConsoleStatus("disconnected");
           scheduleReconnect();
@@ -833,7 +937,7 @@ export default function ServerControlsPage() {
       cancelled = true;
       cleanup();
     };
-  }, [appendConsoleOutput, basePath, shouldConnectLogStream, serverId]);
+  }, [appendConsoleOutput, basePath, buildConsoleLogsURL, shouldConnectLogStream]);
 
   useEffect(() => {
     if (!basePath || !shouldConnectInteractiveConsole) {
@@ -1105,7 +1209,6 @@ export default function ServerControlsPage() {
       return;
     }
     if (action === "stop") {
-      setLogStreamActive(false);
       setExecSessionActive(false);
     }
     setStackActionLoading(action);
@@ -1759,30 +1862,18 @@ export default function ServerControlsPage() {
     }
   };
 
-  const handleConsoleScroll = () => {
-    const node = consoleOutputRef.current;
-    if (!node) {
+  const refreshConsoleOutput = () => {
+    if (
+      !canReadConsole ||
+      consoleSnapshotLoading ||
+      consoleRefreshMode !== "manual"
+    ) {
       return;
     }
-    const threshold = 24;
-    const distanceFromBottom = node.scrollHeight - node.scrollTop - node.clientHeight;
-    consoleAutoScrollRef.current = distanceFromBottom <= threshold;
-  };
-
-  const startLogStream = () => {
-    if (!canConnectLogStream) {
-      return;
-    }
-    setConsoleError("");
-    setLogStreamActive(true);
-  };
-
-  const stopLogStream = () => {
-    setLogStreamActive(false);
+    void loadConsoleSnapshot();
   };
 
   const clearLogOutput = () => {
-    consoleAutoScrollRef.current = true;
     setConsoleOutput("");
   };
 
@@ -2034,23 +2125,36 @@ export default function ServerControlsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Console Logs (Read-Only)</CardTitle>
-          <CardDescription>Live stream for users with console read access.</CardDescription>
+          <CardDescription>
+            Switch between manual refresh and automatic live updates.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-2">
             <Button
-              variant="secondary"
-              onClick={startLogStream}
-              disabled={!canConnectLogStream || logStreamActive}
+              variant={consoleRefreshMode === "auto" ? "secondary" : "outline"}
+              onClick={() => setConsoleRefreshMode("auto")}
+              disabled={!canReadConsole}
             >
-              {logStreamActive ? "Stream running..." : "Start log stream"}
+              Auto update
+            </Button>
+            <Button
+              variant={consoleRefreshMode === "manual" ? "secondary" : "outline"}
+              onClick={() => setConsoleRefreshMode("manual")}
+              disabled={!canReadConsole}
+            >
+              Manual refresh
             </Button>
             <Button
               variant="outline"
-              onClick={stopLogStream}
-              disabled={!logStreamActive}
+              onClick={refreshConsoleOutput}
+              disabled={
+                !canReadConsole ||
+                consoleSnapshotLoading ||
+                consoleRefreshMode !== "manual"
+              }
             >
-              Stop stream
+              {consoleSnapshotLoading ? "Refreshing..." : "Refresh now"}
             </Button>
             <Button
               variant="ghost"
@@ -2061,9 +2165,15 @@ export default function ServerControlsPage() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Stream status: {consoleStatus}
+            Refresh mode:{" "}
+            {consoleRefreshMode === "auto" ? "Automatic updates" : "Manual refresh"}
           </p>
-          {!isServerUp ? (
+          {consoleRefreshMode === "auto" ? (
+            <p className="text-xs text-muted-foreground">
+              Stream status: {consoleStatus}
+            </p>
+          ) : null}
+          {!isServerUp && consoleRefreshMode === "auto" ? (
             <p className="text-xs text-muted-foreground">
               Server is offline. Start the server to open a live stream.
             </p>
@@ -2071,12 +2181,15 @@ export default function ServerControlsPage() {
           {consoleError ? <p className="text-sm text-red-600">{consoleError}</p> : null}
           <pre
             ref={consoleOutputRef}
-            onScroll={handleConsoleScroll}
             className="max-h-80 overflow-auto whitespace-pre-wrap rounded-md border bg-muted/40 p-3 text-xs"
           >
             {consoleOutput ||
-              (!logStreamActive
-                ? "Log stream not started. Click \"Start log stream\"."
+              (consoleSnapshotLoading
+                ? "Loading logs..."
+                : !canReadConsole
+                ? "You don't have permission to read console logs."
+                : consoleRefreshMode === "manual"
+                ? "No logs loaded. Click \"Refresh now\"."
                 : consoleStatus === "connected"
                 ? "Connected. Waiting for new log lines..."
                 : "Waiting for log stream...")}

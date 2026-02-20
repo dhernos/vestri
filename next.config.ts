@@ -51,12 +51,14 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${GO_API_URL}/api/:path*`,
-      },
-    ];
+    return {
+      fallback: [
+        {
+          source: "/api/:path*",
+          destination: `${GO_API_URL}/api/:path*`,
+        },
+      ],
+    };
   },
 };
 
