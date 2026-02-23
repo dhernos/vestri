@@ -5,6 +5,14 @@ import { useParams } from "next/navigation";
 import { Link, useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { FitAddon } from "@xterm/addon-fit";
@@ -67,10 +75,19 @@ type GameServerTemplateVersionConfig = {
   game?: GameServerTemplateVersionField;
 };
 
+type GameServerTemplateAgreement = {
+  required: boolean;
+  title?: string;
+  text?: string;
+  linkText?: string;
+  linkUrl?: string;
+};
+
 type GameServerTemplate = {
   id: string;
   name: string;
   game: string;
+  agreement?: GameServerTemplateAgreement;
   versionConfig?: GameServerTemplateVersionConfig;
 };
 
@@ -456,6 +473,7 @@ export default function ServerControlsPage() {
   const [velocityError, setVelocityError] = useState("");
   const [velocityCreateError, setVelocityCreateError] = useState("");
   const [velocityCreating, setVelocityCreating] = useState(false);
+  const [velocityAgreementOpen, setVelocityAgreementOpen] = useState(false);
   const [velocityTemplateId, setVelocityTemplateId] = useState("");
   const [velocityBackendName, setVelocityBackendName] = useState("");
   const [velocityBackendSoftwareVersion, setVelocityBackendSoftwareVersion] = useState("");
@@ -546,6 +564,7 @@ export default function ServerControlsPage() {
     () => velocityTemplates.find((template) => template.id === velocityTemplateId) || null,
     [velocityTemplateId, velocityTemplates]
   );
+  const selectedVelocityAgreement = selectedVelocityTemplate?.agreement;
   const velocitySoftwareField = selectedVelocityTemplate?.versionConfig?.software;
   const velocityGameField = selectedVelocityTemplate?.versionConfig?.game;
   const velocitySoftwareOptions = useMemo(
@@ -689,6 +708,7 @@ export default function ServerControlsPage() {
       setVelocityTemplateId("");
       setVelocityError("");
       setVelocityCreateError("");
+      setVelocityAgreementOpen(false);
       return;
     }
     void loadVelocityData();
@@ -1323,7 +1343,7 @@ export default function ServerControlsPage() {
     }
   };
 
-  const createVelocityBackend = async () => {
+  const submitCreateVelocityBackend = async (agreementAccepted: boolean) => {
     if (!nodeRef || !server || server.kind !== "velocity" || !velocityTemplateId) {
       return;
     }
@@ -1338,7 +1358,7 @@ export default function ServerControlsPage() {
         body: JSON.stringify({
           templateId: velocityTemplateId,
           name: velocityBackendName.trim(),
-          agreementAccepted: true,
+          agreementAccepted,
           softwareVersion: velocitySoftwareField ? velocityBackendSoftwareVersion.trim() : "",
           gameVersion: velocityGameField ? velocityBackendGameVersion.trim() : "",
           parentServerRef: server.id,
@@ -1358,6 +1378,19 @@ export default function ServerControlsPage() {
     } finally {
       setVelocityCreating(false);
     }
+  };
+
+  const createVelocityBackend = async () => {
+    if (selectedVelocityAgreement?.required) {
+      setVelocityAgreementOpen(true);
+      return;
+    }
+    await submitCreateVelocityBackend(false);
+  };
+
+  const confirmVelocityAgreementAndCreate = async () => {
+    await submitCreateVelocityBackend(true);
+    setVelocityAgreementOpen(false);
   };
 
   const loadBrowserEntries = useCallback(async () => {
@@ -2111,6 +2144,11 @@ export default function ServerControlsPage() {
                 {velocityLoading ? "Refreshing..." : "Refresh backends"}
               </Button>
             </div>
+            {selectedVelocityAgreement?.required ? (
+              <p className="text-xs text-muted-foreground">
+                This template requires agreement confirmation before creating the backend server.
+              </p>
+            ) : null}
             {velocityError ? <p className="text-sm text-red-600">{velocityError}</p> : null}
             {velocityCreateError ? <p className="text-sm text-red-600">{velocityCreateError}</p> : null}
 
@@ -2674,6 +2712,47 @@ export default function ServerControlsPage() {
           </CardContent>
         </Card>
       ) : null}
+
+      <Dialog open={velocityAgreementOpen} onOpenChange={setVelocityAgreementOpen}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>
+              {selectedVelocityAgreement?.title || "Template agreement required"}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedVelocityAgreement?.text ||
+                "You must accept this agreement before creating the backend server."}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedVelocityAgreement?.linkUrl ? (
+            <a
+              href={selectedVelocityAgreement.linkUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="text-sm text-blue-600 underline"
+            >
+              {selectedVelocityAgreement.linkText || selectedVelocityAgreement.linkUrl}
+            </a>
+          ) : null}
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setVelocityAgreementOpen(false)}
+              disabled={velocityCreating}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmVelocityAgreementAndCreate}
+              disabled={velocityCreating}
+            >
+              {velocityCreating ? "Creating..." : "I agree and create backend"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
