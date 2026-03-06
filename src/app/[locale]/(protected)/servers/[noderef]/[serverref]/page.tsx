@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { Link, useRouter } from "@/i18n/navigation";
+import ServerStatusBlob from "@/components/servers/status-blob";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -459,6 +461,7 @@ const loadXtermRuntime = async (): Promise<XTermRuntime> => {
 };
 
 export default function ServerControlsPage() {
+  const t = useTranslations("ServerPage");
   const router = useRouter();
   const params = useParams<{ noderef: string; serverref: string }>();
   const nodeRef = typeof params?.noderef === "string" ? params.noderef : "";
@@ -554,12 +557,14 @@ export default function ServerControlsPage() {
   const isServerUp = server?.status === "up";
   const canReadConsole = Boolean(server?.permissions.canReadConsole);
   const canUseInteractiveConsole = Boolean(server?.permissions.canManage);
-  const canConnectLogStream = canReadConsole && isServerUp;
+  const canConnectLogStream = canReadConsole;
   const canConnectInteractiveConsole = canUseInteractiveConsole && isServerUp;
   const shouldConnectLogStream = canConnectLogStream && consoleRefreshMode === "auto";
   const shouldConnectInteractiveConsole =
     canConnectInteractiveConsole && execSessionActive;
   const isVelocityServer = server?.kind === "velocity";
+  const isVelocityBackendServer = server?.kind === "velocity-backend";
+  const statusLabel = useCallback((status: ServerStatus) => t(`status.${status}`), [t]);
   const selectedVelocityTemplate = useMemo(
     () => velocityTemplates.find((template) => template.id === velocityTemplateId) || null,
     [velocityTemplateId, velocityTemplates]
@@ -1952,15 +1957,15 @@ export default function ServerControlsPage() {
   };
 
   if (loading) {
-    return <p className="p-6">Loading...</p>;
+    return <p className="p-6">{t("loading")}</p>;
   }
 
   if (error || !server) {
     return (
       <div className="container mx-auto space-y-4 p-6">
-        <p className="text-red-600">{error || "Server not found."}</p>
+        <p className="text-red-600">{error || t("errors.notFound")}</p>
         <Button asChild variant="secondary">
-          <Link href="/dashboard">Back to dashboard</Link>
+          <Link href="/dashboard">{t("buttons.backToDashboard")}</Link>
         </Button>
       </div>
     );
@@ -1969,24 +1974,39 @@ export default function ServerControlsPage() {
   return (
     <div className="container mx-auto space-y-6 p-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold">{server.name}</h1>
+        <h1 className="flex items-center gap-3 text-3xl font-bold">
+          <ServerStatusBlob status={server.status} size="lg" label={statusLabel(server.status)} />
+          <span>{server.name}</span>
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Template: {server.templateName || server.templateId} | Stack: {server.stackName}
+          {t("header.templateLabel")}: {server.templateName || server.templateId} |{" "}
+          {t("header.stackLabel")}: {server.stackName}
         </p>
       </div>
 
       <div className="flex flex-wrap gap-2">
         <Button asChild variant="secondary">
           <Link href={`/dashboard?node=${encodeURIComponent(nodeRef)}`}>
-            Back to dashboard
+            {t("buttons.backToDashboard")}
           </Link>
         </Button>
+        {isVelocityBackendServer && server.parentServerId ? (
+          <Button asChild variant="outline">
+            <Link
+              href={`/servers/${encodeURIComponent(nodeRef)}/${encodeURIComponent(
+                server.parentServerId
+              )}`}
+            >
+              {t("buttons.backToProxy")}
+            </Link>
+          </Button>
+        ) : null}
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Controls</CardTitle>
-          <CardDescription>Status: {server.status}</CardDescription>
+          <CardTitle>{t("controls.title")}</CardTitle>
+          <CardDescription>{t("controls.description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-2">
@@ -1994,21 +2014,21 @@ export default function ServerControlsPage() {
               onClick={() => runStackAction("start")}
               disabled={!server.permissions.canControl || stackActionLoading !== ""}
             >
-              {stackActionLoading === "start" ? "Starting..." : "Start"}
+              {stackActionLoading === "start" ? t("controls.starting") : t("controls.start")}
             </Button>
             <Button
               variant="destructive"
               onClick={() => runStackAction("stop")}
               disabled={!server.permissions.canControl || stackActionLoading !== ""}
             >
-              {stackActionLoading === "stop" ? "Stopping..." : "Stop"}
+              {stackActionLoading === "stop" ? t("controls.stopping") : t("controls.stop")}
             </Button>
             <Button
               variant="secondary"
               onClick={refreshStatus}
               disabled={!server.permissions.canReadConsole}
             >
-              Refresh status
+              {t("controls.refreshStatus")}
             </Button>
             {server.permissions.canManage ? (
               <Button
@@ -2016,7 +2036,7 @@ export default function ServerControlsPage() {
                 onClick={deleteServer}
                 disabled={serverDeleting}
               >
-                {serverDeleting ? "Deleting..." : "Delete server"}
+                {serverDeleting ? t("controls.deleting") : t("controls.deleteServer")}
               </Button>
             ) : null}
           </div>
@@ -2028,16 +2048,15 @@ export default function ServerControlsPage() {
       {isVelocityServer ? (
         <Card>
           <CardHeader>
-            <CardTitle>Velocity Backends</CardTitle>
+            <CardTitle>{t("velocity.title")}</CardTitle>
             <CardDescription>
-              Minecraft backend servers are attached to the same internal Docker network and are not
-              shown on the main server list.
+              {t("velocity.description")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="velocity-backend-template">Template</Label>
+                <Label htmlFor="velocity-backend-template">{t("velocity.fields.template")}</Label>
                 <select
                   id="velocity-backend-template"
                   className="h-9 w-full rounded-md border bg-transparent px-3 text-sm"
@@ -2046,7 +2065,7 @@ export default function ServerControlsPage() {
                   disabled={velocityCreating || velocityTemplates.length === 0}
                 >
                   {velocityTemplates.length === 0 ? (
-                    <option value="">No backend templates available</option>
+                    <option value="">{t("velocity.empty.templates")}</option>
                   ) : (
                     velocityTemplates.map((template) => (
                       <option key={template.id} value={template.id}>
@@ -2057,19 +2076,19 @@ export default function ServerControlsPage() {
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="velocity-backend-name">Identifier</Label>
+                <Label htmlFor="velocity-backend-name">{t("velocity.fields.identifier")}</Label>
                 <Input
                   id="velocity-backend-name"
                   value={velocityBackendName}
                   onChange={(event) => setVelocityBackendName(event.target.value)}
-                  placeholder="backend-1"
+                  placeholder={t("velocity.fields.identifierPlaceholder")}
                   disabled={velocityCreating}
                 />
               </div>
               {velocitySoftwareField ? (
                 <div className="space-y-2">
                   <Label htmlFor="velocity-backend-software">
-                    {velocitySoftwareField.label || "Server type"}
+                    {velocitySoftwareField.label || t("velocity.fields.serverType")}
                   </Label>
                   {velocitySoftwareOptions.length > 0 ? (
                     <select
@@ -2099,7 +2118,7 @@ export default function ServerControlsPage() {
               {velocityGameField ? (
                 <div className="space-y-2">
                   <Label htmlFor="velocity-backend-game-version">
-                    {velocityGameField.label || "Game version"}
+                    {velocityGameField.label || t("velocity.fields.gameVersion")}
                   </Label>
                   {velocityGameOptions.length > 0 ? (
                     <select
@@ -2132,7 +2151,7 @@ export default function ServerControlsPage() {
                 onClick={createVelocityBackend}
                 disabled={velocityCreating || !velocityTemplateId}
               >
-                {velocityCreating ? "Creating..." : "Create backend server"}
+                {velocityCreating ? t("velocity.buttons.creating") : t("velocity.buttons.create")}
               </Button>
               <Button
                 variant="secondary"
@@ -2141,19 +2160,19 @@ export default function ServerControlsPage() {
                 }}
                 disabled={velocityLoading}
               >
-                {velocityLoading ? "Refreshing..." : "Refresh backends"}
+                {velocityLoading ? t("velocity.buttons.refreshing") : t("velocity.buttons.refresh")}
               </Button>
             </div>
             {selectedVelocityAgreement?.required ? (
               <p className="text-xs text-muted-foreground">
-                This template requires agreement confirmation before creating the backend server.
+                {t("velocity.agreementRequired")}
               </p>
             ) : null}
             {velocityError ? <p className="text-sm text-red-600">{velocityError}</p> : null}
             {velocityCreateError ? <p className="text-sm text-red-600">{velocityCreateError}</p> : null}
 
             {velocityBackends.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No backend servers attached yet.</p>
+              <p className="text-sm text-muted-foreground">{t("velocity.empty.backends")}</p>
             ) : (
               <div className="space-y-2">
                 {velocityBackends.map((backend) => (
@@ -2162,22 +2181,28 @@ export default function ServerControlsPage() {
                     className="flex flex-wrap items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm"
                   >
                     <div>
-                      <p className="font-medium">{backend.name}</p>
+                      <p className="flex items-center gap-2 font-medium">
+                        <ServerStatusBlob
+                          status={backend.status}
+                          size="md"
+                          label={statusLabel(backend.status)}
+                        />
+                        <span>{backend.name}</span>
+                      </p>
                       <p className="text-xs text-muted-foreground">
-                        Connect from Velocity:{" "}
+                        {t("velocity.connectLabel")}:{" "}
                         {backend.connectHost || `vestri-${backend.slug}`}:
                         {backend.connectPort || 25565}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="rounded bg-muted px-2 py-0.5 text-xs">{backend.status}</span>
                       <Button asChild size="sm" variant="secondary">
                         <Link
                           href={`/servers/${encodeURIComponent(nodeRef)}/${encodeURIComponent(
                             backend.id
                           )}`}
                         >
-                          Open controls
+                          {t("buttons.openControls")}
                         </Link>
                       </Button>
                     </div>
@@ -2191,9 +2216,9 @@ export default function ServerControlsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Console Logs (Read-Only)</CardTitle>
+          <CardTitle>{t("logs.title")}</CardTitle>
           <CardDescription>
-            Switch between manual refresh and automatic live updates.
+            {t("logs.description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -2203,14 +2228,14 @@ export default function ServerControlsPage() {
               onClick={() => setConsoleRefreshMode("auto")}
               disabled={!canReadConsole}
             >
-              Auto update
+              {t("logs.buttons.autoUpdate")}
             </Button>
             <Button
               variant={consoleRefreshMode === "manual" ? "secondary" : "outline"}
               onClick={() => setConsoleRefreshMode("manual")}
               disabled={!canReadConsole}
             >
-              Manual refresh
+              {t("logs.buttons.manualRefresh")}
             </Button>
             <Button
               variant="outline"
@@ -2221,28 +2246,28 @@ export default function ServerControlsPage() {
                 consoleRefreshMode !== "manual"
               }
             >
-              {consoleSnapshotLoading ? "Refreshing..." : "Refresh now"}
+              {consoleSnapshotLoading ? t("logs.buttons.refreshing") : t("logs.buttons.refreshNow")}
             </Button>
             <Button
               variant="ghost"
               onClick={clearLogOutput}
               disabled={consoleOutput.length === 0}
             >
-              Clear output
+              {t("logs.buttons.clearOutput")}
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Refresh mode:{" "}
-            {consoleRefreshMode === "auto" ? "Automatic updates" : "Manual refresh"}
+            {t("logs.refreshModeLabel")}{" "}
+            {consoleRefreshMode === "auto" ? t("logs.refreshModeAuto") : t("logs.refreshModeManual")}
           </p>
           {consoleRefreshMode === "auto" ? (
             <p className="text-xs text-muted-foreground">
-              Stream status: {consoleStatus}
+              {t("logs.streamStatusLabel")} {t(`connectionStatus.${consoleStatus}`)}
             </p>
           ) : null}
           {!isServerUp && consoleRefreshMode === "auto" ? (
             <p className="text-xs text-muted-foreground">
-              Server is offline. Start the server to open a live stream.
+              {t("logs.serverOfflineHint")}
             </p>
           ) : null}
           {consoleError ? <p className="text-sm text-red-600">{consoleError}</p> : null}
@@ -2252,14 +2277,14 @@ export default function ServerControlsPage() {
           >
             {consoleOutput ||
               (consoleSnapshotLoading
-                ? "Loading logs..."
+                ? t("logs.placeholder.loading")
                 : !canReadConsole
-                ? "You don't have permission to read console logs."
+                ? t("logs.placeholder.noPermission")
                 : consoleRefreshMode === "manual"
-                ? "No logs loaded. Click \"Refresh now\"."
+                ? t("logs.placeholder.noLogsManual")
                 : consoleStatus === "connected"
-                ? "Connected. Waiting for new log lines..."
-                : "Waiting for log stream...")}
+                ? t("logs.placeholder.connectedWaiting")
+                : t("logs.placeholder.waitingStream"))}
           </pre>
         </CardContent>
       </Card>
@@ -2305,7 +2330,7 @@ export default function ServerControlsPage() {
               />
             ) : (
               <div className="flex h-32 items-center justify-center rounded-md border border-dashed text-xs text-muted-foreground">
-                Interactive session is idle. Click "Start interactive session".
+                {t("interactive.idleHint")}
               </div>
             )}
           </CardContent>

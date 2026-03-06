@@ -411,5 +411,148 @@
       "invalidSession": "Ihre Sitzung ist abgelaufen oder ungültig. Bitte erneut anmelden.",
       "sessionDetails": "Sitzungsdetails konnten nicht geladen werden."
     }
+  },
+  "HealthBlob": {
+    "loading": "Health-Check wird ausgeführt...",
+    "missingNode": "Worker nicht erreichbar oder fehlerhafte Node-Konfiguration.",
+    "ok": "Alles passt: Worker ist erreichbar und Internetverbindung funktioniert.",
+    "partial": "Worker ist erreichbar, kann aber keine Internetverbindung aufbauen.",
+    "httpError": "Worker nicht erreichbar oder anderer Fehler (HTTP {status}).",
+    "genericError": "Worker nicht erreichbar oder anderer Fehler."
+  },
+  "GameServerPanel": {
+    "title": "Game Server",
+    "titleAlpha": "Game Server (Alpha)",
+    "description": "Server-Steuerung ist jetzt auf einer eigenen Detailseite pro Server.",
+    "selectNodeFirst": "Wähle zuerst einen Node aus, um Game Server zu verwalten.",
+    "fields": {
+      "template": "Template",
+      "identifier": "Bezeichner",
+      "serverType": "Servertyp",
+      "gameVersion": "Spielversion"
+    },
+    "empty": {
+      "templates": "Keine Templates verfügbar",
+      "servers": "Noch keine Game Server vorhanden."
+    },
+    "buttons": {
+      "creating": "Erstelle...",
+      "createServer": "Server erstellen",
+      "refresh": "Aktualisieren",
+      "openControls": "Steuerung öffnen",
+      "cancel": "Abbrechen",
+      "agreeAndCreate": "Ich stimme zu und erstelle den Server"
+    },
+    "permissions": {
+      "createLimited": "Erstellen ist auf Owner/Admin beschränkt."
+    },
+    "agreement": {
+      "requiredInfo": "Dieses Template erfordert eine Bestätigung, bevor der Server erstellt werden kann.",
+      "title": "Template-Zustimmung erforderlich",
+      "description": "Du musst diese Vereinbarung akzeptieren, bevor der Server erstellt werden kann."
+    },
+    "serverList": {
+      "title": "Serverliste",
+      "templateLabel": "Template"
+    },
+    "status": {
+      "up": "Online",
+      "down": "Offline",
+      "unknown": "Unbekannt"
+    },
+    "errors": {
+      "loadTemplates": "Game-Server-Templates konnten nicht geladen werden.",
+      "loadServers": "Game Server konnten nicht geladen werden.",
+      "loadData": "Game-Server-Daten konnten nicht geladen werden.",
+      "createServer": "Game Server konnte nicht erstellt werden."
+    }
+  },
+  "ServerPage": {
+    "loading": "Lädt...",
+    "errors": {
+      "notFound": "Server nicht gefunden."
+    },
+    "header": {
+      "templateLabel": "Template",
+      "stackLabel": "Stack"
+    },
+    "buttons": {
+      "backToDashboard": "Zurück zum Dashboard",
+      "backToProxy": "Zurück zum Proxy",
+      "openControls": "Steuerung öffnen"
+    },
+    "controls": {
+      "title": "Steuerung",
+      "description": "Steuere den aktuellen Serverprozess.",
+      "start": "Starten",
+      "starting": "Starte...",
+      "stop": "Stoppen",
+      "stopping": "Stoppe...",
+      "refreshStatus": "Status aktualisieren",
+      "deleteServer": "Server löschen",
+      "deleting": "Lösche..."
+    },
+    "velocity": {
+      "title": "Velocity Backends",
+      "description": "Minecraft-Backend-Server sind im selben internen Docker-Netzwerk angebunden und werden nicht in der Hauptserverliste angezeigt.",
+      "fields": {
+        "template": "Template",
+        "identifier": "Bezeichner",
+        "identifierPlaceholder": "backend-1",
+        "serverType": "Servertyp",
+        "gameVersion": "Spielversion"
+      },
+      "buttons": {
+        "create": "Backend-Server erstellen",
+        "creating": "Erstelle...",
+        "refresh": "Backends aktualisieren",
+        "refreshing": "Aktualisiere..."
+      },
+      "agreementRequired": "Dieses Template erfordert eine Bestätigung, bevor der Backend-Server erstellt werden kann.",
+      "connectLabel": "Verbindung aus Velocity",
+      "empty": {
+        "templates": "Keine Backend-Templates verfügbar",
+        "backends": "Noch keine Backend-Server angebunden."
+      }
+    },
+    "logs": {
+      "title": "Konsolen-Logs (Read-Only)",
+      "description": "Zwischen manueller Aktualisierung und automatischen Live-Updates wechseln.",
+      "buttons": {
+        "autoUpdate": "Automatisch",
+        "manualRefresh": "Manuell",
+        "refreshNow": "Jetzt aktualisieren",
+        "refreshing": "Aktualisiere...",
+        "clearOutput": "Ausgabe leeren"
+      },
+      "refreshModeLabel": "Aktualisierungsmodus:",
+      "refreshModeAuto": "Automatische Updates",
+      "refreshModeManual": "Manuell",
+      "streamStatusLabel": "Stream-Status:",
+      "serverOfflineHint": "Server ist offline. Starte den Server, um den Live-Stream zu öffnen.",
+      "placeholder": {
+        "loading": "Logs werden geladen...",
+        "noPermission": "Du hast keine Berechtigung, Konsolen-Logs zu lesen.",
+        "noLogsManual": "Keine Logs geladen. Klicke auf \"Jetzt aktualisieren\".",
+        "connectedWaiting": "Verbunden. Warte auf neue Log-Zeilen...",
+        "waitingStream": "Warte auf Log-Stream..."
+      }
+    },
+    "interactive": {
+      "idleHint": "Interaktive Sitzung ist inaktiv. Klicke auf Interaktive Sitzung starten."
+    },
+    "status": {
+      "up": "Online",
+      "down": "Offline",
+      "unknown": "Unbekannt"
+    },
+    "connectionStatus": {
+      "idle": "inaktiv",
+      "connecting": "verbinde",
+      "connected": "verbunden",
+      "reconnecting": "verbinde erneut",
+      "disconnected": "getrennt",
+      "error": "fehler"
+    }
   }
 }

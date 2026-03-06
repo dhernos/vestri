@@ -411,5 +411,148 @@
       "invalidSession": "Your session has expired or is invalid. Please log in again.",
       "sessionDetails": "Could not load session details."
     }
+  },
+  "HealthBlob": {
+    "loading": "Health check is running...",
+    "missingNode": "Worker is unreachable or node configuration is invalid.",
+    "ok": "All good: worker is reachable and internet access is available.",
+    "partial": "Worker is reachable, but external network checks failed.",
+    "httpError": "Worker is unreachable or returned an error (HTTP {status}).",
+    "genericError": "Worker is unreachable or returned an error."
+  },
+  "GameServerPanel": {
+    "title": "Game Servers",
+    "titleAlpha": "Game Servers (Alpha)",
+    "description": "Server controls are now on a dedicated detail page per server.",
+    "selectNodeFirst": "Select a node first to manage game servers.",
+    "fields": {
+      "template": "Template",
+      "identifier": "Identifier",
+      "serverType": "Server type",
+      "gameVersion": "Game version"
+    },
+    "empty": {
+      "templates": "No templates available",
+      "servers": "No game servers yet."
+    },
+    "buttons": {
+      "creating": "Creating...",
+      "createServer": "Create server",
+      "refresh": "Refresh",
+      "openControls": "Open controls",
+      "cancel": "Cancel",
+      "agreeAndCreate": "I agree and create server"
+    },
+    "permissions": {
+      "createLimited": "Create permission is limited to owner/admin."
+    },
+    "agreement": {
+      "requiredInfo": "This template requires agreement confirmation before the server can be created.",
+      "title": "Template agreement required",
+      "description": "You must accept this agreement before creating the server."
+    },
+    "serverList": {
+      "title": "Server List",
+      "templateLabel": "Template"
+    },
+    "status": {
+      "up": "Online",
+      "down": "Offline",
+      "unknown": "Unknown"
+    },
+    "errors": {
+      "loadTemplates": "Failed to load game server templates.",
+      "loadServers": "Failed to load game servers.",
+      "loadData": "Failed to load game server data.",
+      "createServer": "Failed to create game server."
+    }
+  },
+  "ServerPage": {
+    "loading": "Loading...",
+    "errors": {
+      "notFound": "Server not found."
+    },
+    "header": {
+      "templateLabel": "Template",
+      "stackLabel": "Stack"
+    },
+    "buttons": {
+      "backToDashboard": "Back to dashboard",
+      "backToProxy": "Back to proxy",
+      "openControls": "Open controls"
+    },
+    "controls": {
+      "title": "Controls",
+      "description": "Control the current server process.",
+      "start": "Start",
+      "starting": "Starting...",
+      "stop": "Stop",
+      "stopping": "Stopping...",
+      "refreshStatus": "Refresh status",
+      "deleteServer": "Delete server",
+      "deleting": "Deleting..."
+    },
+    "velocity": {
+      "title": "Velocity Backends",
+      "description": "Minecraft backend servers are attached to the same internal Docker network and are not shown on the main server list.",
+      "fields": {
+        "template": "Template",
+        "identifier": "Identifier",
+        "identifierPlaceholder": "backend-1",
+        "serverType": "Server type",
+        "gameVersion": "Game version"
+      },
+      "buttons": {
+        "create": "Create backend server",
+        "creating": "Creating...",
+        "refresh": "Refresh backends",
+        "refreshing": "Refreshing..."
+      },
+      "agreementRequired": "This template requires agreement confirmation before creating the backend server.",
+      "connectLabel": "Connect from Velocity",
+      "empty": {
+        "templates": "No backend templates available",
+        "backends": "No backend servers attached yet."
+      }
+    },
+    "logs": {
+      "title": "Console Logs (Read-Only)",
+      "description": "Switch between manual refresh and automatic live updates.",
+      "buttons": {
+        "autoUpdate": "Auto update",
+        "manualRefresh": "Manual refresh",
+        "refreshNow": "Refresh now",
+        "refreshing": "Refreshing...",
+        "clearOutput": "Clear output"
+      },
+      "refreshModeLabel": "Refresh mode:",
+      "refreshModeAuto": "Automatic updates",
+      "refreshModeManual": "Manual refresh",
+      "streamStatusLabel": "Stream status:",
+      "serverOfflineHint": "Server is offline. Start the server to open a live stream.",
+      "placeholder": {
+        "loading": "Loading logs...",
+        "noPermission": "You don't have permission to read console logs.",
+        "noLogsManual": "No logs loaded. Click \"Refresh now\".",
+        "connectedWaiting": "Connected. Waiting for new log lines...",
+        "waitingStream": "Waiting for log stream..."
+      }
+    },
+    "interactive": {
+      "idleHint": "Interactive session is idle. Click Start interactive session."
+    },
+    "status": {
+      "up": "Online",
+      "down": "Offline",
+      "unknown": "Unknown"
+    },
+    "connectionStatus": {
+      "idle": "idle",
+      "connecting": "connecting",
+      "connected": "connected",
+      "reconnecting": "reconnecting",
+      "disconnected": "disconnected",
+      "error": "error"
+    }
   }
 }

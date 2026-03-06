@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 type HealthState = "green" | "orange" | "red" | "loading";
 
@@ -9,15 +10,14 @@ type HealthBlobProps = {
 };
 
 export default function HealthBlob({ nodeRef }: HealthBlobProps) {
+  const t = useTranslations("HealthBlob");
   const [state, setState] = useState<HealthState>("loading");
-  const [statusReason, setStatusReason] = useState(
-    "Health-Check wird ausgeführt..."
-  );
+  const [statusReason, setStatusReason] = useState(t("loading"));
 
   useEffect(() => {
     if (!nodeRef) {
       setState("red");
-      setStatusReason("Worker nicht erreichbar oder fehlerhafte Node-Konfiguration.");
+      setStatusReason(t("missingNode"));
       return;
     }
 
@@ -36,26 +36,20 @@ export default function HealthBlob({ nodeRef }: HealthBlobProps) {
 
           if (data.status === "OK" && data.external_service === "OK") {
             setState("green");
-            setStatusReason(
-              "Alles passt: Worker ist erreichbar und Internetverbindung funktioniert."
-            );
+            setStatusReason(t("ok"));
           } else {
             setState("orange");
-            setStatusReason(
-              "Worker ist erreichbar, kann aber keine Internetverbindung aufbauen."
-            );
+            setStatusReason(t("partial"));
           }
 
           return;
         }
 
         setState("red");
-        setStatusReason(
-          `Worker nicht erreichbar oder anderer Fehler (HTTP ${res.status}).`
-        );
+        setStatusReason(t("httpError", { status: res.status }));
       } catch {
         setState("red");
-        setStatusReason("Worker nicht erreichbar oder anderer Fehler.");
+        setStatusReason(t("genericError"));
       }
     };
 
@@ -63,7 +57,7 @@ export default function HealthBlob({ nodeRef }: HealthBlobProps) {
     const interval = setInterval(checkHealth, 10000); // alle 10s
 
     return () => clearInterval(interval);
-  }, [nodeRef]);
+  }, [nodeRef, t]);
 
   return (
     <div

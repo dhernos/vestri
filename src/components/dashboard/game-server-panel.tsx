@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import ServerStatusBlob from "@/components/servers/status-blob";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -140,6 +142,7 @@ const resolveFieldValue = (
 };
 
 export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelProps) {
+  const t = useTranslations("GameServerPanel");
   const [templates, setTemplates] = useState<GameServerTemplate[]>([]);
   const [servers, setServers] = useState<GameServer[]>([]);
   const [loading, setLoading] = useState(false);
@@ -171,6 +174,11 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
   const gameOptions = useMemo(
     () => normalizeFieldOptions(gameField, softwareVersion),
     [gameField, softwareVersion]
+  );
+
+  const statusLabel = useCallback(
+    (status: GameServer["status"]) => t(`status.${status}`),
+    [t]
   );
 
   const loadData = useCallback(async () => {
@@ -208,10 +216,10 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
         if (templatesRes.ok) {
           nextTemplates = Array.isArray(templatesData.templates) ? templatesData.templates : [];
         } else {
-          errors.push(templatesData.message || "Failed to load game server templates.");
+          errors.push(templatesData.message || t("errors.loadTemplates"));
         }
       } else {
-        errors.push("Failed to load game server templates.");
+        errors.push(t("errors.loadTemplates"));
       }
 
       if (serversResult.status === "fulfilled") {
@@ -224,10 +232,10 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
         if (serversRes.ok) {
           nextServers = Array.isArray(serversData.servers) ? serversData.servers : [];
         } else {
-          errors.push(serversData.message || "Failed to load game servers.");
+          errors.push(serversData.message || t("errors.loadServers"));
         }
       } else {
-        errors.push("Failed to load game servers.");
+        errors.push(t("errors.loadServers"));
       }
 
       setTemplates(nextTemplates);
@@ -248,11 +256,11 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
         setError(errors.join(" "));
       }
     } catch {
-      setError("Failed to load game server data.");
+      setError(t("errors.loadData"));
     } finally {
       setLoading(false);
     }
-  }, [basePath, nodeRef, templateId]);
+  }, [basePath, nodeRef, t, templateId]);
 
   useEffect(() => {
     loadData();
@@ -289,14 +297,14 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
 
       const data = (await res.json().catch(() => ({}))) as { message?: string };
       if (!res.ok) {
-        setError(data.message || "Failed to create game server.");
+        setError(data.message || t("errors.createServer"));
         return;
       }
 
       setServerName("");
       await loadData();
     } catch {
-      setError("Failed to create game server.");
+      setError(t("errors.createServer"));
     } finally {
       setCreating(false);
     }
@@ -319,11 +327,11 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Game Servers</CardTitle>
+          <CardTitle>{t("title")}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Select a node first to manage game servers.
+            {t("selectNodeFirst")}
           </p>
         </CardContent>
       </Card>
@@ -334,15 +342,15 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Game Servers (Alpha)</CardTitle>
+          <CardTitle>{t("titleAlpha")}</CardTitle>
           <CardDescription>
-            Server controls are now on a dedicated detail page per server.
+            {t("description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="template-id">Template</Label>
+              <Label htmlFor="template-id">{t("fields.template")}</Label>
               <select
                 id="template-id"
                 className="h-9 w-full rounded-md border bg-transparent px-3 text-sm"
@@ -351,7 +359,7 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
                 disabled={!canCreate || creating || templates.length === 0}
               >
                 {templates.length === 0 ? (
-                  <option value="">No templates available</option>
+                  <option value="">{t("empty.templates")}</option>
                 ) : (
                   templates.map((template) => (
                     <option key={template.id} value={template.id}>
@@ -362,7 +370,7 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="server-name">Identifier</Label>
+              <Label htmlFor="server-name">{t("fields.identifier")}</Label>
               <Input
                 id="server-name"
                 value={serverName}
@@ -372,7 +380,7 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
             </div>
             {softwareField ? (
               <div className="space-y-2">
-                <Label htmlFor="server-software">{softwareField.label || "Server type"}</Label>
+                <Label htmlFor="server-software">{softwareField.label || t("fields.serverType")}</Label>
                 {softwareOptions.length > 0 ? (
                   <select
                     id="server-software"
@@ -400,7 +408,7 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
             ) : null}
             {gameField ? (
               <div className="space-y-2">
-                <Label htmlFor="server-game-version">{gameField.label || "Game version"}</Label>
+                <Label htmlFor="server-game-version">{gameField.label || t("fields.gameVersion")}</Label>
                 {gameOptions.length > 0 ? (
                   <select
                     id="server-game-version"
@@ -429,20 +437,20 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
           </div>
           <div className="flex flex-wrap gap-2">
             <Button onClick={createServer} disabled={!canCreate || creating || !templateId}>
-              {creating ? "Creating..." : "Create server"}
+              {creating ? t("buttons.creating") : t("buttons.createServer")}
             </Button>
             <Button variant="secondary" onClick={loadData} disabled={loading}>
-              Refresh
+              {t("buttons.refresh")}
             </Button>
           </div>
           {!canCreate ? (
             <p className="text-xs text-muted-foreground">
-              Create permission is limited to owner/admin.
+              {t("permissions.createLimited")}
             </p>
           ) : null}
           {selectedAgreement?.required ? (
             <p className="text-xs text-muted-foreground">
-              This template requires agreement confirmation before the server can be created.
+              {t("agreement.requiredInfo")}
             </p>
           ) : null}
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
@@ -451,34 +459,34 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
 
       <Card>
         <CardHeader>
-          <CardTitle>Server List</CardTitle>
+          <CardTitle>{t("serverList.title")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {servers.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No game servers yet.</p>
+            <p className="text-sm text-muted-foreground">{t("empty.servers")}</p>
           ) : (
             servers.map((server) => (
               <div
                 key={server.id}
                 className="flex items-center justify-between gap-3 rounded-md border px-3 py-2"
               >
-                <div>
-                  <p className="text-sm font-medium">{server.name}</p>
+                <div className="space-y-1">
+                  <p className="flex items-center gap-2 text-sm font-medium">
+                    <ServerStatusBlob status={server.status} size="md" label={statusLabel(server.status)} />
+                    <span>{server.name}</span>
+                  </p>
                   <p className="text-xs text-muted-foreground">
-                    Template: {server.templateName || server.templateId}
+                    {t("serverList.templateLabel")}: {server.templateName || server.templateId}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="rounded bg-muted px-2 py-0.5 text-xs">
-                    {server.status}
-                  </span>
                   <Button asChild size="sm">
                     <Link
                       href={`/servers/${encodeURIComponent(nodeRef)}/${encodeURIComponent(
                         server.id
                       )}`}
                     >
-                      Open controls
+                      {t("buttons.openControls")}
                     </Link>
                   </Button>
                 </div>
@@ -491,10 +499,9 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
       <Dialog open={agreementOpen} onOpenChange={setAgreementOpen}>
         <DialogContent showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle>{selectedAgreement?.title || "Template agreement required"}</DialogTitle>
+            <DialogTitle>{selectedAgreement?.title || t("agreement.title")}</DialogTitle>
             <DialogDescription>
-              {selectedAgreement?.text ||
-                "You must accept this agreement before creating the server."}
+              {selectedAgreement?.text || t("agreement.description")}
             </DialogDescription>
           </DialogHeader>
           {selectedAgreement?.linkUrl ? (
@@ -514,10 +521,10 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
               onClick={() => setAgreementOpen(false)}
               disabled={creating}
             >
-              Cancel
+              {t("buttons.cancel")}
             </Button>
             <Button type="button" onClick={confirmAgreementAndCreate} disabled={creating}>
-              {creating ? "Creating..." : "I agree and create server"}
+              {creating ? t("buttons.creating") : t("buttons.agreeAndCreate")}
             </Button>
           </DialogFooter>
         </DialogContent>
