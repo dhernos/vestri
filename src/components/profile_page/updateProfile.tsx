@@ -57,12 +57,10 @@ export default function UpdateProfileSection() {
         body: JSON.stringify({ name, theme }),
       });
 
-      const data = await res.json();
-
       if (res.ok) {
         push({
           variant: "success",
-          description: data.message || t("messages.profileUpdated"),
+          description: t("messages.profileUpdated"),
         });
 
         await refresh();
@@ -71,7 +69,7 @@ export default function UpdateProfileSection() {
       } else {
         push({
           variant: "error",
-          description: data.message || t("profileUpdateError"),
+          description: t("profileUpdateError"),
         });
       }
     } catch (err) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,7 @@ type RequestOptions = {
 };
 
 export default function DashboardPage() {
+  const t = useTranslations("TestPage");
   const { data: session, status } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -82,7 +84,7 @@ export default function DashboardPage() {
   const [results, setResults] = useState<Record<string, string>>({});
   const [logs, setLogs] = useState<RequestLog[]>([]);
 
-  const userId = session?.user?.id || "unknown";
+  const userId = session?.user?.id || t("fallback.unknownUser");
   const requestedNode = searchParams.get("node") || "";
   const canCall = status === "authenticated" && selectedNodeRef !== "";
   const proxyBaseUrl = selectedNodeRef
@@ -103,7 +105,7 @@ export default function DashboardPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setNodes([]);
-        setNodesError(data?.message || "Failed to load nodes.");
+        setNodesError(data?.message || t("errors.loadNodes"));
         return;
       }
       const loadedNodes: WorkerNode[] = Array.isArray(data?.nodes)
@@ -112,11 +114,11 @@ export default function DashboardPage() {
       setNodes(loadedNodes);
     } catch {
       setNodes([]);
-      setNodesError("Failed to load nodes.");
+      setNodesError(t("errors.loadNodes"));
     } finally {
       setNodesLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (status !== "authenticated") {
@@ -224,16 +226,16 @@ export default function DashboardPage() {
     extraHeaders,
     download,
   }: RequestOptions) => {
-    updateResult(id, "Running...");
+    updateResult(id, t("request.running"));
     if (!canCall) {
       updateResult(
         id,
-        "You must be authenticated and select a node to call this endpoint.",
+        t("request.authAndNodeRequired")
       );
       return;
     }
     if (!proxyBaseUrl) {
-      updateResult(id, "Missing node selection.");
+      updateResult(id, t("request.missingNodeSelection"));
       return;
     }
 
@@ -265,7 +267,7 @@ export default function DashboardPage() {
         anchor.click();
         anchor.remove();
         URL.revokeObjectURL(blobUrl);
-        output = `Downloaded ${fileName} (${blob.size} bytes).`;
+        output = t("request.downloaded", { fileName, size: blob.size });
       } else {
         const responseBody = await readResponseBody(res);
         output = formatResponse(res, responseBody);
@@ -284,7 +286,7 @@ export default function DashboardPage() {
         durationMs: Math.round(performance.now() - startedAt),
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Request failed.";
+      const message = err instanceof Error ? err.message : t("request.failed");
       updateResult(id, message);
       addLog({
         id: createNonce(),
@@ -318,15 +320,15 @@ export default function DashboardPage() {
   const stackStatusPath = `/stack/status?stack=${stackName}`;
 
   if (status === "loading") {
-    return <p className="p-6">Loading...</p>;
+    return <p className="p-6">{t("loading")}</p>;
   }
 
   if (status === "unauthenticated") {
     return (
       <div className="p-6">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <h1 className="text-2xl font-semibold">{t("title")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          You must be authenticated to use the API test tools.
+          {t("unauthenticatedMessage")}
         </p>
       </div>
     );
@@ -335,23 +337,23 @@ export default function DashboardPage() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold">Worker API Test Bench</h1>
+        <h1 className="text-3xl font-bold">{t("benchTitle")}</h1>
         <p className="text-sm text-muted-foreground">
-          Signed request helper for the Go worker endpoints.
+          {t("benchDescription")}
         </p>
         <p className="text-sm text-muted-foreground">
-          Authenticated user id: {userId}
+          {t("authenticatedUserId", { userId })}
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Connection</CardTitle>
-          <CardDescription>Node selection shared by all calls.</CardDescription>
+          <CardTitle>{t("connection.title")}</CardTitle>
+          <CardDescription>{t("connection.description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="node-select">Node</Label>
+            <Label htmlFor="node-select">{t("connection.nodeLabel")}</Label>
             <div className="flex flex-wrap items-center gap-2">
               <select
                 id="node-select"
@@ -361,7 +363,7 @@ export default function DashboardPage() {
                 disabled={nodesLoading || nodes.length === 0}
               >
                 {nodes.length === 0 ? (
-                  <option value="">No nodes available</option>
+                  <option value="">{t("connection.noNodes")}</option>
                 ) : (
                   nodes.map((node) => (
                     <option key={node.id} value={node.id}>
@@ -377,19 +379,19 @@ export default function DashboardPage() {
                 onClick={loadNodes}
                 disabled={nodesLoading}
               >
-                Refresh
+                {t("buttons.refresh")}
               </Button>
               <Button asChild type="button" variant="outline" size="sm">
-                <Link href="/nodes">Manage nodes</Link>
+                <Link href="/nodes">{t("buttons.manageNodes")}</Link>
               </Button>
             </div>
             {nodesError && <p className="text-xs text-red-600">{nodesError}</p>}
             <p className="text-xs text-muted-foreground">
-              Requests are proxied via /api/nodes/[nodeId]/worker.
+              {t("connection.proxyInfo")}
             </p>
             {selectedNode ? (
               <p className="text-xs text-muted-foreground">
-                Active role on this node: {selectedNode.accessRole}
+                {t("connection.activeRole", { role: selectedNode.accessRole })}
               </p>
             ) : null}
           </div>
@@ -400,11 +402,11 @@ export default function DashboardPage() {
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">
-              No node available. Create one in{" "}
+              {t("noNodeAvailable.prefix")}{" "}
               <Link className="underline" href="/nodes">
                 /nodes
               </Link>{" "}
-              first.
+              {t("noNodeAvailable.suffix")}
             </p>
           </CardContent>
         </Card>
@@ -417,8 +419,8 @@ export default function DashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Health</CardTitle>
-          <CardDescription>GET /health</CardDescription>
+          <CardTitle>{t("health.title")}</CardTitle>
+          <CardDescription>{t("health.description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button
@@ -431,7 +433,7 @@ export default function DashboardPage() {
             }
             disabled={!canCall}
           >
-            Run health check
+            {t("health.buttons.run")}
           </Button>
           <ResultBlock id="health" />
         </CardContent>
@@ -439,8 +441,8 @@ export default function DashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Settings (Disabled)</CardTitle>
-          <CardDescription>GET /settings (expected 404)</CardDescription>
+          <CardTitle>{t("settings.title")}</CardTitle>
+          <CardDescription>{t("settings.description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button
@@ -453,24 +455,24 @@ export default function DashboardPage() {
             }
             disabled={!canCall}
           >
-            Call /settings
+            {t("settings.buttons.call")}
           </Button>
           <ResultBlock id="settings" />
         </CardContent>
       </Card>
 
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold">Filesystem</h2>
+        <h2 className="text-2xl font-semibold">{t("filesystem.title")}</h2>
 
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle>FS Read</CardTitle>
-              <CardDescription>GET /fs/read?path=...</CardDescription>
+              <CardTitle>{t("filesystem.read.title")}</CardTitle>
+              <CardDescription>{t("filesystem.read.description")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="fs-read-path">Path</Label>
+                <Label htmlFor="fs-read-path">{t("fields.path")}</Label>
                 <Input
                   id="fs-read-path"
                   value={fsReadPath}
@@ -487,7 +489,7 @@ export default function DashboardPage() {
                 }
                 disabled={!canCall}
               >
-                Read file
+                {t("filesystem.read.buttons.run")}
               </Button>
               <ResultBlock id="fs-read" />
             </CardContent>
@@ -495,12 +497,12 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>FS List</CardTitle>
-              <CardDescription>GET /fs/list?path=...</CardDescription>
+              <CardTitle>{t("filesystem.list.title")}</CardTitle>
+              <CardDescription>{t("filesystem.list.description")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="fs-list-path">Path</Label>
+                <Label htmlFor="fs-list-path">{t("fields.path")}</Label>
                 <Input
                   id="fs-list-path"
                   value={fsListPath}
@@ -517,7 +519,7 @@ export default function DashboardPage() {
                 }
                 disabled={!canCall}
               >
-                List path
+                {t("filesystem.list.buttons.run")}
               </Button>
               <ResultBlock id="fs-list" />
             </CardContent>
@@ -525,12 +527,12 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>FS List (Safe Root)</CardTitle>
-              <CardDescription>GET /fs/list?path=</CardDescription>
+              <CardTitle>{t("filesystem.listRoot.title")}</CardTitle>
+              <CardDescription>{t("filesystem.listRoot.description")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="fs-list-root-path">Path (empty for root)</Label>
+                <Label htmlFor="fs-list-root-path">{t("filesystem.listRoot.pathLabel")}</Label>
                 <Input
                   id="fs-list-root-path"
                   value={fsListRootPath}
@@ -547,7 +549,7 @@ export default function DashboardPage() {
                 }
                 disabled={!canCall}
               >
-                List safe root
+                {t("filesystem.listRoot.buttons.run")}
               </Button>
               <ResultBlock id="fs-list-root" />
             </CardContent>
@@ -555,12 +557,12 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>FS Write</CardTitle>
-              <CardDescription>POST /fs/write</CardDescription>
+              <CardTitle>{t("filesystem.write.title")}</CardTitle>
+              <CardDescription>{t("filesystem.write.description")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="fs-write-path">Path</Label>
+                <Label htmlFor="fs-write-path">{t("fields.path")}</Label>
                 <Input
                   id="fs-write-path"
                   value={fsWritePath}
@@ -568,7 +570,7 @@ export default function DashboardPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="fs-write-content">Content</Label>
+                <Label htmlFor="fs-write-content">{t("fields.content")}</Label>
                 <textarea
                   id="fs-write-content"
                   value={fsWriteContent}
@@ -591,7 +593,7 @@ export default function DashboardPage() {
                 }
                 disabled={!canCall}
               >
-                Write file
+                {t("filesystem.write.buttons.run")}
               </Button>
               <ResultBlock id="fs-write" />
             </CardContent>
@@ -599,12 +601,12 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>FS Download</CardTitle>
-              <CardDescription>GET /fs/download?path=...</CardDescription>
+              <CardTitle>{t("filesystem.download.title")}</CardTitle>
+              <CardDescription>{t("filesystem.download.description")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="fs-download-path">Path</Label>
+                <Label htmlFor="fs-download-path">{t("fields.path")}</Label>
                 <Input
                   id="fs-download-path"
                   value={fsDownloadPath}
@@ -622,7 +624,7 @@ export default function DashboardPage() {
                 }
                 disabled={!canCall}
               >
-                Download file
+                {t("filesystem.download.buttons.run")}
               </Button>
               <ResultBlock id="fs-download" />
             </CardContent>
@@ -630,12 +632,12 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>FS Upload</CardTitle>
-              <CardDescription>POST /fs/upload (multipart)</CardDescription>
+              <CardTitle>{t("filesystem.upload.title")}</CardTitle>
+              <CardDescription>{t("filesystem.upload.description")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="fs-upload-path">Path</Label>
+                <Label htmlFor="fs-upload-path">{t("fields.path")}</Label>
                 <Input
                   id="fs-upload-path"
                   value={fsUploadPath}
@@ -643,7 +645,7 @@ export default function DashboardPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="fs-upload-file">File</Label>
+                <Label htmlFor="fs-upload-file">{t("fields.file")}</Label>
                 <Input
                   id="fs-upload-file"
                   type="file"
@@ -655,7 +657,7 @@ export default function DashboardPage() {
               <Button
                 onClick={() => {
                   if (!fsUploadFile) {
-                    updateResult("fs-upload", "Select a file to upload.");
+                    updateResult("fs-upload", t("filesystem.upload.errors.selectFile"));
                     return;
                   }
                   const formData = new FormData();
@@ -670,7 +672,7 @@ export default function DashboardPage() {
                 }}
                 disabled={!canCall}
               >
-                Upload file
+                {t("filesystem.upload.buttons.run")}
               </Button>
               <ResultBlock id="fs-upload" />
             </CardContent>
@@ -678,14 +680,14 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>FS Delete</CardTitle>
+              <CardTitle>{t("filesystem.delete.title")}</CardTitle>
               <CardDescription>
-                POST /fs/delete (file or folder)
+                {t("filesystem.delete.description")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="fs-delete-path">Path</Label>
+                <Label htmlFor="fs-delete-path">{t("fields.path")}</Label>
                 <Input
                   id="fs-delete-path"
                   value={fsDeletePath}
@@ -700,7 +702,7 @@ export default function DashboardPage() {
                     setFsDeleteRecursive(event.target.checked)
                   }
                 />
-                Delete recursively (required for non-empty folders)
+                {t("filesystem.delete.recursiveHint")}
               </label>
               <Button
                 variant="destructive"
@@ -718,7 +720,7 @@ export default function DashboardPage() {
                 }
                 disabled={!canCall}
               >
-                Delete
+                {t("filesystem.delete.buttons.run")}
               </Button>
               <ResultBlock id="fs-delete" />
             </CardContent>
@@ -726,12 +728,12 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>FS Zip</CardTitle>
-              <CardDescription>POST /fs/zip</CardDescription>
+              <CardTitle>{t("filesystem.zip.title")}</CardTitle>
+              <CardDescription>{t("filesystem.zip.description")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="fs-zip-source">Source</Label>
+                <Label htmlFor="fs-zip-source">{t("fields.source")}</Label>
                 <Input
                   id="fs-zip-source"
                   value={fsZipSource}
@@ -739,7 +741,7 @@ export default function DashboardPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="fs-zip-dest">Destination</Label>
+                <Label htmlFor="fs-zip-dest">{t("fields.destination")}</Label>
                 <Input
                   id="fs-zip-dest"
                   value={fsZipDest}
@@ -761,7 +763,7 @@ export default function DashboardPage() {
                 }
                 disabled={!canCall}
               >
-                Create zip
+                {t("filesystem.zip.buttons.run")}
               </Button>
               <ResultBlock id="fs-zip" />
             </CardContent>
@@ -769,12 +771,12 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>FS Unzip</CardTitle>
-              <CardDescription>POST /fs/unzip</CardDescription>
+              <CardTitle>{t("filesystem.unzip.title")}</CardTitle>
+              <CardDescription>{t("filesystem.unzip.description")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="fs-unzip-source">Source</Label>
+                <Label htmlFor="fs-unzip-source">{t("fields.source")}</Label>
                 <Input
                   id="fs-unzip-source"
                   value={fsUnzipSource}
@@ -782,7 +784,7 @@ export default function DashboardPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="fs-unzip-dest">Destination</Label>
+                <Label htmlFor="fs-unzip-dest">{t("fields.destination")}</Label>
                 <Input
                   id="fs-unzip-dest"
                   value={fsUnzipDest}
@@ -804,7 +806,7 @@ export default function DashboardPage() {
                 }
                 disabled={!canCall}
               >
-                Unzip archive
+                {t("filesystem.unzip.buttons.run")}
               </Button>
               <ResultBlock id="fs-unzip" />
             </CardContent>
@@ -813,17 +815,17 @@ export default function DashboardPage() {
       </div>
 
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold">Stack</h2>
+        <h2 className="text-2xl font-semibold">{t("stack.title")}</h2>
         <Card>
           <CardHeader>
-            <CardTitle>Stack Controls</CardTitle>
+            <CardTitle>{t("stack.controls.title")}</CardTitle>
             <CardDescription>
-              GET /stack/status, POST /stack/up|down|restart
+              {t("stack.controls.description")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="stack-name">Stack name</Label>
+              <Label htmlFor="stack-name">{t("stack.controls.stackNameLabel")}</Label>
               <Input
                 id="stack-name"
                 value={stackName}
@@ -841,7 +843,7 @@ export default function DashboardPage() {
                 }
                 disabled={!canCall}
               >
-                Status
+                {t("stack.controls.buttons.status")}
               </Button>
               <Button
                 onClick={() =>
@@ -855,7 +857,7 @@ export default function DashboardPage() {
                 }
                 disabled={!canCall}
               >
-                Up
+                {t("stack.controls.buttons.up")}
               </Button>
               <Button
                 onClick={() =>
@@ -869,7 +871,7 @@ export default function DashboardPage() {
                 }
                 disabled={!canCall}
               >
-                Down
+                {t("stack.controls.buttons.down")}
               </Button>
               <Button
                 onClick={() =>
@@ -883,7 +885,7 @@ export default function DashboardPage() {
                 }
                 disabled={!canCall}
               >
-                Restart
+                {t("stack.controls.buttons.restart")}
               </Button>
             </div>
             <ResultBlock id="stack-status" />
@@ -896,14 +898,14 @@ export default function DashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Request Log</CardTitle>
+          <CardTitle>{t("requestLog.title")}</CardTitle>
           <CardDescription>
-            User id and node id are captured with each call.
+            {t("requestLog.description")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {logs.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No requests yet.</p>
+            <p className="text-sm text-muted-foreground">{t("requestLog.empty")}</p>
           ) : (
             <div className="max-h-72 space-y-2 overflow-auto">
               {logs.map((entry) => (
@@ -918,12 +920,15 @@ export default function DashboardPage() {
                     <span
                       className={entry.ok ? "text-green-600" : "text-red-600"}
                     >
-                      {entry.ok ? "OK" : "ERR"} {entry.status}
+                      {entry.ok ? t("requestLog.status.ok") : t("requestLog.status.err")} {entry.status}
                     </span>
                   </div>
                   <div className="text-muted-foreground">
-                    User: {entry.userId} | Node: {entry.nodeRef} |{" "}
-                    {entry.durationMs}ms
+                    {t("requestLog.meta", {
+                      userId: entry.userId,
+                      nodeRef: entry.nodeRef,
+                      durationMs: entry.durationMs,
+                    })}
                   </div>
                   {entry.error && (
                     <div className="text-red-600">{entry.error}</div>
@@ -939,7 +944,7 @@ export default function DashboardPage() {
             onClick={() => setLogs([])}
             disabled={logs.length === 0}
           >
-            Clear log
+            {t("requestLog.buttons.clear")}
           </Button>
         </CardFooter>
       </Card>

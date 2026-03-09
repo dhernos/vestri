@@ -2,7 +2,7 @@
 "use server"; // Marks the function as a Server Action
 
 const GITHUB_VERSION_URL =
-  "https://raw.githubusercontent.com/dhernos/Simple-Grades/refs/heads/master/public/version.txt";
+  "https://raw.githubusercontent.com/dhernos/vestri/refs/heads/main/public/version.txt";
 
 export async function getRemoteVersion() {
   try {
@@ -14,7 +14,7 @@ export async function getRemoteVersion() {
     if (!response.ok) {
       // Throw a specific error for better debugging
       throw new Error(
-        `Failed to fetch remote version: HTTP Status ${response.status}`
+        `Failed to fetch remote version: HTTP Status ${response.status}`,
       );
     }
 

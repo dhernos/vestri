@@ -295,9 +295,8 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
         }),
       });
 
-      const data = (await res.json().catch(() => ({}))) as { message?: string };
       if (!res.ok) {
-        setError(data.message || t("errors.createServer"));
+        setError(t("errors.createServer"));
         return;
       }
 

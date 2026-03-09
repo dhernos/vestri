@@ -1,7 +1,43 @@
 import { GoUser } from "@/lib/auth-client";
 
-type CredentialCreationOptionsJSON = any;
-type CredentialRequestOptionsJSON = any;
+type CredentialDescriptorJSON = {
+  id: string;
+  type?: PublicKeyCredentialType;
+  transports?: AuthenticatorTransport[];
+  [key: string]: unknown;
+};
+
+type CredentialCreationOptionsJSON = {
+  publicKey: {
+    challenge: string;
+    rp: PublicKeyCredentialRpEntity;
+    user: {
+      id: string;
+      name: string;
+      displayName: string;
+      [key: string]: unknown;
+    };
+    pubKeyCredParams: PublicKeyCredentialParameters[];
+    timeout?: number;
+    attestation?: AttestationConveyancePreference;
+    authenticatorSelection?: AuthenticatorSelectionCriteria;
+    excludeCredentials?: CredentialDescriptorJSON[];
+    extensions?: AuthenticationExtensionsClientInputs;
+    [key: string]: unknown;
+  };
+};
+
+type CredentialRequestOptionsJSON = {
+  publicKey: {
+    challenge: string;
+    timeout?: number;
+    allowCredentials?: CredentialDescriptorJSON[];
+    rpId?: string;
+    userVerification?: UserVerificationRequirement;
+    extensions?: AuthenticationExtensionsClientInputs;
+    [key: string]: unknown;
+  };
+};
 
 export type PasskeyError =
   | "UNSUPPORTED"
@@ -12,10 +48,22 @@ export type PasskeyError =
   | "LOGIN_CANCELLED"
   | "LOGIN_FINISH_FAILED";
 
+export const passkeyFallbackCodes = {
+  secureContextRequired: "PASSKEY_SECURE_CONTEXT_REQUIRED",
+  creationRpIdMismatch: "PASSKEY_CREATION_RP_ID_MISMATCH",
+  creationBlocked: "PASSKEY_CREATION_BLOCKED",
+  loginSecureContextRequired: "PASSKEY_LOGIN_SECURE_CONTEXT_REQUIRED",
+  loginRpIdMismatch: "PASSKEY_LOGIN_RP_ID_MISMATCH",
+  loginBlocked: "PASSKEY_LOGIN_BLOCKED",
+} as const;
+
 const jsonFetchInit: RequestInit = {
   credentials: "include",
   headers: { "Content-Type": "application/json" },
 };
+
+const isMessageCode = (value: unknown): value is string =>
+  typeof value === "string" && /^[A-Z0-9_]+$/.test(value);
 
 const bufferToBase64url = (buffer: ArrayBuffer): string => {
   const bytes = new Uint8Array(buffer);
@@ -37,28 +85,53 @@ const base64urlToBuffer = (base64url: string): ArrayBuffer => {
 };
 
 const transformCreationOptions = (opts: CredentialCreationOptionsJSON) => {
-  const publicKey = { ...opts.publicKey };
-  publicKey.challenge = base64urlToBuffer(publicKey.challenge);
-  publicKey.user = {
-    ...publicKey.user,
-    id: base64urlToBuffer(publicKey.user.id),
+  const source = opts.publicKey;
+  const {
+    challenge,
+    user,
+    excludeCredentials,
+    ...rest
+  } = source;
+  const publicKey: PublicKeyCredentialCreationOptions = {
+    ...(rest as Omit<
+      PublicKeyCredentialCreationOptions,
+      "challenge" | "user" | "excludeCredentials"
+    >),
+    challenge: base64urlToBuffer(challenge),
+    user: {
+      ...user,
+      id: base64urlToBuffer(user.id),
+    },
   };
-  if (publicKey.excludeCredentials) {
-    publicKey.excludeCredentials = publicKey.excludeCredentials.map((cred: any) => ({
+  if (excludeCredentials) {
+    publicKey.excludeCredentials = excludeCredentials.map((cred) => ({
       ...cred,
       id: base64urlToBuffer(cred.id),
+      type: cred.type ?? "public-key",
     }));
   }
   return { publicKey };
 };
 
 const transformRequestOptions = (opts: CredentialRequestOptionsJSON) => {
-  const publicKey = { ...opts.publicKey };
-  publicKey.challenge = base64urlToBuffer(publicKey.challenge);
-  if (publicKey.allowCredentials) {
-    publicKey.allowCredentials = publicKey.allowCredentials.map((cred: any) => ({
+  const source = opts.publicKey;
+  const {
+    challenge,
+    allowCredentials,
+    ...rest
+  } = source;
+  const publicKey: PublicKeyCredentialRequestOptions = {
+    ...(rest as Omit<
+      PublicKeyCredentialRequestOptions,
+      "challenge" | "allowCredentials"
+    >),
+    challenge: base64urlToBuffer(challenge),
+  };
+  if (allowCredentials) {
+    publicKey.allowCredentials = allowCredentials.map((cred) => ({
       ...cred,
       id: base64urlToBuffer(cred.id),
+      type: cred.type ?? "public-key",
     }));
   }
   return { publicKey };
@@ -103,7 +176,7 @@ export async function registerPasskey(
     return {
       ok: false,
       error: "START_FAILED",
-      fallback: "Passkeys require a secure context (https or localhost).",
+      fallback: passkeyFallbackCodes.secureContextRequired,
     };
   }
 
@@ -118,7 +191,8 @@ export async function registerPasskey(
   }
   if (!startRes.ok) {
     const body = await startRes.json().catch(() => ({}));
-    return { ok: false, error: "START_FAILED", fallback: body?.message };
+    const fallback = isMessageCode(body?.message) ? body.message : undefined;
+    return { ok: false, error: "START_FAILED", fallback };
   }
   const { options, sessionId } = await startRes.json();
 
@@ -130,7 +204,7 @@ export async function registerPasskey(
       return {
         ok: false,
         error: "START_FAILED",
-        fallback: `Passkeys must be created on ${rpId} or its subdomains.`,
+        fallback: `${passkeyFallbackCodes.creationRpIdMismatch}:${rpId}`,
       };
     }
   }
@@ -143,7 +217,7 @@ export async function registerPasskey(
       return {
         ok: false,
         error: "START_FAILED",
-        fallback: "Passkey creation is blocked. Use https or localhost.",
+        fallback: passkeyFallbackCodes.creationBlocked,
       };
     }
     if (domErr?.name === "NotAllowedError") {
@@ -169,7 +243,8 @@ export async function registerPasskey(
     });
     if (!finishRes.ok) {
       const body = await finishRes.json().catch(() => ({}));
-      return { ok: false, error: "FINISH_FAILED", fallback: body?.message };
+      const fallback = isMessageCode(body?.message) ? body.message : undefined;
+      return { ok: false, error: "FINISH_FAILED", fallback };
     }
   } catch {
     return { ok: false, error: "FINISH_FAILED" };
@@ -190,7 +265,7 @@ export async function loginWithPasskey(
     return {
       ok: false,
       error: "LOGIN_START_FAILED",
-      fallback: "Passkey login requires a secure context (https or localhost).",
+      fallback: passkeyFallbackCodes.loginSecureContextRequired,
     };
   }
 
@@ -206,7 +281,8 @@ export async function loginWithPasskey(
   }
   if (!startRes.ok) {
     const body = await startRes.json().catch(() => ({}));
-    return { ok: false, error: "LOGIN_START_FAILED", fallback: body?.message };
+    const fallback = isMessageCode(body?.message) ? body.message : undefined;
+    return { ok: false, error: "LOGIN_START_FAILED", fallback };
   }
   const { options, sessionId } = await startRes.json();
 
@@ -218,7 +294,7 @@ export async function loginWithPasskey(
       return {
         ok: false,
         error: "LOGIN_START_FAILED",
-        fallback: `Passkey login requires ${rpId} or its subdomains.`,
+        fallback: `${passkeyFallbackCodes.loginRpIdMismatch}:${rpId}`,
       };
     }
   }
@@ -231,7 +307,7 @@ export async function loginWithPasskey(
       return {
         ok: false,
         error: "LOGIN_START_FAILED",
-        fallback: "Passkey login is blocked. Use https or localhost.",
+        fallback: passkeyFallbackCodes.loginBlocked,
       };
     }
     if (domErr?.name === "NotAllowedError") {
@@ -258,7 +334,8 @@ export async function loginWithPasskey(
   }
   if (!finishRes.ok) {
     const body = await finishRes.json().catch(() => ({}));
-    return { ok: false, error: "LOGIN_FINISH_FAILED", fallback: body?.message };
+    const fallback = isMessageCode(body?.message) ? body.message : undefined;
+    return { ok: false, error: "LOGIN_FINISH_FAILED", fallback };
   }
   const data = await finishRes.json();
   const u = data?.user || {};

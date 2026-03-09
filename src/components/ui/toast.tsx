@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { pushToast, subscribeToToasts, type ToastPayload } from "@/lib/toast";
 import { X } from "lucide-react";
 
@@ -29,6 +30,7 @@ const variants: Record<
 };
 
 export function ToastViewport() {
+  const t = useTranslations("Common");
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const timers = useRef<Map<string, number>>(new Map());
 
@@ -42,6 +44,7 @@ export function ToastViewport() {
   }, []);
 
   useEffect(() => {
+    const timerMap = timers.current;
     const unsubscribe = subscribeToToasts((toast) => {
       const id = crypto.randomUUID ? crypto.randomUUID() : fallbackId();
       const entry: ToastItem = {
@@ -53,13 +56,13 @@ export function ToastViewport() {
 
       setToasts((prev) => [...prev, entry]);
       const timerId = window.setTimeout(() => dismiss(id), entry.duration!);
-      timers.current.set(id, timerId);
+      timerMap.set(id, timerId);
     });
 
     return () => {
       unsubscribe();
-      timers.current.forEach((timerId) => window.clearTimeout(timerId));
-      timers.current.clear();
+      timerMap.forEach((timerId) => window.clearTimeout(timerId));
+      timerMap.clear();
     };
   }, [dismiss]);
 
@@ -86,7 +89,7 @@ export function ToastViewport() {
               <button
                 type="button"
                 className="text-muted-foreground transition hover:text-foreground cursor-pointer"
-                aria-label="Dismiss notification"
+                aria-label={t("a11y.dismissNotification")}
                 onClick={() => dismiss(toast.id)}
               >
                 <X className="h-4 w-4" />

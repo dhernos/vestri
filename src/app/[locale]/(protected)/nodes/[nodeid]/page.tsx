@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import HealthBlob from "@/components/nodes/health";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -21,6 +22,7 @@ type WorkerNode = {
 };
 
 export default function NodeDetailsPage() {
+  const t = useTranslations("NodeDetailsPage");
   const router = useRouter();
   const params = useParams<{ nodeid: string }>();
   const nodeRef = typeof params?.nodeid === "string" ? params.nodeid : "";
@@ -36,7 +38,7 @@ export default function NodeDetailsPage() {
     return node.accessRole === "owner";
   }, [node]);
 
-  const loadNode = async (ref: string) => {
+  const loadNode = useCallback(async (ref: string) => {
     setLoading(true);
     setError("");
     try {
@@ -47,32 +49,32 @@ export default function NodeDetailsPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data?.message || "Failed to load node.");
+        setError(data?.message || t("errors.loadNode"));
         setLoading(false);
         return;
       }
       setNode(data?.node || null);
     } catch {
-      setError("Failed to load node.");
+      setError(t("errors.loadNode"));
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     if (!nodeRef) {
-      setError("Missing node id.");
+      setError(t("errors.missingNodeId"));
       setLoading(false);
       return;
     }
 
-    loadNode(nodeRef);
-  }, [nodeRef]);
+    void loadNode(nodeRef);
+  }, [loadNode, nodeRef, t]);
 
   const deleteNode = async () => {
     if (!node || deletingNode) return;
     const confirmed = window.confirm(
-      `Delete node "${node.name}" and all game servers on it?`
+      t("delete.confirm", { name: node.name })
     );
     if (!confirmed) {
       return;
@@ -87,27 +89,27 @@ export default function NodeDetailsPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setDeleteNodeError(data?.message || "Failed to delete node.");
+        setDeleteNodeError(data?.message || t("delete.error"));
         return;
       }
       router.push("/nodes");
     } catch {
-      setDeleteNodeError("Failed to delete node.");
+      setDeleteNodeError(t("delete.error"));
     } finally {
       setDeletingNode(false);
     }
   };
 
   if (loading) {
-    return <p className="p-6">Loading...</p>;
+    return <p className="p-6">{t("loading")}</p>;
   }
 
   if (error || !node) {
     return (
       <div className="container mx-auto space-y-4 p-6">
-        <p className="text-red-600">{error || "Node not found."}</p>
+        <p className="text-red-600">{error || t("errors.notFound")}</p>
         <Button asChild variant="secondary">
-          <Link href="/nodes">Back to nodes</Link>
+          <Link href="/nodes">{t("buttons.backToNodes")}</Link>
         </Button>
       </div>
     );
@@ -118,40 +120,40 @@ export default function NodeDetailsPage() {
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold">{node.name}</h1>
-          <p className="text-sm text-muted-foreground">Detailed node view</p>
+          <p className="text-sm text-muted-foreground">{t("description")}</p>
         </div>
         <HealthBlob nodeRef={node.id} />
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Node information</CardTitle>
+          <CardTitle>{t("info.title")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <p>
-            <span className="font-medium">ID:</span> {node.id}
+            <span className="font-medium">{t("info.labels.id")}</span> {node.id}
           </p>
           <p>
-            <span className="font-medium">Slug:</span> {node.slug}
+            <span className="font-medium">{t("info.labels.slug")}</span> {node.slug}
           </p>
           <p>
-            <span className="font-medium">Role:</span> {node.accessRole}
+            <span className="font-medium">{t("info.labels.role")}</span> {node.accessRole}
           </p>
           <p>
-            <span className="font-medium">Base URL:</span> {node.baseUrl}
+            <span className="font-medium">{t("info.labels.baseUrl")}</span> {node.baseUrl}
           </p>
           <p>
-            <span className="font-medium">Owner user ID:</span> {node.ownerUserId}
+            <span className="font-medium">{t("info.labels.ownerUserId")}</span> {node.ownerUserId}
           </p>
           <p>
-            <span className="font-medium">API key:</span> {node.apiKeyPreview}
+            <span className="font-medium">{t("info.labels.apiKey")}</span> {node.apiKeyPreview}
           </p>
           <p>
-            <span className="font-medium">Created:</span>{" "}
+            <span className="font-medium">{t("info.labels.createdAt")}</span>{" "}
             {new Date(node.createdAt).toLocaleString()}
           </p>
           <p>
-            <span className="font-medium">Updated:</span>{" "}
+            <span className="font-medium">{t("info.labels.updatedAt")}</span>{" "}
             {new Date(node.updatedAt).toLocaleString()}
           </p>
           {canDeleteNode ? (
@@ -161,7 +163,7 @@ export default function NodeDetailsPage() {
                 onClick={deleteNode}
                 disabled={deletingNode}
               >
-                {deletingNode ? "Deleting node..." : "Delete node"}
+                {deletingNode ? t("delete.deleting") : t("delete.button")}
               </Button>
               {deleteNodeError ? (
                 <p className="pt-2 text-sm text-red-600">{deleteNodeError}</p>
@@ -173,23 +175,22 @@ export default function NodeDetailsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Access Management</CardTitle>
+          <CardTitle>{t("access.title")}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Invites and guest permissions are managed per game server. Open a
-            game server and use its controls page to manage access.
+            {t("access.description")}
           </p>
         </CardContent>
       </Card>
 
       <div className="flex gap-2">
         <Button asChild variant="secondary">
-          <Link href="/nodes">Back to nodes</Link>
+          <Link href="/nodes">{t("buttons.backToNodes")}</Link>
         </Button>
         <Button asChild>
           <Link href={`/dashboard?node=${encodeURIComponent(node.id)}`}>
-            Open dashboard with node
+            {t("buttons.openDashboardWithNode")}
           </Link>
         </Button>
       </div>

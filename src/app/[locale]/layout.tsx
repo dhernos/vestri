@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/app/[locale]/globals.css";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { Providers } from "@/components/providers";
@@ -16,11 +17,25 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const metadata: Metadata = {
-  title: "Auth Template",
-  description: "Auth App",
-  icons: "/favicon.ico",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const activeLocale = hasLocale(routing.locales, locale)
+    ? locale
+    : routing.defaultLocale;
+  const t = await getTranslations({
+    locale: activeLocale,
+    namespace: "AppMetadata",
+  });
+  return {
+    title: t("title"),
+    description: t("description"),
+    icons: "/favicon.ico",
+  };
+}
 
 export default async function RootLayout({
   children,
@@ -51,5 +66,3 @@ export default async function RootLayout({
     </html>
   );
 }
-
-export { metadata };

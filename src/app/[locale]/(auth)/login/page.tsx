@@ -21,7 +21,11 @@ import Image from "next/image";
 import { useTheme } from "next-themes";
 import { TwoFactorModal } from "@/components/profile_page/TwoFactorModal";
 import { loginWithPassword, useAuth } from "@/hooks/useAuth";
-import { loginWithPasskey, type PasskeyError } from "@/lib/webauthn";
+import {
+  loginWithPasskey,
+  passkeyFallbackCodes,
+  type PasskeyError,
+} from "@/lib/webauthn";
 import { startOAuth } from "@/lib/auth-client";
 import { useToast } from "@/components/ui/toast";
 
@@ -149,7 +153,7 @@ export default function LoginPage() {
                 description: tErrors("SEND_CODE_ERROR"),
               });
             }
-          } catch (err) {
+          } catch {
             push({ variant: "error", description: tErrors("SEND_CODE_ERROR") });
           }
           break;
@@ -194,17 +198,37 @@ export default function LoginPage() {
   };
 
   const mapPasskeyError = (code: PasskeyError, fallback?: string) => {
+    const mapFallback = () => {
+      if (!fallback) return null;
+      if (fallback === passkeyFallbackCodes.loginSecureContextRequired) {
+        return tPasskeys("errors.loginSecureContextRequired");
+      }
+      if (fallback === passkeyFallbackCodes.loginBlocked) {
+        return tPasskeys("errors.loginBlocked");
+      }
+      if (fallback.startsWith(`${passkeyFallbackCodes.loginRpIdMismatch}:`)) {
+        const rpId = fallback.slice(
+          `${passkeyFallbackCodes.loginRpIdMismatch}:`.length
+        );
+        return tPasskeys("errors.loginRpIdMismatch", { rpId });
+      }
+      if (/^[A-Z0-9_]+$/.test(fallback) && tErrors.has(fallback as never)) {
+        return tErrors(fallback as never);
+      }
+      return null;
+    };
+    const fallbackMessage = mapFallback();
     switch (code) {
       case "UNSUPPORTED":
         return tPasskeys("errors.unsupported");
       case "LOGIN_START_FAILED":
-        return fallback || tPasskeys("errors.startFailed");
+        return fallbackMessage || tPasskeys("errors.startFailed");
       case "LOGIN_CANCELLED":
         return tPasskeys("errors.cancelled");
       case "LOGIN_FINISH_FAILED":
-        return fallback || tPasskeys("errors.finishFailed");
+        return fallbackMessage || tPasskeys("errors.finishFailed");
       default:
-        return fallback || tPasskeys("errors.generic");
+        return fallbackMessage || tPasskeys("errors.generic");
     }
   };
 
@@ -303,6 +327,7 @@ export default function LoginPage() {
                     ) : (
                       <EyeIcon className="h-4 w-4" />
                     )}
+                    <span className="sr-only">{t("form.togglePassword")}</span>
                   </Button>
                 </div>
               </div>
@@ -370,7 +395,7 @@ export default function LoginPage() {
             >
               <Image
                 src="/logos/github.svg"
-                alt="GitHub"
+                alt={t("form.githubIconAlt")}
                 height={4}
                 width={4}
                 className="mr-2 h-4 w-4"
@@ -390,7 +415,7 @@ export default function LoginPage() {
                     ? "/logos/discord-white.svg"
                     : "/logos/discord.svg"
                 }
-                alt="Discord"
+                alt={t("form.discordIconAlt")}
                 height={4}
                 width={4}
                 className="mr-2 h-4 w-4"

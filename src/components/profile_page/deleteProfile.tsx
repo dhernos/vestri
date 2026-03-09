@@ -65,20 +65,16 @@ export default function DeleteProfileSection() {
         }),
       });
 
-      const data = await res.json();
-
       if (res.ok) {
-        // Erfolg: Benutzer ausloggen
-        const description = data.message || t("errors.accountDeleteError");
         push({
-          variant: data.message ? "success" : "error",
-          description,
+          variant: "success",
+          description: t("messages.accountDeleted"),
         });
         await logout();
         return null; // Kein Fehler
       } else {
         // Fehler, z.B. falscher 2FA-Code
-        return data.message || t("errors.accountDeleteError");
+        return t("errors.accountDeleteError");
       }
     } catch (err) {
       console.error(err);

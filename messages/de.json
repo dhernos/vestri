@@ -27,6 +27,10 @@
       "updateEmail": "E-Mail aktualisieren",
       "updateProfile": "Profil aktualisieren"
     },
+    "a11y": {
+      "closeDialog": "Schließen",
+      "dismissNotification": "Benachrichtigung schließen"
+    },
     "accessDenied": "Zugriff verweigert",
     "errorPrefix": "Fehler"
   },
@@ -81,12 +85,29 @@
   "TwoFactorModal": {
     "invalidCode": "Ungültiger 2FA-Code.",
     "codeLengthError": "Der Code muss 6 Ziffern haben.",
+    "codePlaceholder": "000000",
     "successMessage": "Erfolg.",
     "header": "Zwei-Faktor-Authentifizierung",
     "headerFinalize": "2FA Einrichtung abschließen",
     "description": "Bitte geben Sie den Code ein, um {action}.",
     "descriptionFinalize": "Geben Sie den Code ein, um die Einrichtung abzuschließen.",
     "stepUpTitle": "Step-up Verifikation für {purpose}",
+    "api": {
+      "INVALID_2FA_CODE": "Ungültiger 2FA-Code.",
+      "INVALID_OR_EXPIRED_CODE": "Ungültiger oder abgelaufener Code.",
+      "INVALID_OR_EXPIRED_2FA_CODE": "Ungültiger oder abgelaufener 2FA-Code."
+    },
+    "errors": {
+      "missingOAuthData": "Interner Fehler: OAuth-Verifizierungsdaten fehlen.",
+      "missingCredentials": "Interner Fehler: E-Mail oder Passwort fehlt.",
+      "loginFailed": "Anmeldung fehlgeschlagen.",
+      "stepUpPurposeMissing": "Interner Fehler: Step-up-Zweck fehlt.",
+      "setupMethodMissing": "Interner Fehler: 2FA-Einrichtungsmethode fehlt.",
+      "setupVerificationFailed": "Setup-Verifizierung fehlgeschlagen.",
+      "verificationFailed": "Verifizierung fehlgeschlagen.",
+      "unhandledMode": "Unbehandelter Verifizierungsmodus.",
+      "network": "Netzwerkfehler bei der Code-Verifizierung."
+    },
     "buttons": {
       "cancel": "Abbrechen",
       "loadingButton": "Überprüfe...",
@@ -107,6 +128,9 @@
     "setupAppDescription": "Scannen Sie den QR-Code mit Ihrer Authenticator-App und verifizieren.",
     "setupEmailDescription": "Ein Code wird an Ihre E-Mail gesendet.",
     "scanInstruction": "Scannen Sie den QR-Code mit Ihrer Authenticator-App.",
+    "qrCodeAlt": "2FA QR-Code",
+    "secretLabel": "Geheimnis: {secret}",
+    "codePlaceholder": "000000",
     "missingCodeOrSecret": "Code oder Secret fehlt.",
     "missingCode": "Bitte geben Sie den Code ein.",
     "activationSuccess": "2FA aktiviert.",
@@ -205,13 +229,16 @@
     "form": {
       "emailLabel": "E-Mail",
       "passwordLabel": "Passwort",
+      "togglePassword": "Passwortsichtbarkeit umschalten",
       "rememberMe": "Angemeldet bleiben",
       "forgotPassword": "Passwort vergessen?",
       "loadingButton": "Anmeldung...",
       "loginButton": "Anmelden",
       "orContinueWith": "oder fortfahren mit",
       "githubButton": "Mit GitHub anmelden",
-      "discordButton": "Mit Discord anmelden"
+      "discordButton": "Mit Discord anmelden",
+      "githubIconAlt": "GitHub-Logo",
+      "discordIconAlt": "Discord-Logo"
     },
     "passkeys": {
       "button": "Mit Passkey anmelden",
@@ -260,6 +287,9 @@
       "hint": "Unterstützt: {types} (max {max}MB)",
       "uploading": "Lade hoch...",
       "saveButton": "Speichern",
+      "zoom": "Zoom",
+      "avatarAlt": "Profilbild",
+      "fallbackInitials": "CN",
       "success": "Profilbild gespeichert.",
       "error": "Profilbild konnte nicht gespeichert werden."
     },
@@ -300,6 +330,9 @@
     "confirmDeleteAccount": "Sind Sie sicher, dass Sie Ihr Konto löschen möchten? Diese Aktion ist unwiderruflich.",
     "dangerZone": "Gefahrenzone",
     "dangerZoneDescription": "Das Löschen Ihres Kontos entfernt alle Ihre Daten.",
+    "messages": {
+      "accountDeleted": "Konto gelöscht."
+    },
     "errors": {
       "accountDeleteError": "Konto konnte nicht gelöscht werden."
     }
@@ -375,9 +408,61 @@
       "unsupported": "Passkeys werden in diesem Browser nicht unterstützt.",
       "startFailed": "Passkey-Vorgang konnte nicht gestartet werden.",
       "finishFailed": "Passkey-Vorgang konnte nicht abgeschlossen werden.",
-      "cancelled": "Passkey-Vorgang wurde abgebrochen."
+      "cancelled": "Passkey-Vorgang wurde abgebrochen.",
+      "secureContextRequired": "Passkeys benötigen einen sicheren Kontext (HTTPS oder localhost).",
+      "creationRpIdMismatch": "Passkeys müssen auf {rpId} oder dessen Subdomains erstellt werden.",
+      "creationBlocked": "Passkey-Erstellung ist blockiert. Verwenden Sie HTTPS oder localhost.",
+      "loginSecureContextRequired": "Passkey-Login benötigt einen sicheren Kontext (HTTPS oder localhost).",
+      "loginRpIdMismatch": "Passkey-Login benötigt {rpId} oder dessen Subdomains.",
+      "loginBlocked": "Passkey-Login ist blockiert. Verwenden Sie HTTPS oder localhost."
     },
     "stepUpActionLabel": "Passkey-Verwaltung"
+  },
+  "QueryToasts": {
+    "oauth": {
+      "title": "Anmeldefehler",
+      "defaultDescription": "OAuth-Anmeldung fehlgeschlagen. Bitte erneut versuchen."
+    },
+    "oauthReasons": {
+      "provider_unavailable": "Dieser Anmeldeanbieter ist nicht konfiguriert.",
+      "state_persist_failed": "Anmeldung konnte nicht gestartet werden. Bitte gleich erneut versuchen.",
+      "unsupported_provider": "Der angeforderte Anmeldeanbieter ist nicht verfügbar.",
+      "missing_state": "Die Anmeldesitzung fehlt oder ist abgelaufen. Bitte erneut versuchen.",
+      "state_invalid": "Ihre Anmeldesitzung ist abgelaufen. Starten Sie den OAuth-Flow erneut.",
+      "state_mismatch": "Der Anmeldestatus konnte nicht verifiziert werden. Bitte erneut versuchen.",
+      "token_exchange_failed": "Ihr Konto konnte beim Anbieter nicht bestätigt werden.",
+      "profile_fetch_failed": "Ihr Profil konnte vom Anbieter nicht geladen werden.",
+      "email_required": "Vom Anbieter konnte keine E-Mail-Adresse gelesen werden.",
+      "lookup_failed": "Ihr Konto für diesen Anbieter konnte nicht gefunden oder erstellt werden.",
+      "create_failed": "Ihr Konto konnte aus den Anbieter-Daten nicht erstellt werden.",
+      "link_failed": "Dieser Anbieter konnte nicht mit Ihrem Konto verknüpft werden.",
+      "two_factor_required": "Für dieses Konto ist Zwei-Faktor-Authentifizierung erforderlich.",
+      "two_factor_failed": "Die Zwei-Faktor-Verifizierung konnte nicht gestartet werden. Bitte erneut versuchen.",
+      "session_failed": "Nach der Anmeldung konnte keine Sitzung gestartet werden."
+    },
+    "notice": {
+      "title": "Hinweis",
+      "defaultDescription": "Ein Fehler ist aufgetreten."
+    },
+    "noticeReasons": {
+      "UNAUTHORIZED": "Nicht autorisiert.",
+      "ACCESS_DENIED": "Zugriff verweigert."
+    }
+  },
+  "LanguageToggle": {
+    "flagAlt": {
+      "en": "Englisch",
+      "de": "Deutsch"
+    },
+    "localeName": {
+      "en": "Englisch",
+      "de": "Deutsch"
+    },
+    "switchTo": "Sprache auf {locale} wechseln"
+  },
+  "AppMetadata": {
+    "title": "Vestri",
+    "description": "Plattform zur Verwaltung von Gameservern"
   },
   "AccessDenied": {
     "title": "Zugriff verweigert",
@@ -410,6 +495,280 @@
     "errors": {
       "invalidSession": "Ihre Sitzung ist abgelaufen oder ungültig. Bitte erneut anmelden.",
       "sessionDetails": "Sitzungsdetails konnten nicht geladen werden."
+    }
+  },
+  "NodesPage": {
+    "title": "Nodes",
+    "description": "Erstelle Nodes und akzeptiere Server-Einladungen.",
+    "loading": "Lädt...",
+    "errors": {
+      "loadNodes": "Nodes konnten nicht geladen werden.",
+      "createNode": "Node konnte nicht erstellt werden."
+    },
+    "createNode": {
+      "title": "Worker-Node hinzufügen",
+      "fields": {
+        "name": "Name (optional)",
+        "namePlaceholder": "EU-West Minecraft Node",
+        "host": "IP / Host / URL",
+        "hostPlaceholder": "192.168.1.23:8031",
+        "apiKey": "API-Key",
+        "apiKeyPlaceholder": "Worker API key"
+      },
+      "buttons": {
+        "creating": "Erstelle...",
+        "create": "Node erstellen"
+      }
+    },
+    "incomingInvites": {
+      "title": "Eingehende Einladungen",
+      "empty": "Keine ausstehenden Einladungen.",
+      "meta": {
+        "nodeServer": "Node: {nodeSlug} | Server: {serverSlug}",
+        "roleInviter": "Rolle: {role} | Eingeladen von: {inviterMail}",
+        "expires": "Läuft ab: {expiresAt}"
+      },
+      "buttons": {
+        "accepting": "Akzeptiere...",
+        "accept": "Akzeptieren"
+      }
+    },
+    "nodesList": {
+      "title": "Zugängliche Nodes",
+      "empty": "Keine Nodes verfügbar.",
+      "meta": {
+        "baseUrlKey": "{baseUrl} | Key: {apiKey}"
+      },
+      "buttons": {
+        "openDashboard": "Dashboard öffnen",
+        "details": "Details"
+      }
+    }
+  },
+  "NodeDetailsPage": {
+    "loading": "Lädt...",
+    "description": "Detaillierte Node-Ansicht",
+    "errors": {
+      "missingNodeId": "Node-ID fehlt.",
+      "loadNode": "Node konnte nicht geladen werden.",
+      "notFound": "Node nicht gefunden."
+    },
+    "buttons": {
+      "backToNodes": "Zurück zu Nodes",
+      "openDashboardWithNode": "Dashboard mit Node öffnen"
+    },
+    "info": {
+      "title": "Node-Informationen",
+      "labels": {
+        "id": "ID:",
+        "slug": "Slug:",
+        "role": "Rolle:",
+        "baseUrl": "Base URL:",
+        "ownerUserId": "Owner User ID:",
+        "apiKey": "API-Key:",
+        "createdAt": "Erstellt:",
+        "updatedAt": "Aktualisiert:"
+      }
+    },
+    "delete": {
+      "button": "Node löschen",
+      "deleting": "Lösche Node...",
+      "confirm": "Node \"{name}\" und alle Game-Server darauf löschen?",
+      "error": "Node konnte nicht gelöscht werden."
+    },
+    "access": {
+      "title": "Zugriffsverwaltung",
+      "description": "Einladungen und Gast-Berechtigungen werden pro Game-Server verwaltet. Öffne einen Game-Server und nutze dessen Steuerungsseite, um den Zugriff zu verwalten."
+    }
+  },
+  "DashboardPage": {
+    "title": "Dashboard",
+    "loading": "Lädt...",
+    "unauthenticatedMessage": "Du musst angemeldet sein, um die API-Testtools zu nutzen.",
+    "benchTitle": "Worker API Test Bench",
+    "benchDescription": "Signierte Request-Hilfe für die Go-Worker-Endpunkte.",
+    "authenticatedUserId": "Angemeldete Benutzer-ID: {userId}",
+    "errors": {
+      "loadNodes": "Nodes konnten nicht geladen werden."
+    },
+    "buttons": {
+      "refresh": "Aktualisieren",
+      "manageNodes": "Nodes verwalten"
+    },
+    "request": {
+      "running": "Läuft...",
+      "authAndNodeRequired": "Du musst angemeldet sein und eine Node auswählen, um diesen Endpunkt aufzurufen.",
+      "missingNodeSelection": "Node-Auswahl fehlt.",
+      "downloaded": "{fileName} wurde heruntergeladen ({size} Bytes).",
+      "failed": "Anfrage fehlgeschlagen."
+    },
+    "connection": {
+      "title": "Verbindung",
+      "description": "Node-Auswahl wird für alle Aufrufe gemeinsam genutzt.",
+      "nodeLabel": "Node",
+      "noNodes": "Keine Nodes verfügbar",
+      "proxyInfo": "Anfragen werden über /api/nodes/[nodeId]/worker weitergeleitet.",
+      "activeRole": "Aktive Rolle auf dieser Node: {role}"
+    },
+    "noNodeAvailable": {
+      "prefix": "Keine Node verfügbar. Erstelle zuerst eine in",
+      "suffix": "."
+    }
+  },
+  "TestPage": {
+    "title": "Dashboard",
+    "loading": "Lädt...",
+    "unauthenticatedMessage": "Du musst angemeldet sein, um die API-Testtools zu nutzen.",
+    "benchTitle": "Worker API Test Bench",
+    "benchDescription": "Signierte Request-Hilfe für die Go-Worker-Endpunkte.",
+    "authenticatedUserId": "Angemeldete Benutzer-ID: {userId}",
+    "fallback": {
+      "unknownUser": "unbekannt"
+    },
+    "errors": {
+      "loadNodes": "Nodes konnten nicht geladen werden."
+    },
+    "buttons": {
+      "refresh": "Aktualisieren",
+      "manageNodes": "Nodes verwalten"
+    },
+    "request": {
+      "running": "Läuft...",
+      "authAndNodeRequired": "Du musst angemeldet sein und eine Node auswählen, um diesen Endpunkt aufzurufen.",
+      "missingNodeSelection": "Node-Auswahl fehlt.",
+      "downloaded": "{fileName} wurde heruntergeladen ({size} Bytes).",
+      "failed": "Anfrage fehlgeschlagen."
+    },
+    "connection": {
+      "title": "Verbindung",
+      "description": "Node-Auswahl wird für alle Aufrufe gemeinsam genutzt.",
+      "nodeLabel": "Node",
+      "noNodes": "Keine Nodes verfügbar",
+      "proxyInfo": "Anfragen werden über /api/nodes/[nodeId]/worker weitergeleitet.",
+      "activeRole": "Aktive Rolle auf dieser Node: {role}"
+    },
+    "noNodeAvailable": {
+      "prefix": "Keine Node verfügbar. Erstelle zuerst eine in",
+      "suffix": "."
+    },
+    "health": {
+      "title": "Health",
+      "description": "GET /health",
+      "buttons": {
+        "run": "Health-Check ausführen"
+      }
+    },
+    "settings": {
+      "title": "Einstellungen (deaktiviert)",
+      "description": "GET /settings (erwartet 404)",
+      "buttons": {
+        "call": "/settings aufrufen"
+      }
+    },
+    "fields": {
+      "path": "Pfad",
+      "content": "Inhalt",
+      "file": "Datei",
+      "source": "Quelle",
+      "destination": "Ziel"
+    },
+    "filesystem": {
+      "title": "Dateisystem",
+      "read": {
+        "title": "FS Lesen",
+        "description": "GET /fs/read?path=...",
+        "buttons": {
+          "run": "Datei lesen"
+        }
+      },
+      "list": {
+        "title": "FS Liste",
+        "description": "GET /fs/list?path=...",
+        "buttons": {
+          "run": "Pfad auflisten"
+        }
+      },
+      "listRoot": {
+        "title": "FS Liste (Safe Root)",
+        "description": "GET /fs/list?path=",
+        "pathLabel": "Pfad (leer für Root)",
+        "buttons": {
+          "run": "Safe Root auflisten"
+        }
+      },
+      "write": {
+        "title": "FS Schreiben",
+        "description": "POST /fs/write",
+        "buttons": {
+          "run": "Datei schreiben"
+        }
+      },
+      "download": {
+        "title": "FS Download",
+        "description": "GET /fs/download?path=...",
+        "buttons": {
+          "run": "Datei herunterladen"
+        }
+      },
+      "upload": {
+        "title": "FS Upload",
+        "description": "POST /fs/upload (multipart)",
+        "buttons": {
+          "run": "Datei hochladen"
+        },
+        "errors": {
+          "selectFile": "Wähle eine Datei zum Hochladen aus."
+        }
+      },
+      "delete": {
+        "title": "FS Löschen",
+        "description": "POST /fs/delete (Datei oder Ordner)",
+        "recursiveHint": "Rekursiv löschen (erforderlich für nicht-leere Ordner)",
+        "buttons": {
+          "run": "Löschen"
+        }
+      },
+      "zip": {
+        "title": "FS Zip",
+        "description": "POST /fs/zip",
+        "buttons": {
+          "run": "Zip erstellen"
+        }
+      },
+      "unzip": {
+        "title": "FS Unzip",
+        "description": "POST /fs/unzip",
+        "buttons": {
+          "run": "Archiv entpacken"
+        }
+      }
+    },
+    "stack": {
+      "title": "Stack",
+      "controls": {
+        "title": "Stack-Steuerung",
+        "description": "GET /stack/status, POST /stack/up|down|restart",
+        "stackNameLabel": "Stack-Name",
+        "buttons": {
+          "status": "Status",
+          "up": "Hoch",
+          "down": "Runter",
+          "restart": "Neustart"
+        }
+      }
+    },
+    "requestLog": {
+      "title": "Request-Log",
+      "description": "Benutzer-ID und Node-ID werden bei jedem Aufruf erfasst.",
+      "empty": "Noch keine Anfragen.",
+      "meta": "User: {userId} | Node: {nodeRef} | {durationMs}ms",
+      "status": {
+        "ok": "OK",
+        "err": "ERR"
+      },
+      "buttons": {
+        "clear": "Log leeren"
+      }
     }
   },
   "HealthBlob": {
@@ -470,7 +829,9 @@
   "ServerPage": {
     "loading": "Lädt...",
     "errors": {
-      "notFound": "Server nicht gefunden."
+      "notFound": "Server nicht gefunden.",
+      "missingRouteParams": "Node- oder Server-Referenz fehlt.",
+      "loadServer": "Serverdetails konnten nicht geladen werden."
     },
     "header": {
       "templateLabel": "Template",
@@ -490,7 +851,13 @@
       "stopping": "Stoppe...",
       "refreshStatus": "Status aktualisieren",
       "deleteServer": "Server löschen",
-      "deleting": "Lösche..."
+      "deleting": "Lösche...",
+      "confirmDelete": "Server \"{name}\" dauerhaft löschen?",
+      "errors": {
+        "start": "Server konnte nicht gestartet werden.",
+        "stop": "Server konnte nicht gestoppt werden.",
+        "delete": "Server konnte nicht gelöscht werden."
+      }
     },
     "velocity": {
       "title": "Velocity Backends",
@@ -513,6 +880,18 @@
       "empty": {
         "templates": "Keine Backend-Templates verfügbar",
         "backends": "Noch keine Backend-Server angebunden."
+      },
+      "errors": {
+        "loadTemplates": "Backend-Templates konnten nicht geladen werden.",
+        "loadBackends": "Liste der Backend-Server konnte nicht geladen werden.",
+        "loadData": "Velocity-Backend-Daten konnten nicht geladen werden.",
+        "createBackend": "Backend-Server konnte nicht erstellt werden."
+      },
+      "dialog": {
+        "title": "Template-Bedingung erforderlich",
+        "description": "Du musst dieser Bedingung zustimmen, bevor der Backend-Server erstellt werden kann.",
+        "cancel": "Abbrechen",
+        "agreeAndCreate": "Ich stimme zu und erstelle das Backend"
       }
     },
     "logs": {
@@ -536,10 +915,151 @@
         "noLogsManual": "Keine Logs geladen. Klicke auf \"Jetzt aktualisieren\".",
         "connectedWaiting": "Verbunden. Warte auf neue Log-Zeilen...",
         "waitingStream": "Warte auf Log-Stream..."
+      },
+      "errors": {
+        "loadSnapshot": "Konsolen-Snapshot konnte nicht geladen werden.",
+        "connectStream": "Verbindung zum Live-Log-Stream konnte nicht aufgebaut werden.",
+        "noReadableBody": "Der Live-Log-Stream hat keinen lesbaren Response-Body zurückgegeben.",
+        "interrupted": "Der Live-Log-Stream wurde unterbrochen."
       }
     },
     "interactive": {
-      "idleHint": "Interaktive Sitzung ist inaktiv. Klicke auf Interaktive Sitzung starten."
+      "title": "Interaktive Konsole",
+      "description": "Nur Owner/Admin. Die Sitzung wird über Backend und Worker weitergeleitet.",
+      "sessionStatusLabel": "Sitzungsstatus:",
+      "offlineHint": "Die interaktive Konsole ist nur verfügbar, solange der Server läuft.",
+      "idleHint": "Interaktive Sitzung ist inaktiv. Klicke auf Interaktive Sitzung starten.",
+      "buttons": {
+        "startSession": "Interaktive Sitzung starten",
+        "sessionRunning": "Sitzung läuft...",
+        "stopSession": "Sitzung stoppen"
+      },
+      "errors": {
+        "generic": "Die interaktive Konsole hat einen Fehler zurückgegeben.",
+        "connectionFailed": "Verbindung zur interaktiven Konsole fehlgeschlagen.",
+        "closedImmediately": "Verbindung zur interaktiven Konsole wurde sofort geschlossen.",
+        "loadRuntime": "Terminal-Runtime konnte nicht geladen werden."
+      },
+      "terminal": {
+        "connecting": "Verbinde mit interaktiver Konsole...",
+        "connected": "interaktive Sitzung verbunden",
+        "disconnected": "interaktive Sitzung getrennt",
+        "errorPrefix": "fehler",
+        "sessionEnded": "Sitzung beendet: Exit {code}"
+      }
+    },
+    "fileBrowser": {
+      "title": "Dateibrowser",
+      "currentFolder": "Aktueller Ordner: {path}",
+      "empty": "Keine Einträge in diesem Ordner.",
+      "restricted": "Dateiverwaltung ist auf Server-Owner/Admin begrenzt.",
+      "labels": {
+        "folder": "Ordner",
+        "file": "Datei"
+      },
+      "entryTypes": {
+        "dir": "ORDNER",
+        "file": "DATEI",
+        "symlink": "SYMLINK",
+        "other": "SONSTIGES"
+      },
+      "confirmDeletePath": "{label} \"{path}\" löschen?",
+      "buttons": {
+        "loading": "Lädt...",
+        "refresh": "Aktualisieren",
+        "upOneLevel": "Eine Ebene hoch",
+        "goToRoot": "Zum Root",
+        "uploading": "Lade hoch...",
+        "uploadToCurrentFolder": "In aktuellen Ordner hochladen",
+        "downloading": "Lade herunter...",
+        "download": "Download",
+        "unzipping": "Entpacke...",
+        "unzip": "Entpacken",
+        "deleting": "Lösche...",
+        "delete": "Löschen"
+      },
+      "errors": {
+        "loadDirectory": "Verzeichniseinträge konnten nicht geladen werden.",
+        "downloadPath": "Pfad konnte nicht heruntergeladen werden.",
+        "invalidUploadPath": "Ungültiger Upload-Pfad.",
+        "uploadFile": "Datei konnte nicht hochgeladen werden.",
+        "deletePath": "Pfad konnte nicht gelöscht werden.",
+        "unzipArchive": "Archiv konnte nicht entpackt werden."
+      }
+    },
+    "fileEditor": {
+      "title": "Dateieditor",
+      "selectFromBrowser": "Wähle eine Datei aus dem Browser",
+      "buttons": {
+        "saving": "Speichere...",
+        "saveFile": "Datei speichern",
+        "reload": "Neu laden"
+      },
+      "errors": {
+        "loadFile": "Datei konnte nicht geladen werden.",
+        "saveFile": "Datei konnte nicht gespeichert werden.",
+        "onlyRegularTextFiles": "Nur reguläre Textdateien können geöffnet werden."
+      }
+    },
+    "configEditor": {
+      "title": "Config-Editor",
+      "description": "Vorhandene Schlüssel sind schreibgeschützt; Werte sind editierbar.",
+      "fields": {
+        "configFile": "Config-Datei"
+      },
+      "empty": {
+        "noConfiguredFiles": "Keine konfigurierten Dateien"
+      },
+      "columns": {
+        "key": "Schlüssel",
+        "value": "Wert"
+      },
+      "buttons": {
+        "remove": "Entfernen",
+        "addSetting": "Eintrag hinzufügen",
+        "saving": "Speichere...",
+        "saveConfig": "Config speichern"
+      },
+      "errors": {
+        "loadConfig": "Config-Datei konnte nicht geladen werden.",
+        "saveConfig": "Config-Datei konnte nicht gespeichert werden."
+      }
+    },
+    "access": {
+      "title": "Zugriffsverwaltung",
+      "description": "Nutzer einladen und serverspezifische Berechtigungen verwalten.",
+      "loading": "Lädt...",
+      "fields": {
+        "email": "E-Mail",
+        "emailPlaceholder": "freund@example.com",
+        "role": "Rolle"
+      },
+      "roles": {
+        "admin": "admin (voller Serverzugriff)",
+        "operator": "operator (start/stop + status)",
+        "viewer": "viewer (nur status)"
+      },
+      "buttons": {
+        "sendingInvite": "Einladung wird gesendet...",
+        "createInvite": "Einladung erstellen",
+        "revoking": "Widerrufe...",
+        "revoke": "Widerrufen",
+        "removing": "Entferne...",
+        "remove": "Entfernen"
+      },
+      "pendingInvites": {
+        "title": "Ausstehende Einladungen",
+        "empty": "Keine ausstehenden Einladungen.",
+        "meta": "Einladender: {inviter} | Läuft ab: {expiresAt}"
+      },
+      "guests": {
+        "title": "Gäste",
+        "empty": "Keine Gäste zugewiesen.",
+        "meta": "{email} | Hinzugefügt: {createdAt}"
+      },
+      "errors": {
+        "createInvite": "Einladung konnte nicht erstellt werden."
+      }
     },
     "status": {
       "up": "Online",

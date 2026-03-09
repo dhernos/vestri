@@ -2,7 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { deletePasskey, fetchPasskeys, GoPasskey } from "@/lib/auth-client";
-import { registerPasskey, PasskeyError } from "@/lib/webauthn";
+import {
+  registerPasskey,
+  PasskeyError,
+  passkeyFallbackCodes,
+} from "@/lib/webauthn";
 import { TwoFactorModal } from "./TwoFactorModal";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,6 +14,7 @@ import { useToast } from "@/components/ui/toast";
 
 export default function PasskeySection() {
   const t = useTranslations("Passkeys");
+  const tErrors = useTranslations("Errors");
   const { data: session } = useAuth();
   const { push } = useToast();
   const [passkeys, setPasskeys] = useState<GoPasskey[]>([]);
@@ -25,24 +30,57 @@ export default function PasskeySection() {
     load();
   }, [load]);
 
+  const mapFallback = (fallback?: string) => {
+    if (!fallback) return null;
+    if (fallback === passkeyFallbackCodes.secureContextRequired) {
+      return t("errors.secureContextRequired");
+    }
+    if (fallback === passkeyFallbackCodes.creationBlocked) {
+      return t("errors.creationBlocked");
+    }
+    if (fallback === passkeyFallbackCodes.loginSecureContextRequired) {
+      return t("errors.loginSecureContextRequired");
+    }
+    if (fallback === passkeyFallbackCodes.loginBlocked) {
+      return t("errors.loginBlocked");
+    }
+    if (fallback.startsWith(`${passkeyFallbackCodes.creationRpIdMismatch}:`)) {
+      const rpId = fallback.slice(
+        `${passkeyFallbackCodes.creationRpIdMismatch}:`.length
+      );
+      return t("errors.creationRpIdMismatch", { rpId });
+    }
+    if (fallback.startsWith(`${passkeyFallbackCodes.loginRpIdMismatch}:`)) {
+      const rpId = fallback.slice(
+        `${passkeyFallbackCodes.loginRpIdMismatch}:`.length
+      );
+      return t("errors.loginRpIdMismatch", { rpId });
+    }
+    if (/^[A-Z0-9_]+$/.test(fallback) && tErrors.has(fallback as never)) {
+      return tErrors(fallback as never);
+    }
+    return null;
+  };
+
   const mapPasskeyError = (code: PasskeyError, fallback?: string) => {
+    const fallbackMessage = mapFallback(fallback);
     switch (code) {
       case "UNSUPPORTED":
         return t("errors.unsupported");
       case "START_FAILED":
-        return fallback || t("errors.startFailed");
+        return fallbackMessage || t("errors.startFailed");
       case "CREATE_CANCELLED":
         return t("errors.cancelled");
       case "FINISH_FAILED":
-        return fallback || t("errors.finishFailed");
+        return fallbackMessage || t("errors.finishFailed");
       case "LOGIN_START_FAILED":
-        return fallback || t("errors.startFailed");
+        return fallbackMessage || t("errors.startFailed");
       case "LOGIN_CANCELLED":
         return t("errors.cancelled");
       case "LOGIN_FINISH_FAILED":
-        return fallback || t("errors.finishFailed");
+        return fallbackMessage || t("errors.finishFailed");
       default:
-        return fallback || t("errors.generic");
+        return fallbackMessage || t("errors.generic");
     }
   };
 

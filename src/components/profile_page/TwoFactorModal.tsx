@@ -50,17 +50,31 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
   onSuccess,
 }) => {
   const t = useTranslations("TwoFactorModal");
-  const tCommon = useTranslations("Common"); // <-- NEU: gemeinsame Buttons / Texte
+  const tCommon = useTranslations("Common");
+  const tErrors = useTranslations("Errors");
   const { push } = useToast();
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const mapErrorCode = (code: unknown) => {
+    if (typeof code !== "string" || !/^[A-Z0-9_]+$/.test(code)) {
+      return null;
+    }
+    if (t.has(`api.${code}` as never)) {
+      return t(`api.${code}` as never);
+    }
+    if (tErrors.has(code as never)) {
+      return tErrors(code as never);
+    }
+    return null;
+  };
+
   const internalVerify = async (code: string): Promise<string | null> => {
     try {
-      // 👉 OAuth second factor (after provider sign-in)
       if (mode === "oauth") {
-        if (!provider || !pendingId)
-          return "Internal error: missing OAuth verification data.";
+        if (!provider || !pendingId) {
+          return t("errors.missingOAuthData");
+        }
 
         const res = await fetch(
           `/api/oauth/${provider}/two-factor?pending=${encodeURIComponent(pendingId)}`,
@@ -73,32 +87,32 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
         );
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          return data?.message || "Verification failed";
+          return (
+            mapErrorCode(data?.message || data?.error) ||
+            t("errors.verificationFailed")
+          );
         }
         return null;
       }
 
-      // 👉 1) LOGIN / FIRST FACTOR
       if (mode === "login") {
-        if (!email || !password)
-          return "Internal error: email/password missing";
+        if (!email || !password) {
+          return t("errors.missingCredentials");
+        }
 
         const result = await loginWithPassword(email, password, code);
 
-        if (!result.ok && result.message === "INVALID_2FA_CODE") {
-          return t("invalidCode");
-        }
-
         if (!result.ok) {
-          return result.message || "Login failed";
+          return mapErrorCode(result.message) || t("errors.loginFailed");
         }
 
         return null;
       }
 
-      // 👉 2) STEP-UP
       if (mode === "stepup") {
-        if (!purpose) return "Step-Up purpose missing (internal error).";
+        if (!purpose) {
+          return t("errors.stepUpPurposeMissing");
+        }
 
         const res = await fetch("/api/two-factor/step-up", {
           method: "POST",
@@ -108,12 +122,16 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
         });
 
         const data = await res.json();
-        if (!res.ok) return data.error || "Invalid Step-Up code";
+        if (!res.ok) {
+          return mapErrorCode(data?.error || data?.message) || t("invalidCode");
+        }
         return null;
       }
 
       if (mode === "setup-finalize") {
-        if (!method) return "2FA setup method missing (internal error).";
+        if (!method) {
+          return t("errors.setupMethodMissing");
+        }
 
         const res = await fetch("/api/two-factor/setup-finalize", {
           method: "POST",
@@ -123,13 +141,18 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
         });
 
         const data = await res.json();
-        if (!res.ok) return data.error || "Setup verification failed";
+        if (!res.ok) {
+          return (
+            mapErrorCode(data?.error || data?.message) ||
+            t("errors.setupVerificationFailed")
+          );
+        }
         return null;
       }
 
-      return "Unhandled verification mode.";
-    } catch (err) {
-      return "Network error while verifying code.";
+      return t("errors.unhandledMode");
+    } catch {
+      return t("errors.network");
     }
   };
 
@@ -189,7 +212,7 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
           <div className="grid gap-4 py-4">
             <Input
               id="twoFactorCode"
-              placeholder="000000"
+              placeholder={t("codePlaceholder")}
               value={code}
               onChange={(e) => setCode(e.target.value)}
               maxLength={6}

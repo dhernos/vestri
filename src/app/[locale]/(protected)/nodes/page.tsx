@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import HealthBlob from "@/components/nodes/health";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ type IncomingInvite = {
 };
 
 export default function NodesPage() {
+  const t = useTranslations("NodesPage");
   const [nodes, setNodes] = useState<WorkerNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -48,7 +50,7 @@ export default function NodesPage() {
   const [ip, setIP] = useState("");
   const [apiKey, setAPIKey] = useState("");
 
-  const loadNodes = async () => {
+  const loadNodes = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -59,19 +61,19 @@ export default function NodesPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data?.message || "Failed to load nodes.");
+        setError(data?.message || t("errors.loadNodes"));
         setLoading(false);
         return;
       }
       setNodes(Array.isArray(data?.nodes) ? data.nodes : []);
     } catch {
-      setError("Failed to load nodes.");
+      setError(t("errors.loadNodes"));
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
-  const loadIncomingInvites = async () => {
+  const loadIncomingInvites = useCallback(async () => {
     setLoadingIncoming(true);
     try {
       const res = await fetch("/api/nodes/invites", {
@@ -91,12 +93,12 @@ export default function NodesPage() {
     } finally {
       setLoadingIncoming(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    loadNodes();
-    loadIncomingInvites();
-  }, []);
+    void loadNodes();
+    void loadIncomingInvites();
+  }, [loadIncomingInvites, loadNodes]);
 
   const createNode = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -117,7 +119,7 @@ export default function NodesPage() {
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data?.message || "Failed to create node.");
+        setError(data?.message || t("errors.createNode"));
         return;
       }
 
@@ -126,7 +128,7 @@ export default function NodesPage() {
       setAPIKey("");
       await loadNodes();
     } catch {
-      setError("Failed to create node.");
+      setError(t("errors.createNode"));
     } finally {
       setSubmitting(false);
     }
@@ -155,51 +157,51 @@ export default function NodesPage() {
   return (
     <div className="container mx-auto space-y-6 p-6">
       <div>
-        <h1 className="text-3xl font-bold">Nodes</h1>
+        <h1 className="text-3xl font-bold">{t("title")}</h1>
         <p className="text-sm text-muted-foreground">
-          Create nodes and accept server invites.
+          {t("description")}
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Add worker node</CardTitle>
+          <CardTitle>{t("createNode.title")}</CardTitle>
         </CardHeader>
         <CardContent>
           <form className="grid gap-4 md:grid-cols-2" onSubmit={createNode}>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="node-name">Name (optional)</Label>
+              <Label htmlFor="node-name">{t("createNode.fields.name")}</Label>
               <Input
                 id="node-name"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                placeholder="EU-West Minecraft Node"
+                placeholder={t("createNode.fields.namePlaceholder")}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="node-ip">IP / Host / URL</Label>
+              <Label htmlFor="node-ip">{t("createNode.fields.host")}</Label>
               <Input
                 id="node-ip"
                 value={ip}
                 onChange={(event) => setIP(event.target.value)}
-                placeholder="192.168.1.23:8031"
+                placeholder={t("createNode.fields.hostPlaceholder")}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="node-api-key">API key</Label>
+              <Label htmlFor="node-api-key">{t("createNode.fields.apiKey")}</Label>
               <Input
                 id="node-api-key"
                 type="password"
                 value={apiKey}
                 onChange={(event) => setAPIKey(event.target.value)}
-                placeholder="Worker API key"
+                placeholder={t("createNode.fields.apiKeyPlaceholder")}
                 required
               />
             </div>
             <div className="md:col-span-2">
               <Button type="submit" disabled={submitting}>
-                {submitting ? "Creating..." : "Create node"}
+                {submitting ? t("createNode.buttons.creating") : t("createNode.buttons.create")}
               </Button>
             </div>
           </form>
@@ -209,12 +211,12 @@ export default function NodesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Incoming invites</CardTitle>
+          <CardTitle>{t("incomingInvites.title")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {loadingIncoming ? <p>Loading...</p> : null}
+          {loadingIncoming ? <p>{t("loading")}</p> : null}
           {!loadingIncoming && incomingInvites.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No pending invites.</p>
+            <p className="text-sm text-muted-foreground">{t("incomingInvites.empty")}</p>
           ) : null}
           {!loadingIncoming &&
             incomingInvites.map((invite) => (
@@ -227,13 +229,21 @@ export default function NodesPage() {
                     {invite.nodeName} / {invite.serverName}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Node: {invite.nodeSlug} | Server: {invite.serverSlug}
+                    {t("incomingInvites.meta.nodeServer", {
+                      nodeSlug: invite.nodeSlug,
+                      serverSlug: invite.serverSlug,
+                    })}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Role: {invite.permission} | Invited by: {invite.inviterMail}
+                    {t("incomingInvites.meta.roleInviter", {
+                      role: invite.permission,
+                      inviterMail: invite.inviterMail,
+                    })}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Expires: {new Date(invite.expiresAt).toLocaleString()}
+                    {t("incomingInvites.meta.expires", {
+                      expiresAt: new Date(invite.expiresAt).toLocaleString(),
+                    })}
                   </p>
                 </div>
                 <Button
@@ -241,7 +251,9 @@ export default function NodesPage() {
                   disabled={acceptingInviteId === invite.id}
                   size="sm"
                 >
-                  {acceptingInviteId === invite.id ? "Accepting..." : "Accept"}
+                  {acceptingInviteId === invite.id
+                    ? t("incomingInvites.buttons.accepting")
+                    : t("incomingInvites.buttons.accept")}
                 </Button>
               </div>
             ))}
@@ -250,12 +262,12 @@ export default function NodesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Accessible nodes</CardTitle>
+          <CardTitle>{t("nodesList.title")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {loading ? <p>Loading...</p> : null}
+          {loading ? <p>{t("loading")}</p> : null}
           {!loading && nodes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No nodes available.</p>
+            <p className="text-sm text-muted-foreground">{t("nodesList.empty")}</p>
           ) : null}
           {!loading &&
             nodes.map((node) => (
@@ -272,17 +284,20 @@ export default function NodesPage() {
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {node.baseUrl} | Key: {node.apiKeyPreview}
+                    {t("nodesList.meta.baseUrlKey", {
+                      baseUrl: node.baseUrl,
+                      apiKey: node.apiKeyPreview,
+                    })}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button asChild variant="secondary" size="sm">
                     <Link href={`/dashboard?node=${encodeURIComponent(node.id)}`}>
-                      Open dashboard
+                      {t("nodesList.buttons.openDashboard")}
                     </Link>
                   </Button>
                   <Button asChild size="sm">
-                    <Link href={`/nodes/${node.slug}`}>Details</Link>
+                    <Link href={`/nodes/${node.slug}`}>{t("nodesList.buttons.details")}</Link>
                   </Button>
                 </div>
               </div>

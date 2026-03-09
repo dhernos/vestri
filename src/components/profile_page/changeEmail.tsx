@@ -56,7 +56,7 @@ export default function ChangeEmailSection() {
       if (res.ok) {
         push({
           variant: "success",
-          description: `${data.message}${t("messageWillLogout")}`,
+          description: `${t("messages.emailUpdated")}${t("messageWillLogout")}`,
         });
         await refresh();
         setTimeout(() => {
@@ -77,7 +77,7 @@ export default function ChangeEmailSection() {
         } else {
           push({
             variant: "error",
-            description: data.message || t("emailUpdateFailed"),
+            description: t("emailUpdateFailed"),
           });
           setEmail(session?.user?.email || "");
         }

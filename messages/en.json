@@ -27,6 +27,10 @@
       "updateEmail": "Update email",
       "updateProfile": "Update profile"
     },
+    "a11y": {
+      "closeDialog": "Close",
+      "dismissNotification": "Dismiss notification"
+    },
     "accessDenied": "Access denied",
     "errorPrefix": "Error"
   },
@@ -81,12 +85,29 @@
   "TwoFactorModal": {
     "invalidCode": "Invalid 2FA code.",
     "codeLengthError": "Code must be 6 digits.",
+    "codePlaceholder": "000000",
     "successMessage": "Success.",
     "header": "Two-Factor Authentication",
     "headerFinalize": "Finalize 2FA setup",
     "description": "Please enter the code to {action}.",
     "descriptionFinalize": "Enter the code to finish setup.",
     "stepUpTitle": "Step-up verification for {purpose}",
+    "api": {
+      "INVALID_2FA_CODE": "Invalid 2FA code.",
+      "INVALID_OR_EXPIRED_CODE": "Invalid or expired code.",
+      "INVALID_OR_EXPIRED_2FA_CODE": "Invalid or expired 2FA code."
+    },
+    "errors": {
+      "missingOAuthData": "Internal error: missing OAuth verification data.",
+      "missingCredentials": "Internal error: email or password missing.",
+      "loginFailed": "Login failed.",
+      "stepUpPurposeMissing": "Internal error: missing step-up purpose.",
+      "setupMethodMissing": "Internal error: missing 2FA setup method.",
+      "setupVerificationFailed": "Setup verification failed.",
+      "verificationFailed": "Verification failed.",
+      "unhandledMode": "Unhandled verification mode.",
+      "network": "Network error while verifying the code."
+    },
     "buttons": {
       "cancel": "Cancel",
       "loadingButton": "Verifying...",
@@ -107,6 +128,9 @@
     "setupAppDescription": "Scan the QR code with your authenticator app and verify.",
     "setupEmailDescription": "A code will be sent to your email for verification.",
     "scanInstruction": "Scan the QR code with your authenticator app.",
+    "qrCodeAlt": "2FA QR code",
+    "secretLabel": "Secret: {secret}",
+    "codePlaceholder": "000000",
     "missingCodeOrSecret": "Missing code or secret.",
     "missingCode": "Please provide the code.",
     "activationSuccess": "2FA activated.",
@@ -205,13 +229,16 @@
     "form": {
       "emailLabel": "Email",
       "passwordLabel": "Password",
+      "togglePassword": "Toggle password visibility",
       "rememberMe": "Remember me",
       "forgotPassword": "Forgot password?",
       "loadingButton": "Signing in...",
       "loginButton": "Sign in",
       "orContinueWith": "or continue with",
       "githubButton": "Sign in with GitHub",
-      "discordButton": "Sign in with Discord"
+      "discordButton": "Sign in with Discord",
+      "githubIconAlt": "GitHub logo",
+      "discordIconAlt": "Discord logo"
     },
     "passkeys": {
       "button": "Sign in with a passkey",
@@ -260,6 +287,9 @@
       "hint": "Supported: {types} (max {max}MB)",
       "uploading": "Uploading...",
       "saveButton": "Save",
+      "zoom": "Zoom",
+      "avatarAlt": "Profile picture",
+      "fallbackInitials": "CN",
       "success": "Profile picture saved.",
       "error": "Could not save profile picture."
     },
@@ -300,6 +330,9 @@
     "confirmDeleteAccount": "Are you sure you want to delete your account? This action is irreversible.",
     "dangerZone": "Danger Zone",
     "dangerZoneDescription": "Deleting your account will remove all your data.",
+    "messages": {
+      "accountDeleted": "Account deleted."
+    },
     "errors": {
       "accountDeleteError": "Failed to delete account."
     }
@@ -375,9 +408,61 @@
       "unsupported": "Passkeys are not supported in this browser.",
       "startFailed": "Could not start the passkey flow.",
       "finishFailed": "Could not complete the passkey flow.",
-      "cancelled": "Passkey flow was cancelled."
+      "cancelled": "Passkey flow was cancelled.",
+      "secureContextRequired": "Passkeys require a secure context (HTTPS or localhost).",
+      "creationRpIdMismatch": "Passkeys must be created on {rpId} or its subdomains.",
+      "creationBlocked": "Passkey creation is blocked. Use HTTPS or localhost.",
+      "loginSecureContextRequired": "Passkey login requires a secure context (HTTPS or localhost).",
+      "loginRpIdMismatch": "Passkey login requires {rpId} or its subdomains.",
+      "loginBlocked": "Passkey login is blocked. Use HTTPS or localhost."
     },
     "stepUpActionLabel": "Passkey management"
+  },
+  "QueryToasts": {
+    "oauth": {
+      "title": "Sign-in error",
+      "defaultDescription": "OAuth sign-in failed. Please try again."
+    },
+    "oauthReasons": {
+      "provider_unavailable": "This sign-in provider is not configured.",
+      "state_persist_failed": "Could not start sign-in. Please try again in a moment.",
+      "unsupported_provider": "The requested sign-in provider is not available.",
+      "missing_state": "The sign-in session was missing or expired. Please try again.",
+      "state_invalid": "Your sign-in session expired. Start the OAuth flow again.",
+      "state_mismatch": "Could not verify your sign-in state. Please try again.",
+      "token_exchange_failed": "Could not confirm your account with the provider.",
+      "profile_fetch_failed": "Could not fetch your profile from the provider.",
+      "email_required": "Could not get an email address from the provider.",
+      "lookup_failed": "Could not find or create your account for this provider.",
+      "create_failed": "Could not create your account from the provider details.",
+      "link_failed": "Could not link this provider to your account.",
+      "two_factor_required": "Two-factor authentication is required for this account.",
+      "two_factor_failed": "Could not start two-factor verification. Please try again.",
+      "session_failed": "Could not start a session after signing in."
+    },
+    "notice": {
+      "title": "Notice",
+      "defaultDescription": "An error occurred."
+    },
+    "noticeReasons": {
+      "UNAUTHORIZED": "Unauthorized.",
+      "ACCESS_DENIED": "Access denied."
+    }
+  },
+  "LanguageToggle": {
+    "flagAlt": {
+      "en": "English",
+      "de": "German"
+    },
+    "localeName": {
+      "en": "English",
+      "de": "German"
+    },
+    "switchTo": "Switch language to {locale}"
+  },
+  "AppMetadata": {
+    "title": "Vestri",
+    "description": "Game server management platform"
   },
   "AccessDenied": {
     "title": "Access denied",
@@ -410,6 +495,280 @@
     "errors": {
       "invalidSession": "Your session has expired or is invalid. Please log in again.",
       "sessionDetails": "Could not load session details."
+    }
+  },
+  "NodesPage": {
+    "title": "Nodes",
+    "description": "Create nodes and accept server invites.",
+    "loading": "Loading...",
+    "errors": {
+      "loadNodes": "Failed to load nodes.",
+      "createNode": "Failed to create node."
+    },
+    "createNode": {
+      "title": "Add worker node",
+      "fields": {
+        "name": "Name (optional)",
+        "namePlaceholder": "EU-West Minecraft Node",
+        "host": "IP / Host / URL",
+        "hostPlaceholder": "192.168.1.23:8031",
+        "apiKey": "API key",
+        "apiKeyPlaceholder": "Worker API key"
+      },
+      "buttons": {
+        "creating": "Creating...",
+        "create": "Create node"
+      }
+    },
+    "incomingInvites": {
+      "title": "Incoming invites",
+      "empty": "No pending invites.",
+      "meta": {
+        "nodeServer": "Node: {nodeSlug} | Server: {serverSlug}",
+        "roleInviter": "Role: {role} | Invited by: {inviterMail}",
+        "expires": "Expires: {expiresAt}"
+      },
+      "buttons": {
+        "accepting": "Accepting...",
+        "accept": "Accept"
+      }
+    },
+    "nodesList": {
+      "title": "Accessible nodes",
+      "empty": "No nodes available.",
+      "meta": {
+        "baseUrlKey": "{baseUrl} | Key: {apiKey}"
+      },
+      "buttons": {
+        "openDashboard": "Open dashboard",
+        "details": "Details"
+      }
+    }
+  },
+  "NodeDetailsPage": {
+    "loading": "Loading...",
+    "description": "Detailed node view",
+    "errors": {
+      "missingNodeId": "Missing node id.",
+      "loadNode": "Failed to load node.",
+      "notFound": "Node not found."
+    },
+    "buttons": {
+      "backToNodes": "Back to nodes",
+      "openDashboardWithNode": "Open dashboard with node"
+    },
+    "info": {
+      "title": "Node information",
+      "labels": {
+        "id": "ID:",
+        "slug": "Slug:",
+        "role": "Role:",
+        "baseUrl": "Base URL:",
+        "ownerUserId": "Owner user ID:",
+        "apiKey": "API key:",
+        "createdAt": "Created:",
+        "updatedAt": "Updated:"
+      }
+    },
+    "delete": {
+      "button": "Delete node",
+      "deleting": "Deleting node...",
+      "confirm": "Delete node \"{name}\" and all game servers on it?",
+      "error": "Failed to delete node."
+    },
+    "access": {
+      "title": "Access Management",
+      "description": "Invites and guest permissions are managed per game server. Open a game server and use its controls page to manage access."
+    }
+  },
+  "DashboardPage": {
+    "title": "Dashboard",
+    "loading": "Loading...",
+    "unauthenticatedMessage": "You must be authenticated to use the API test tools.",
+    "benchTitle": "Worker API Test Bench",
+    "benchDescription": "Signed request helper for the Go worker endpoints.",
+    "authenticatedUserId": "Authenticated user id: {userId}",
+    "errors": {
+      "loadNodes": "Failed to load nodes."
+    },
+    "buttons": {
+      "refresh": "Refresh",
+      "manageNodes": "Manage nodes"
+    },
+    "request": {
+      "running": "Running...",
+      "authAndNodeRequired": "You must be authenticated and select a node to call this endpoint.",
+      "missingNodeSelection": "Missing node selection.",
+      "downloaded": "Downloaded {fileName} ({size} bytes).",
+      "failed": "Request failed."
+    },
+    "connection": {
+      "title": "Connection",
+      "description": "Node selection shared by all calls.",
+      "nodeLabel": "Node",
+      "noNodes": "No nodes available",
+      "proxyInfo": "Requests are proxied via /api/nodes/[nodeId]/worker.",
+      "activeRole": "Active role on this node: {role}"
+    },
+    "noNodeAvailable": {
+      "prefix": "No node available. Create one in",
+      "suffix": "first."
+    }
+  },
+  "TestPage": {
+    "title": "Dashboard",
+    "loading": "Loading...",
+    "unauthenticatedMessage": "You must be authenticated to use the API test tools.",
+    "benchTitle": "Worker API Test Bench",
+    "benchDescription": "Signed request helper for the Go worker endpoints.",
+    "authenticatedUserId": "Authenticated user id: {userId}",
+    "fallback": {
+      "unknownUser": "unknown"
+    },
+    "errors": {
+      "loadNodes": "Failed to load nodes."
+    },
+    "buttons": {
+      "refresh": "Refresh",
+      "manageNodes": "Manage nodes"
+    },
+    "request": {
+      "running": "Running...",
+      "authAndNodeRequired": "You must be authenticated and select a node to call this endpoint.",
+      "missingNodeSelection": "Missing node selection.",
+      "downloaded": "Downloaded {fileName} ({size} bytes).",
+      "failed": "Request failed."
+    },
+    "connection": {
+      "title": "Connection",
+      "description": "Node selection shared by all calls.",
+      "nodeLabel": "Node",
+      "noNodes": "No nodes available",
+      "proxyInfo": "Requests are proxied via /api/nodes/[nodeId]/worker.",
+      "activeRole": "Active role on this node: {role}"
+    },
+    "noNodeAvailable": {
+      "prefix": "No node available. Create one in",
+      "suffix": "first."
+    },
+    "health": {
+      "title": "Health",
+      "description": "GET /health",
+      "buttons": {
+        "run": "Run health check"
+      }
+    },
+    "settings": {
+      "title": "Settings (Disabled)",
+      "description": "GET /settings (expected 404)",
+      "buttons": {
+        "call": "Call /settings"
+      }
+    },
+    "fields": {
+      "path": "Path",
+      "content": "Content",
+      "file": "File",
+      "source": "Source",
+      "destination": "Destination"
+    },
+    "filesystem": {
+      "title": "Filesystem",
+      "read": {
+        "title": "FS Read",
+        "description": "GET /fs/read?path=...",
+        "buttons": {
+          "run": "Read file"
+        }
+      },
+      "list": {
+        "title": "FS List",
+        "description": "GET /fs/list?path=...",
+        "buttons": {
+          "run": "List path"
+        }
+      },
+      "listRoot": {
+        "title": "FS List (Safe Root)",
+        "description": "GET /fs/list?path=",
+        "pathLabel": "Path (empty for root)",
+        "buttons": {
+          "run": "List safe root"
+        }
+      },
+      "write": {
+        "title": "FS Write",
+        "description": "POST /fs/write",
+        "buttons": {
+          "run": "Write file"
+        }
+      },
+      "download": {
+        "title": "FS Download",
+        "description": "GET /fs/download?path=...",
+        "buttons": {
+          "run": "Download file"
+        }
+      },
+      "upload": {
+        "title": "FS Upload",
+        "description": "POST /fs/upload (multipart)",
+        "buttons": {
+          "run": "Upload file"
+        },
+        "errors": {
+          "selectFile": "Select a file to upload."
+        }
+      },
+      "delete": {
+        "title": "FS Delete",
+        "description": "POST /fs/delete (file or folder)",
+        "recursiveHint": "Delete recursively (required for non-empty folders)",
+        "buttons": {
+          "run": "Delete"
+        }
+      },
+      "zip": {
+        "title": "FS Zip",
+        "description": "POST /fs/zip",
+        "buttons": {
+          "run": "Create zip"
+        }
+      },
+      "unzip": {
+        "title": "FS Unzip",
+        "description": "POST /fs/unzip",
+        "buttons": {
+          "run": "Unzip archive"
+        }
+      }
+    },
+    "stack": {
+      "title": "Stack",
+      "controls": {
+        "title": "Stack Controls",
+        "description": "GET /stack/status, POST /stack/up|down|restart",
+        "stackNameLabel": "Stack name",
+        "buttons": {
+          "status": "Status",
+          "up": "Up",
+          "down": "Down",
+          "restart": "Restart"
+        }
+      }
+    },
+    "requestLog": {
+      "title": "Request Log",
+      "description": "User id and node id are captured with each call.",
+      "empty": "No requests yet.",
+      "meta": "User: {userId} | Node: {nodeRef} | {durationMs}ms",
+      "status": {
+        "ok": "OK",
+        "err": "ERR"
+      },
+      "buttons": {
+        "clear": "Clear log"
+      }
     }
   },
   "HealthBlob": {
@@ -470,7 +829,9 @@
   "ServerPage": {
     "loading": "Loading...",
     "errors": {
-      "notFound": "Server not found."
+      "notFound": "Server not found.",
+      "missingRouteParams": "Missing node or server route parameters.",
+      "loadServer": "Failed to load server details."
     },
     "header": {
       "templateLabel": "Template",
@@ -490,7 +851,13 @@
       "stopping": "Stopping...",
       "refreshStatus": "Refresh status",
       "deleteServer": "Delete server",
-      "deleting": "Deleting..."
+      "deleting": "Deleting...",
+      "confirmDelete": "Delete server \"{name}\" permanently?",
+      "errors": {
+        "start": "Failed to start server.",
+        "stop": "Failed to stop server.",
+        "delete": "Failed to delete server."
+      }
     },
     "velocity": {
       "title": "Velocity Backends",
@@ -513,6 +880,18 @@
       "empty": {
         "templates": "No backend templates available",
         "backends": "No backend servers attached yet."
+      },
+      "errors": {
+        "loadTemplates": "Failed to load backend templates.",
+        "loadBackends": "Failed to load backend server list.",
+        "loadData": "Failed to load Velocity backend data.",
+        "createBackend": "Failed to create backend server."
+      },
+      "dialog": {
+        "title": "Template agreement required",
+        "description": "You must accept this agreement before creating the backend server.",
+        "cancel": "Cancel",
+        "agreeAndCreate": "I agree and create backend"
       }
     },
     "logs": {
@@ -536,10 +915,151 @@
         "noLogsManual": "No logs loaded. Click \"Refresh now\".",
         "connectedWaiting": "Connected. Waiting for new log lines...",
         "waitingStream": "Waiting for log stream..."
+      },
+      "errors": {
+        "loadSnapshot": "Failed to load console snapshot.",
+        "connectStream": "Failed to connect to live log stream.",
+        "noReadableBody": "Live log stream did not return a readable response body.",
+        "interrupted": "Live log stream was interrupted."
       }
     },
     "interactive": {
-      "idleHint": "Interactive session is idle. Click Start interactive session."
+      "title": "Interactive Console",
+      "description": "Owner/Admin only. Session is proxied through backend and worker.",
+      "sessionStatusLabel": "Session status:",
+      "offlineHint": "Interactive console is only available while the server is running.",
+      "idleHint": "Interactive session is idle. Click Start interactive session.",
+      "buttons": {
+        "startSession": "Start interactive session",
+        "sessionRunning": "Session running...",
+        "stopSession": "Stop session"
+      },
+      "errors": {
+        "generic": "Interactive console returned an error.",
+        "connectionFailed": "Interactive console connection failed.",
+        "closedImmediately": "Interactive console connection closed immediately.",
+        "loadRuntime": "Failed to load terminal runtime."
+      },
+      "terminal": {
+        "connecting": "Connecting to interactive console...",
+        "connected": "interactive session connected",
+        "disconnected": "interactive session disconnected",
+        "errorPrefix": "error",
+        "sessionEnded": "session ended: exit {code}"
+      }
+    },
+    "fileBrowser": {
+      "title": "File Browser",
+      "currentFolder": "Current folder: {path}",
+      "empty": "No entries in this folder.",
+      "restricted": "File management is limited to server owner/admin.",
+      "labels": {
+        "folder": "folder",
+        "file": "file"
+      },
+      "entryTypes": {
+        "dir": "DIR",
+        "file": "FILE",
+        "symlink": "SYMLINK",
+        "other": "OTHER"
+      },
+      "confirmDeletePath": "Delete {label} \"{path}\"?",
+      "buttons": {
+        "loading": "Loading...",
+        "refresh": "Refresh",
+        "upOneLevel": "Up one level",
+        "goToRoot": "Go to root",
+        "uploading": "Uploading...",
+        "uploadToCurrentFolder": "Upload to current folder",
+        "downloading": "Downloading...",
+        "download": "Download",
+        "unzipping": "Unzipping...",
+        "unzip": "Unzip",
+        "deleting": "Deleting...",
+        "delete": "Delete"
+      },
+      "errors": {
+        "loadDirectory": "Failed to load directory entries.",
+        "downloadPath": "Failed to download path.",
+        "invalidUploadPath": "Invalid upload path.",
+        "uploadFile": "Failed to upload file.",
+        "deletePath": "Failed to delete path.",
+        "unzipArchive": "Failed to unzip archive."
+      }
+    },
+    "fileEditor": {
+      "title": "File Editor",
+      "selectFromBrowser": "Select a file from browser",
+      "buttons": {
+        "saving": "Saving...",
+        "saveFile": "Save file",
+        "reload": "Reload"
+      },
+      "errors": {
+        "loadFile": "Failed to load file.",
+        "saveFile": "Failed to save file.",
+        "onlyRegularTextFiles": "Only regular text files can be opened."
+      }
+    },
+    "configEditor": {
+      "title": "Config Editor",
+      "description": "Existing keys are read-only; values are editable.",
+      "fields": {
+        "configFile": "Config file"
+      },
+      "empty": {
+        "noConfiguredFiles": "No configured files"
+      },
+      "columns": {
+        "key": "Key",
+        "value": "Value"
+      },
+      "buttons": {
+        "remove": "Remove",
+        "addSetting": "Add setting",
+        "saving": "Saving...",
+        "saveConfig": "Save config"
+      },
+      "errors": {
+        "loadConfig": "Failed to load config file.",
+        "saveConfig": "Failed to save config file."
+      }
+    },
+    "access": {
+      "title": "Access Management",
+      "description": "Invite users and manage server-specific permissions.",
+      "loading": "Loading...",
+      "fields": {
+        "email": "Email",
+        "emailPlaceholder": "friend@example.com",
+        "role": "Role"
+      },
+      "roles": {
+        "admin": "admin (full server access)",
+        "operator": "operator (start/stop + status)",
+        "viewer": "viewer (status only)"
+      },
+      "buttons": {
+        "sendingInvite": "Sending invite...",
+        "createInvite": "Create invite",
+        "revoking": "Revoking...",
+        "revoke": "Revoke",
+        "removing": "Removing...",
+        "remove": "Remove"
+      },
+      "pendingInvites": {
+        "title": "Pending invites",
+        "empty": "No pending invites.",
+        "meta": "Inviter: {inviter} | Expires: {expiresAt}"
+      },
+      "guests": {
+        "title": "Guests",
+        "empty": "No guests assigned.",
+        "meta": "{email} | Added: {createdAt}"
+      },
+      "errors": {
+        "createInvite": "Failed to create invite."
+      }
     },
     "status": {
       "up": "Online",

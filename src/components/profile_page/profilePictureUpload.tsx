@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import Cropper from "react-easy-crop";
+import Cropper, { type Area } from "react-easy-crop";
 import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
-import { UploadCloud, Image, ZoomIn, ZoomOut } from "lucide-react";
+import { UploadCloud, ImageIcon, ZoomIn, ZoomOut } from "lucide-react";
 import { useTranslations } from "next-intl"; // neu
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/toast";
@@ -28,9 +28,11 @@ export function ProfileImageUploader() {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const avatarFallback =
+    session?.user?.name?.trim().slice(0, 2).toUpperCase() || t("upload.fallbackInitials");
 
   // --- HILFSFUNKTION: Zustände zurücksetzen ---
   const resetImageState = () => {
@@ -85,13 +87,14 @@ export function ProfileImageUploader() {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
   // --- CROP CALLBACK / CROPPING TO BLOB / UPLOAD HANDLER ---
-  const onCropComplete = useCallback((_: any, croppedPixels: any) => {
+  const onCropComplete = useCallback((_: Area, croppedPixels: Area) => {
     setCroppedAreaPixels(croppedPixels);
   }, []);
 
-  async function cropToBlob(imageSrc: string, cropPixels: any): Promise<Blob> {
+  async function cropToBlob(imageSrc: string, cropPixels: Area): Promise<Blob> {
     const image = document.createElement("img");
     image.src = imageSrc;
+    image.alt = "";
 
     await new Promise((resolve) => {
       image.onload = resolve;
@@ -138,13 +141,12 @@ export function ProfileImageUploader() {
       body: formData,
     });
 
-    const data = await res.json();
     setUploading(false);
 
     if (!res.ok) {
       push({
         variant: "error",
-        description: data.message || t("upload.error"),
+        description: t("upload.error"),
       });
       return;
     }
@@ -164,12 +166,12 @@ export function ProfileImageUploader() {
         <Avatar className="w-[50px] h-[50px]">
           <AvatarImage
             src={session?.user?.image || "/default-profile.png"}
-            alt={session?.user?.name || "CN"}
+            alt={session?.user?.name || t("upload.avatarAlt")}
             width={50}
             height={50}
             className="rounded-full cursor-pointer border shadow"
           />
-          <AvatarFallback>CN</AvatarFallback>
+          <AvatarFallback>{avatarFallback}</AvatarFallback>
         </Avatar>
       </DialogTrigger>
 
@@ -199,7 +201,7 @@ export function ProfileImageUploader() {
             {isDragActive ? (
               <UploadCloud className="w-8 h-8 animate-pulse text-blue-600" />
             ) : (
-              <Image className="w-8 h-8 text-gray-500" />
+              <ImageIcon className="w-8 h-8 text-gray-500" />
             )}
 
             <p className="text-center font-semibold text-gray-700">
@@ -236,7 +238,7 @@ export function ProfileImageUploader() {
               <label className="text-sm font-medium flex items-center gap-2 mb-2">
                 <div className="flex justify-between items-center w-full">
                   <ZoomOut className="w-4 h-4 text-gray-500" />
-                  <p className="flex-grow text-center">Zoom</p>
+                  <p className="flex-grow text-center">{t("upload.zoom")}</p>
                   <ZoomIn className="w-4 h-4 text-gray-500" />
                 </div>
               </label>

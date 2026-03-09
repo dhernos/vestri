@@ -56,7 +56,7 @@ export default function TwoFactorAuthSection() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || t("setupError"));
+        throw new Error(t("setupError"));
       }
 
       if (method === "app" && data.qrCodeUrl && data.secret) {
@@ -65,7 +65,7 @@ export default function TwoFactorAuthSection() {
       } else if (method === "email") {
         push({
           variant: "success",
-          description: data.message || t("emailCodeSent"),
+          description: t("emailCodeSent"),
         });
       }
     } catch (err) {
@@ -100,12 +100,10 @@ export default function TwoFactorAuthSection() {
         }),
       });
 
-      const data = await res.json();
-
       if (res.ok) {
         push({
           variant: "success",
-          description: data.message || t("activationSuccess"),
+          description: t("activationSuccess"),
         });
         await refresh();
         setIs2FASetupModalOpen(false);
@@ -113,7 +111,7 @@ export default function TwoFactorAuthSection() {
       } else {
         push({
           variant: "error",
-          description: data.message || t("activationFailed"),
+          description: t("activationFailed"),
         });
       }
     } catch (err) {
@@ -139,18 +137,16 @@ export default function TwoFactorAuthSection() {
         body: JSON.stringify({ totpCode: code }), // 2FA-Code senden
       });
 
-      const data = await res.json();
-
       if (res.ok) {
         push({
           variant: "success",
-          description: data.message || t("disableSuccess"),
+          description: t("disableSuccess"),
         });
         await refresh();
         return null;
       } else {
         // Fehler, z.B. falscher 2FA-Code
-        return data.message || t("disableFailed");
+        return t("disableFailed");
       }
     } catch (err) {
       console.error(err);
@@ -270,7 +266,7 @@ export default function TwoFactorAuthSection() {
               <div className="text-center p-4">
                 <Image
                   src={qrCodeUrl}
-                  alt="2FA QR Code"
+                  alt={t("qrCodeAlt")}
                   width={200}
                   height={200}
                   className="mx-auto border p-2"
@@ -279,7 +275,7 @@ export default function TwoFactorAuthSection() {
                   {t("scanInstruction")}
                 </p>
                 <p className="mt-1 font-mono text-xs break-all">
-                  Secret: **{setupSecret}**
+                  {t("secretLabel", { secret: setupSecret || "" })}
                 </p>
               </div>
             )}
@@ -288,7 +284,7 @@ export default function TwoFactorAuthSection() {
               <div className="grid gap-4 py-4">
                 <Input
                   id="setupCode"
-                  placeholder="000000"
+                  placeholder={t("codePlaceholder")}
                   value={setupCode}
                   onChange={(e) => setSetupCode(e.target.value)}
                   maxLength={6}

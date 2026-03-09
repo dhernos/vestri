@@ -56,8 +56,6 @@ export default function VerifyEmailPage() {
           body: JSON.stringify({ email, code: verificationCode }),
         });
 
-        const data = await response.json();
-
         if (response.ok) {
           push({ variant: "success", description: t("messages.success") });
           setTimeout(() => {
@@ -66,7 +64,7 @@ export default function VerifyEmailPage() {
         } else {
           push({
             variant: "error",
-            description: data.message || tErrors("VERIFICATION_FAILED"),
+            description: tErrors("VERIFICATION_FAILED"),
           });
         }
       } catch (err) {

@@ -534,7 +534,7 @@ export default function ServerControlsPage() {
   const [execSessionActive, setExecSessionActive] = useState(false);
 
   const consoleOutputRef = useRef<HTMLPreElement | null>(null);
-  const logsAbortRef = useRef<AbortController | null>(null);
+  const logsSocketRef = useRef<WebSocket | null>(null);
   const logsRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const consoleSnapshotRequestRef = useRef(0);
   const consoleHasOutputRef = useRef(false);
@@ -557,7 +557,7 @@ export default function ServerControlsPage() {
   const isServerUp = server?.status === "up";
   const canReadConsole = Boolean(server?.permissions.canReadConsole);
   const canUseInteractiveConsole = Boolean(server?.permissions.canManage);
-  const canConnectLogStream = canReadConsole;
+  const canConnectLogStream = canReadConsole && isServerUp;
   const canConnectInteractiveConsole = canUseInteractiveConsole && isServerUp;
   const shouldConnectLogStream = canConnectLogStream && consoleRefreshMode === "auto";
   const shouldConnectInteractiveConsole =
@@ -565,6 +565,10 @@ export default function ServerControlsPage() {
   const isVelocityServer = server?.kind === "velocity";
   const isVelocityBackendServer = server?.kind === "velocity-backend";
   const statusLabel = useCallback((status: ServerStatus) => t(`status.${status}`), [t]);
+  const invitePermissionLabel = useCallback(
+    (permission: "admin" | "operator" | "viewer") => t(`access.roles.${permission}`),
+    [t]
+  );
   const selectedVelocityTemplate = useMemo(
     () => velocityTemplates.find((template) => template.id === velocityTemplateId) || null,
     [velocityTemplateId, velocityTemplates]
@@ -584,7 +588,7 @@ export default function ServerControlsPage() {
   const loadServer = useCallback(async () => {
     if (!basePath) {
       setLoading(false);
-      setError("Missing route params.");
+      setError(t("errors.missingRouteParams"));
       return;
     }
 
@@ -601,18 +605,18 @@ export default function ServerControlsPage() {
       };
       if (!res.ok || !data.server) {
         setServer(null);
-        setError(data.message || "Failed to load server.");
+        setError(t("errors.loadServer"));
         return;
       }
       setServer(data.server);
       setStackError("");
     } catch {
       setServer(null);
-      setError("Failed to load server.");
+      setError(t("errors.loadServer"));
     } finally {
       setLoading(false);
     }
-  }, [basePath]);
+  }, [basePath, t]);
 
   useEffect(() => {
     loadServer();
@@ -664,10 +668,10 @@ export default function ServerControlsPage() {
               template.id.toLowerCase() === "minecraft-vanilla"
           );
         } else {
-          nextErrors.push(templatesData.message || "Failed to load backend templates.");
+          nextErrors.push(templatesData.message || t("velocity.errors.loadTemplates"));
         }
       } else {
-        nextErrors.push("Failed to load backend templates.");
+        nextErrors.push(t("velocity.errors.loadTemplates"));
       }
 
       if (backendsResult.status === "fulfilled") {
@@ -679,10 +683,10 @@ export default function ServerControlsPage() {
         if (backendsRes.ok) {
           nextBackends = Array.isArray(backendsData.servers) ? backendsData.servers : [];
         } else {
-          nextErrors.push(backendsData.message || "Failed to load velocity backends.");
+          nextErrors.push(backendsData.message || t("velocity.errors.loadBackends"));
         }
       } else {
-        nextErrors.push("Failed to load velocity backends.");
+        nextErrors.push(t("velocity.errors.loadBackends"));
       }
 
       setVelocityTemplates(nextTemplates);
@@ -700,11 +704,11 @@ export default function ServerControlsPage() {
         setVelocityError(nextErrors.join(" "));
       }
     } catch {
-      setVelocityError("Failed to load velocity backend data.");
+      setVelocityError(t("velocity.errors.loadData"));
     } finally {
       setVelocityLoading(false);
     }
-  }, [nodeRef, server, velocityTemplateId]);
+  }, [nodeRef, server, t, velocityTemplateId]);
 
   useEffect(() => {
     if (!server || server.kind !== "velocity") {
@@ -729,12 +733,50 @@ export default function ServerControlsPage() {
     );
   }, [velocityBackendSoftwareVersion, velocityGameField]);
 
+  const refreshServerStatus = useCallback(async (): Promise<ServerStatus | null> => {
+    if (!basePath) {
+      return null;
+    }
+    try {
+      const res = await fetch(`${basePath}/status`, {
+        credentials: "include",
+        cache: "no-store",
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        status?: ServerStatus;
+        output?: string;
+        error?: string;
+      };
+      if (!res.ok) {
+        return null;
+      }
+      const nextStatus = data.status || "unknown";
+      setServer((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: nextStatus,
+              statusOutput: data.output || "",
+              statusError: data.error || "",
+            }
+          : prev
+      );
+      return nextStatus;
+    } catch {
+      return null;
+    }
+  }, [basePath]);
+
   const appendConsoleOutput = useCallback((chunk: string) => {
     if (!chunk) {
       return;
     }
     setConsoleOutput((prev) => {
-      const next = `${prev}${chunk}`;
+      const normalizedChunk = prev.length === 0 && chunk === "\n" ? "" : chunk;
+      if (!normalizedChunk) {
+        return prev;
+      }
+      const next = `${prev}${normalizedChunk}`;
       if (next.length <= maxConsoleOutputChars) {
         return next;
       }
@@ -748,6 +790,17 @@ export default function ServerControlsPage() {
       params.set("follow", follow ? "1" : "0");
       params.set("tail", tail);
       return `${basePath}/console/logs/stream?${params.toString()}`;
+    },
+    [basePath]
+  );
+
+  const buildConsoleLogsWSURL = useCallback(
+    (tail: string) => {
+      const params = new URLSearchParams();
+      params.set("follow", "1");
+      params.set("tail", tail);
+      const proto = window.location.protocol === "https:" ? "wss" : "ws";
+      return `${proto}://${window.location.host}${basePath}/console/logs/ws?${params.toString()}`;
     },
     [basePath]
   );
@@ -775,7 +828,7 @@ export default function ServerControlsPage() {
 
         if (!res.ok) {
           const text = await res.text().catch(() => "");
-          setConsoleError(text || "Failed to load console logs.");
+          setConsoleError(text || t("logs.errors.loadSnapshot"));
           return;
         }
 
@@ -820,14 +873,14 @@ export default function ServerControlsPage() {
         if (requestID !== consoleSnapshotRequestRef.current || signal?.aborted) {
           return;
         }
-        setConsoleError("Failed to load console logs.");
+        setConsoleError(t("logs.errors.loadSnapshot"));
       } finally {
         if (requestID === consoleSnapshotRequestRef.current) {
           setConsoleSnapshotLoading(false);
         }
       }
     },
-    [appendConsoleOutput, basePath, buildConsoleLogsURL, canReadConsole, consoleRefreshMode]
+    [appendConsoleOutput, basePath, buildConsoleLogsURL, canReadConsole, consoleRefreshMode, t]
   );
 
   useEffect(() => {
@@ -878,8 +931,10 @@ export default function ServerControlsPage() {
   useEffect(() => {
     if (!basePath || !shouldConnectLogStream) {
       setConsoleStatus("idle");
-      logsAbortRef.current?.abort();
-      logsAbortRef.current = null;
+      if (logsSocketRef.current && logsSocketRef.current.readyState <= WebSocket.OPEN) {
+        logsSocketRef.current.close();
+      }
+      logsSocketRef.current = null;
       if (logsRetryTimerRef.current) {
         clearTimeout(logsRetryTimerRef.current);
         logsRetryTimerRef.current = null;
@@ -892,16 +947,42 @@ export default function ServerControlsPage() {
     let initialHistoryLoaded = false;
 
     const cleanup = () => {
-      logsAbortRef.current?.abort();
-      logsAbortRef.current = null;
+      if (logsSocketRef.current && logsSocketRef.current.readyState <= WebSocket.OPEN) {
+        logsSocketRef.current.close();
+      }
+      logsSocketRef.current = null;
       if (logsRetryTimerRef.current) {
         clearTimeout(logsRetryTimerRef.current);
         logsRetryTimerRef.current = null;
       }
     };
 
-    const scheduleReconnect = () => {
+    const canRetryLogsConnection = async () => {
       if (cancelled) {
+        return false;
+      }
+
+      const latestStatus = await refreshServerStatus();
+      if (cancelled) {
+        return false;
+      }
+
+      if (latestStatus && latestStatus !== "up") {
+        return false;
+      }
+      if (latestStatus !== "up") {
+        return false;
+      }
+      return true;
+    };
+
+    const scheduleReconnect = async () => {
+      if (cancelled) {
+        return;
+      }
+      const canRetry = await canRetryLogsConnection();
+      if (!canRetry || cancelled) {
+        setConsoleStatus("idle");
         return;
       }
       reconnectAttempt += 1;
@@ -918,71 +999,95 @@ export default function ServerControlsPage() {
         return;
       }
 
-      const controller = new AbortController();
-      logsAbortRef.current = controller;
+      const canConnectNow = await canRetryLogsConnection();
+      if (!canConnectNow || cancelled) {
+        setConsoleStatus("idle");
+        return;
+      }
+
+      if (logsSocketRef.current && logsSocketRef.current.readyState <= WebSocket.OPEN) {
+        logsSocketRef.current.close();
+      }
       setConsoleStatus(reconnectAttempt === 0 ? "connecting" : "reconnecting");
+      setConsoleError("");
 
+      const tailMode =
+        initialHistoryLoaded || consoleHasOutputRef.current ? "0" : "all";
+
+      let socket: WebSocket;
       try {
-        const tailMode =
-          initialHistoryLoaded || consoleHasOutputRef.current ? "0" : "all";
-        const res = await fetch(buildConsoleLogsURL(true, tailMode), {
-          credentials: "include",
-          cache: "no-store",
-          signal: controller.signal,
-        });
-
-        if (!res.ok) {
-          const message = await res.text().catch(() => "");
-          setConsoleError(message || "Failed to connect to log stream.");
+        socket = new WebSocket(buildConsoleLogsWSURL(tailMode));
+      } catch {
+        if (!cancelled) {
+          setConsoleError(t("logs.errors.connectStream"));
           setConsoleStatus("error");
-          scheduleReconnect();
+          void scheduleReconnect();
+        }
+        return;
+      }
+
+      logsSocketRef.current = socket;
+      let hadSocketError = false;
+
+      socket.onopen = () => {
+        if (cancelled) {
+          socket.close();
           return;
         }
-
-        if (!res.body) {
-          setConsoleError("Log stream did not provide a readable body.");
-          setConsoleStatus("error");
-          scheduleReconnect();
-          return;
-        }
-
         setConsoleError("");
         setConsoleStatus("connected");
         reconnectAttempt = 0;
         if (!initialHistoryLoaded) {
           initialHistoryLoaded = true;
         }
+      };
 
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-
-        while (!cancelled) {
-          const { done, value } = await reader.read();
-          if (done) {
-            break;
-          }
-          appendConsoleOutput(decoder.decode(value, { stream: true }));
+      socket.onmessage = (event) => {
+        if (cancelled) {
+          return;
         }
+        if (typeof event.data === "string") {
+          appendConsoleOutput(event.data);
+          return;
+        }
+        if (event.data instanceof Blob) {
+          void event.data
+            .text()
+            .then((value) => {
+              if (!cancelled) {
+                appendConsoleOutput(value);
+              }
+            })
+            .catch(() => {
+              // ignore blob decode failures
+            });
+          return;
+        }
+        if (event.data instanceof ArrayBuffer) {
+          appendConsoleOutput(new TextDecoder().decode(event.data));
+        }
+      };
 
+      socket.onerror = () => {
         if (!cancelled) {
-          const tail = decoder.decode();
-          if (tail) {
-            appendConsoleOutput(tail);
-          }
-          setConsoleStatus("disconnected");
-          scheduleReconnect();
-        }
-      } catch {
-        if (!cancelled && !controller.signal.aborted) {
-          setConsoleError("Log stream interrupted.");
+          hadSocketError = true;
+          setConsoleError(t("logs.errors.interrupted"));
           setConsoleStatus("error");
-          scheduleReconnect();
         }
-      } finally {
-        if (logsAbortRef.current === controller) {
-          logsAbortRef.current = null;
+      };
+
+      socket.onclose = () => {
+        if (logsSocketRef.current === socket) {
+          logsSocketRef.current = null;
         }
-      }
+        if (cancelled) {
+          return;
+        }
+        if (!hadSocketError) {
+          setConsoleStatus("disconnected");
+        }
+        void scheduleReconnect();
+      };
     };
 
     void connectLogs();
@@ -991,7 +1096,14 @@ export default function ServerControlsPage() {
       cancelled = true;
       cleanup();
     };
-  }, [appendConsoleOutput, basePath, buildConsoleLogsURL, shouldConnectLogStream]);
+  }, [
+    appendConsoleOutput,
+    basePath,
+    buildConsoleLogsWSURL,
+    refreshServerStatus,
+    shouldConnectLogStream,
+    t,
+  ]);
 
   useEffect(() => {
     if (!basePath || !shouldConnectInteractiveConsole) {
@@ -1102,17 +1214,17 @@ export default function ServerControlsPage() {
 
       if (message.type === "error") {
         receivedSessionEndSignal = true;
-        const text = message.message || "Interactive console error.";
+        const text = message.message || t("interactive.errors.generic");
         setExecError(text);
         setExecStatus("error");
-        terminal?.write(`\r\n[error] ${text}\r\n`);
+        terminal?.write(`\r\n[${t("interactive.terminal.errorPrefix")} ${text}]\r\n`);
         return;
       }
 
       if (message.type === "exit") {
         receivedSessionEndSignal = true;
         const code = typeof message.code === "number" ? message.code : -1;
-        terminal?.write(`\r\n[session ended: exit ${code}]\r\n`);
+        terminal?.write(`\r\n[${t("interactive.terminal.sessionEnded", { code })}]\r\n`);
         setExecStatus("disconnected");
       }
     };
@@ -1137,7 +1249,7 @@ export default function ServerControlsPage() {
         reconnectAttempt = 0;
         setExecStatus("connected");
         setExecError("");
-        terminal?.write("\r\n[interactive session connected]\r\n");
+        terminal?.write(`\r\n[${t("interactive.terminal.connected")}]\r\n`);
         sendResize();
       };
 
@@ -1150,7 +1262,7 @@ export default function ServerControlsPage() {
       socket.onerror = () => {
         if (!cancelled) {
           setExecStatus("error");
-          setExecError("Interactive console connection failed.");
+          setExecError(t("interactive.errors.connectionFailed"));
         }
       };
 
@@ -1161,15 +1273,13 @@ export default function ServerControlsPage() {
         if (execSocketRef.current === socket) {
           execSocketRef.current = null;
         }
-        terminal?.write("\r\n[interactive session disconnected]\r\n");
+        terminal?.write(`\r\n[${t("interactive.terminal.disconnected")}]\r\n`);
         setExecStatus("disconnected");
 
         const closedQuickly = connectedAtMs > 0 && Date.now() - connectedAtMs < 1500;
         if (receivedSessionEndSignal || closedQuickly) {
           if (closedQuickly && !receivedSessionEndSignal) {
-            setExecError(
-              "Interactive session closed immediately. Check worker logs/container state."
-            );
+            setExecError(t("interactive.errors.closedImmediately"));
           }
           return;
         }
@@ -1202,7 +1312,7 @@ export default function ServerControlsPage() {
         terminal.loadAddon(fitAddon);
         terminal.open(host);
         fitAddon.fit();
-        terminal.write("Connecting to interactive console...\r\n");
+        terminal.write(`${t("interactive.terminal.connecting")}\r\n`);
 
         terminalRef.current = terminal;
         fitAddonRef.current = fitAddon;
@@ -1223,7 +1333,7 @@ export default function ServerControlsPage() {
       } catch {
         if (!cancelled) {
           setExecStatus("error");
-          setExecError("Failed to load xterm runtime.");
+          setExecError(t("interactive.errors.loadRuntime"));
         }
       }
     };
@@ -1239,7 +1349,7 @@ export default function ServerControlsPage() {
       cleanupSocket();
       disposeTerminal();
     };
-  }, [basePath, shouldConnectInteractiveConsole, serverId]);
+  }, [basePath, shouldConnectInteractiveConsole, serverId, t]);
 
   useEffect(() => {
     if (!server) {
@@ -1272,14 +1382,13 @@ export default function ServerControlsPage() {
         method: "POST",
         credentials: "include",
       });
-      const data = (await res.json().catch(() => ({}))) as { message?: string };
       if (!res.ok) {
-        setStackError(data.message || `Failed to ${action} server.`);
+        setStackError(t(`controls.errors.${action}`));
         return;
       }
       await loadServer();
     } catch {
-      setStackError(`Failed to ${action} server.`);
+      setStackError(t(`controls.errors.${action}`));
     } finally {
       setStackActionLoading("");
     }
@@ -1289,41 +1398,14 @@ export default function ServerControlsPage() {
     if (!server || !basePath) {
       return;
     }
-    try {
-      const res = await fetch(`${basePath}/status`, {
-        credentials: "include",
-        cache: "no-store",
-      });
-      const data = (await res.json().catch(() => ({}))) as {
-        status?: ServerStatus;
-        output?: string;
-        error?: string;
-      };
-      if (!res.ok) {
-        return;
-      }
-      setServer((prev) =>
-        prev
-          ? {
-              ...prev,
-              status: data.status || "unknown",
-              statusOutput: data.output || "",
-              statusError: data.error || "",
-            }
-          : prev
-      );
-    } catch {
-      // background refresh only
-    }
+    await refreshServerStatus();
   };
 
   const deleteServer = async () => {
     if (!server || !basePath || serverDeleting) {
       return;
     }
-    const confirmed = window.confirm(
-      `Delete server "${server.name}"? This removes all files on the worker.`
-    );
+    const confirmed = window.confirm(t("controls.confirmDelete", { name: server.name }));
     if (!confirmed) {
       return;
     }
@@ -1335,14 +1417,13 @@ export default function ServerControlsPage() {
         method: "DELETE",
         credentials: "include",
       });
-      const data = (await res.json().catch(() => ({}))) as { message?: string };
       if (!res.ok) {
-        setDeleteError(data.message || "Failed to delete server.");
+        setDeleteError(t("controls.errors.delete"));
         return;
       }
       router.push(`/dashboard?node=${encodeURIComponent(nodeRef)}`);
     } catch {
-      setDeleteError("Failed to delete server.");
+      setDeleteError(t("controls.errors.delete"));
     } finally {
       setServerDeleting(false);
     }
@@ -1370,16 +1451,15 @@ export default function ServerControlsPage() {
         }),
       });
 
-      const data = (await res.json().catch(() => ({}))) as { message?: string };
       if (!res.ok) {
-        setVelocityCreateError(data.message || "Failed to create velocity backend server.");
+        setVelocityCreateError(t("velocity.errors.createBackend"));
         return;
       }
 
       setVelocityBackendName("");
       await loadVelocityData();
     } catch {
-      setVelocityCreateError("Failed to create velocity backend server.");
+      setVelocityCreateError(t("velocity.errors.createBackend"));
     } finally {
       setVelocityCreating(false);
     }
@@ -1420,7 +1500,7 @@ export default function ServerControlsPage() {
       if (!res.ok) {
         const message = await res.text().catch(() => "");
         setBrowserEntries([]);
-        setBrowserError(message || "Failed to load directory.");
+        setBrowserError(message || t("fileBrowser.errors.loadDirectory"));
         return;
       }
       const data = (await res.json().catch(() => [])) as WorkerListEntry[];
@@ -1430,7 +1510,7 @@ export default function ServerControlsPage() {
       setBrowserEntries(sortEntries(normalized));
     } catch {
       setBrowserEntries([]);
-      setBrowserError("Failed to load directory.");
+      setBrowserError(t("fileBrowser.errors.loadDirectory"));
     } finally {
       setBrowserLoading(false);
       if (folderNavigationUnlockTimerRef.current) {
@@ -1442,7 +1522,7 @@ export default function ServerControlsPage() {
         folderNavigationUnlockTimerRef.current = null;
       }, folderNavigationDelayMs);
     }
-  }, [basePath, browserPath, server]);
+  }, [basePath, browserPath, server, t]);
 
   useEffect(() => {
     loadBrowserEntries();
@@ -1477,14 +1557,14 @@ export default function ServerControlsPage() {
       if (!res.ok) {
         const message = await res.text().catch(() => "");
         setFileContent("");
-        setFileError(message || "Failed to load file.");
+        setFileError(message || t("fileEditor.errors.loadFile"));
         return;
       }
       const raw = await res.text();
       setFileContent(decodeEscapedLineBreaks(raw));
     } catch {
       setFileContent("");
-      setFileError("Failed to load file.");
+      setFileError(t("fileEditor.errors.loadFile"));
     } finally {
       setFileLoading(false);
     }
@@ -1508,12 +1588,12 @@ export default function ServerControlsPage() {
       });
       if (!res.ok) {
         const message = await res.text().catch(() => "");
-        setFileError(message || "Failed to save file.");
+        setFileError(message || t("fileEditor.errors.saveFile"));
         return;
       }
       await loadBrowserEntries();
     } catch {
-      setFileError("Failed to save file.");
+      setFileError(t("fileEditor.errors.saveFile"));
     } finally {
       setFileSaving(false);
     }
@@ -1542,7 +1622,7 @@ export default function ServerControlsPage() {
       });
       if (!res.ok) {
         const message = await res.text().catch(() => "");
-        setBrowserActionError(message || "Failed to download path.");
+        setBrowserActionError(message || t("fileBrowser.errors.downloadPath"));
         return;
       }
 
@@ -1559,7 +1639,7 @@ export default function ServerControlsPage() {
       anchor.remove();
       URL.revokeObjectURL(objectUrl);
     } catch {
-      setBrowserActionError("Failed to download path.");
+      setBrowserActionError(t("fileBrowser.errors.downloadPath"));
     } finally {
       setBrowserDownloadingPath("");
     }
@@ -1574,7 +1654,7 @@ export default function ServerControlsPage() {
       browserPath ? `${browserPath}/${browserUploadFile.name}` : browserUploadFile.name
     );
     if (!uploadPath) {
-      setBrowserActionError("Invalid upload path.");
+      setBrowserActionError(t("fileBrowser.errors.invalidUploadPath"));
       return;
     }
 
@@ -1592,7 +1672,7 @@ export default function ServerControlsPage() {
       });
       if (!res.ok) {
         const message = await res.text().catch(() => "");
-        setBrowserActionError(message || "Failed to upload file.");
+        setBrowserActionError(message || t("fileBrowser.errors.uploadFile"));
         return;
       }
 
@@ -1600,7 +1680,7 @@ export default function ServerControlsPage() {
       setBrowserUploadInputKey((prev) => prev + 1);
       await loadBrowserEntries();
     } catch {
-      setBrowserActionError("Failed to upload file.");
+      setBrowserActionError(t("fileBrowser.errors.uploadFile"));
     } finally {
       setBrowserUploading(false);
     }
@@ -1618,8 +1698,9 @@ export default function ServerControlsPage() {
       return;
     }
 
-    const label = entryType === "dir" ? "folder" : "file";
-    const confirmed = window.confirm(`Delete ${label} "${cleanPath}"?`);
+    const label =
+      entryType === "dir" ? t("fileBrowser.labels.folder") : t("fileBrowser.labels.file");
+    const confirmed = window.confirm(t("fileBrowser.confirmDeletePath", { label, path: cleanPath }));
     if (!confirmed) {
       return;
     }
@@ -1638,7 +1719,7 @@ export default function ServerControlsPage() {
       });
       if (!res.ok) {
         const message = await res.text().catch(() => "");
-        setBrowserActionError(message || "Failed to delete path.");
+        setBrowserActionError(message || t("fileBrowser.errors.deletePath"));
         return;
       }
 
@@ -1648,7 +1729,7 @@ export default function ServerControlsPage() {
       }
       await loadBrowserEntries();
     } catch {
-      setBrowserActionError("Failed to delete path.");
+      setBrowserActionError(t("fileBrowser.errors.deletePath"));
     } finally {
       setBrowserDeletingPath("");
     }
@@ -1678,13 +1759,13 @@ export default function ServerControlsPage() {
       });
       if (!res.ok) {
         const message = await res.text().catch(() => "");
-        setBrowserActionError(message || "Failed to unzip archive.");
+        setBrowserActionError(message || t("fileBrowser.errors.unzipArchive"));
         return;
       }
 
       await loadBrowserEntries();
     } catch {
-      setBrowserActionError("Failed to unzip archive.");
+      setBrowserActionError(t("fileBrowser.errors.unzipArchive"));
     } finally {
       setBrowserUnzippingPath("");
     }
@@ -1714,7 +1795,7 @@ export default function ServerControlsPage() {
           const message = await res.text().catch(() => "");
           setConfigContent("");
           setConfigRows([]);
-          setConfigError(message || "Failed to load config.");
+          setConfigError(message || t("configEditor.errors.loadConfig"));
           setUseKeyValueEditor(false);
           return;
         }
@@ -1730,14 +1811,14 @@ export default function ServerControlsPage() {
         setConfigContent("");
         setConfigRows([]);
         setUseKeyValueEditor(false);
-        setConfigError("Failed to load config.");
+        setConfigError(t("configEditor.errors.loadConfig"));
       } finally {
         setConfigLoading(false);
       }
     };
 
     loadConfig();
-  }, [basePath, selectedConfigFile, server]);
+  }, [basePath, selectedConfigFile, server, t]);
 
   const saveConfig = async () => {
     if (!server || !selectedConfigFile || !basePath) {
@@ -1760,12 +1841,12 @@ export default function ServerControlsPage() {
       });
       if (!res.ok) {
         const message = await res.text().catch(() => "");
-        setConfigError(message || "Failed to save config.");
+        setConfigError(message || t("configEditor.errors.saveConfig"));
         return;
       }
       await loadBrowserEntries();
     } catch {
-      setConfigError("Failed to save config.");
+      setConfigError(t("configEditor.errors.saveConfig"));
     } finally {
       setConfigSaving(false);
     }
@@ -1877,15 +1958,14 @@ export default function ServerControlsPage() {
           permission: invitePermission,
         }),
       });
-      const data = (await res.json().catch(() => ({}))) as { message?: string };
       if (!res.ok) {
-        setInviteError(data.message || "Failed to create invite.");
+        setInviteError(t("access.errors.createInvite"));
         return;
       }
       setInviteEmail("");
       await Promise.all([loadInvites(), loadGuests()]);
     } catch {
-      setInviteError("Failed to create invite.");
+      setInviteError(t("access.errors.createInvite"));
     } finally {
       setInviteSubmitting(false);
     }
@@ -2292,9 +2372,9 @@ export default function ServerControlsPage() {
       {canUseInteractiveConsole ? (
         <Card>
           <CardHeader>
-            <CardTitle>Interactive Console</CardTitle>
+            <CardTitle>{t("interactive.title")}</CardTitle>
             <CardDescription>
-              Owner/Admin only. Session is proxied through backend and worker.
+              {t("interactive.description")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -2304,22 +2384,24 @@ export default function ServerControlsPage() {
                 onClick={startExecSession}
                 disabled={!canConnectInteractiveConsole || execSessionActive}
               >
-                {execSessionActive ? "Session running..." : "Start interactive session"}
+                {execSessionActive
+                  ? t("interactive.buttons.sessionRunning")
+                  : t("interactive.buttons.startSession")}
               </Button>
               <Button
                 variant="outline"
                 onClick={stopExecSession}
                 disabled={!execSessionActive}
               >
-                Stop session
+                {t("interactive.buttons.stopSession")}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Session status: {execStatus}
+              {t("interactive.sessionStatusLabel")} {t(`connectionStatus.${execStatus}`)}
             </p>
             {!isServerUp ? (
               <p className="text-xs text-muted-foreground">
-                Interactive console is only available while the server is running.
+                {t("interactive.offlineHint")}
               </p>
             ) : null}
             {execError ? <p className="text-sm text-red-600">{execError}</p> : null}
@@ -2341,9 +2423,9 @@ export default function ServerControlsPage() {
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle>File Browser</CardTitle>
+              <CardTitle>{t("fileBrowser.title")}</CardTitle>
               <CardDescription>
-                Current folder: /{browserPath || "."}
+                {t("fileBrowser.currentFolder", { path: `/${browserPath || "."}` })}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -2353,21 +2435,21 @@ export default function ServerControlsPage() {
                   onClick={loadBrowserEntries}
                   disabled={browserLoading}
                 >
-                  {browserLoading ? "Loading..." : "Refresh"}
+                  {browserLoading ? t("fileBrowser.buttons.loading") : t("fileBrowser.buttons.refresh")}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => setBrowserPath(parentRelativePath(browserPath))}
                   disabled={!browserPath}
                 >
-                  Up one level
+                  {t("fileBrowser.buttons.upOneLevel")}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => setBrowserPath("")}
                   disabled={!browserPath}
                 >
-                  Go to root
+                  {t("fileBrowser.buttons.goToRoot")}
                 </Button>
               </div>
               <div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed p-3">
@@ -2383,7 +2465,9 @@ export default function ServerControlsPage() {
                   onClick={uploadFileToCurrentFolder}
                   disabled={!browserUploadFile || browserUploading}
                 >
-                  {browserUploading ? "Uploading..." : "Upload to current folder"}
+                  {browserUploading
+                    ? t("fileBrowser.buttons.uploading")
+                    : t("fileBrowser.buttons.uploadToCurrentFolder")}
                 </Button>
               </div>
               {browserError ? <p className="text-sm text-red-600">{browserError}</p> : null}
@@ -2392,7 +2476,7 @@ export default function ServerControlsPage() {
               ) : null}
               <div className="max-h-72 space-y-2 overflow-auto">
                 {browserEntries.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No entries in this folder.</p>
+                  <p className="text-sm text-muted-foreground">{t("fileBrowser.empty")}</p>
                 ) : (
                   browserEntries.map((entry) => {
                     const relativePath = normalizeRelativePath(
@@ -2404,14 +2488,16 @@ export default function ServerControlsPage() {
                     const isDeleting = browserDeletingPath === relativePath;
                     const canUnzip = entry.type === "file" && isZipArchiveName(entry.name);
                     const isUnzipping = browserUnzippingPath === relativePath;
-                    const typeLabel =
+                    const typeKey =
                       entry.type === "dir"
-                        ? "[DIR] "
+                        ? "dir"
                         : entry.type === "file"
-                        ? "[FILE] "
+                        ? "file"
                         : entry.type === "symlink"
-                        ? "[SYMLINK] "
-                        : "[OTHER] ";
+                        ? "symlink"
+                        : "other";
+                    const typeLabel =
+                      `[${t(`fileBrowser.entryTypes.${typeKey}`)}] `;
                     return (
                       <div
                         key={`${entry.type}-${entry.name}`}
@@ -2430,7 +2516,7 @@ export default function ServerControlsPage() {
                               return;
                             }
                             if (entry.type !== "file") {
-                              setFileError("Only regular text files can be opened.");
+                              setFileError(t("fileEditor.errors.onlyRegularTextFiles"));
                               return;
                             }
                             openFile(relativePath);
@@ -2454,7 +2540,9 @@ export default function ServerControlsPage() {
                           }}
                           disabled={isDownloading || isDeleting || isUnzipping}
                         >
-                          {isDownloading ? "Downloading..." : "Download"}
+                          {isDownloading
+                            ? t("fileBrowser.buttons.downloading")
+                            : t("fileBrowser.buttons.download")}
                         </Button>
                         {canUnzip ? (
                           <Button
@@ -2465,7 +2553,9 @@ export default function ServerControlsPage() {
                             }}
                             disabled={isDeleting || isDownloading || isUnzipping}
                           >
-                            {isUnzipping ? "Unzipping..." : "Unzip"}
+                            {isUnzipping
+                              ? t("fileBrowser.buttons.unzipping")
+                              : t("fileBrowser.buttons.unzip")}
                           </Button>
                         ) : null}
                         <Button
@@ -2476,7 +2566,9 @@ export default function ServerControlsPage() {
                           }}
                           disabled={isDeleting || isDownloading || isUnzipping}
                         >
-                          {isDeleting ? "Deleting..." : "Delete"}
+                          {isDeleting
+                            ? t("fileBrowser.buttons.deleting")
+                            : t("fileBrowser.buttons.delete")}
                         </Button>
                       </div>
                     );
@@ -2488,8 +2580,8 @@ export default function ServerControlsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>File Editor</CardTitle>
-              <CardDescription>{filePath || "Select a file from browser"}</CardDescription>
+              <CardTitle>{t("fileEditor.title")}</CardTitle>
+              <CardDescription>{filePath || t("fileEditor.selectFromBrowser")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <textarea
@@ -2503,14 +2595,14 @@ export default function ServerControlsPage() {
                   onClick={saveFile}
                   disabled={!filePath || fileSaving || fileLoading}
                 >
-                  {fileSaving ? "Saving..." : "Save file"}
+                  {fileSaving ? t("fileEditor.buttons.saving") : t("fileEditor.buttons.saveFile")}
                 </Button>
                 <Button
                   variant="secondary"
                   onClick={() => openFile(filePath)}
                   disabled={!filePath || fileLoading}
                 >
-                  Reload
+                  {t("fileEditor.buttons.reload")}
                 </Button>
               </div>
               {fileError ? <p className="text-sm text-red-600">{fileError}</p> : null}
@@ -2520,11 +2612,11 @@ export default function ServerControlsPage() {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>File Browser</CardTitle>
+            <CardTitle>{t("fileBrowser.title")}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              File management is limited to server owner/admin.
+              {t("fileBrowser.restricted")}
             </p>
           </CardContent>
         </Card>
@@ -2533,14 +2625,14 @@ export default function ServerControlsPage() {
       {server.permissions.canManageFiles ? (
         <Card>
           <CardHeader>
-            <CardTitle>Config Editor</CardTitle>
+            <CardTitle>{t("configEditor.title")}</CardTitle>
             <CardDescription>
-              Existing keys are read-only; values are editable.
+              {t("configEditor.description")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="config-file-select">Config file</Label>
+              <Label htmlFor="config-file-select">{t("configEditor.fields.configFile")}</Label>
               <select
                 id="config-file-select"
                 className="h-9 w-full rounded-md border bg-transparent px-3 text-sm"
@@ -2549,7 +2641,7 @@ export default function ServerControlsPage() {
                 disabled={server.configFiles.length === 0}
               >
                 {server.configFiles.length === 0 ? (
-                  <option value="">No configured files</option>
+                  <option value="">{t("configEditor.empty.noConfiguredFiles")}</option>
                 ) : (
                   server.configFiles.map((cfg) => (
                     <option key={cfg.id} value={cfg.id}>
@@ -2563,8 +2655,8 @@ export default function ServerControlsPage() {
             {useKeyValueEditor ? (
               <div className="space-y-2">
                 <div className="grid grid-cols-[1fr_1fr_auto] gap-2 text-xs font-medium text-muted-foreground">
-                  <span>Key</span>
-                  <span>Value</span>
+                  <span>{t("configEditor.columns.key")}</span>
+                  <span>{t("configEditor.columns.value")}</span>
                   <span />
                 </div>
                 {configRows.map((row) => (
@@ -2588,7 +2680,7 @@ export default function ServerControlsPage() {
                       onClick={() => removeConfigRow(row.id)}
                       disabled={!row.custom}
                     >
-                      Remove
+                      {t("configEditor.buttons.remove")}
                     </Button>
                   </div>
                 ))}
@@ -2597,7 +2689,7 @@ export default function ServerControlsPage() {
                   onClick={addConfigRow}
                   disabled={configLoading}
                 >
-                  Add setting
+                  {t("configEditor.buttons.addSetting")}
                 </Button>
               </div>
             ) : (
@@ -2614,7 +2706,7 @@ export default function ServerControlsPage() {
                 onClick={saveConfig}
                 disabled={!selectedConfigFile || configSaving || configLoading}
               >
-                {configSaving ? "Saving..." : "Save config"}
+                {configSaving ? t("configEditor.buttons.saving") : t("configEditor.buttons.saveConfig")}
               </Button>
             </div>
             {configError ? <p className="text-sm text-red-600">{configError}</p> : null}
@@ -2625,25 +2717,25 @@ export default function ServerControlsPage() {
       {server.permissions.canManage ? (
         <Card>
           <CardHeader>
-            <CardTitle>Access Management</CardTitle>
+            <CardTitle>{t("access.title")}</CardTitle>
             <CardDescription>
-              Invite users and manage server-specific permissions.
+              {t("access.description")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="invite-email">Email</Label>
+                <Label htmlFor="invite-email">{t("access.fields.email")}</Label>
                 <Input
                   id="invite-email"
                   type="email"
                   value={inviteEmail}
                   onChange={(event) => setInviteEmail(event.target.value)}
-                  placeholder="friend@example.com"
+                  placeholder={t("access.fields.emailPlaceholder")}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="invite-permission">Role</Label>
+                <Label htmlFor="invite-permission">{t("access.fields.role")}</Label>
                 <select
                   id="invite-permission"
                   className="h-9 w-full rounded-md border bg-transparent px-3 text-sm"
@@ -2654,9 +2746,9 @@ export default function ServerControlsPage() {
                     )
                   }
                 >
-                  <option value="admin">admin (full server access)</option>
-                  <option value="operator">operator (start/stop + status)</option>
-                  <option value="viewer">viewer (status only)</option>
+                  <option value="admin">{invitePermissionLabel("admin")}</option>
+                  <option value="operator">{invitePermissionLabel("operator")}</option>
+                  <option value="viewer">{invitePermissionLabel("viewer")}</option>
                 </select>
               </div>
             </div>
@@ -2665,16 +2757,16 @@ export default function ServerControlsPage() {
                 onClick={createInvite}
                 disabled={inviteSubmitting || inviteEmail.trim() === ""}
               >
-                {inviteSubmitting ? "Sending invite..." : "Create invite"}
+                {inviteSubmitting ? t("access.buttons.sendingInvite") : t("access.buttons.createInvite")}
               </Button>
             </div>
             {inviteError ? <p className="text-sm text-red-600">{inviteError}</p> : null}
 
             <div className="space-y-2">
-              <h3 className="font-medium">Pending invites</h3>
-              {invitesLoading ? <p className="text-sm">Loading...</p> : null}
+              <h3 className="font-medium">{t("access.pendingInvites.title")}</h3>
+              {invitesLoading ? <p className="text-sm">{t("access.loading")}</p> : null}
               {!invitesLoading && invites.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No pending invites.</p>
+                <p className="text-sm text-muted-foreground">{t("access.pendingInvites.empty")}</p>
               ) : null}
               {!invitesLoading &&
                 invites.map((invite) => (
@@ -2684,11 +2776,13 @@ export default function ServerControlsPage() {
                   >
                     <div>
                       <p>
-                        {invite.email} - {invite.permission}
+                        {invite.email} - {invitePermissionLabel(invite.permission)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Inviter: {invite.inviterMail} | Expires:{" "}
-                        {new Date(invite.expiresAt).toLocaleString()}
+                        {t("access.pendingInvites.meta", {
+                          inviter: invite.inviterMail,
+                          expiresAt: new Date(invite.expiresAt).toLocaleString(),
+                        })}
                       </p>
                     </div>
                     <Button
@@ -2697,17 +2791,19 @@ export default function ServerControlsPage() {
                       onClick={() => revokeInvite(invite.id)}
                       disabled={revokingInviteId === invite.id}
                     >
-                      {revokingInviteId === invite.id ? "Revoking..." : "Revoke"}
+                      {revokingInviteId === invite.id
+                        ? t("access.buttons.revoking")
+                        : t("access.buttons.revoke")}
                     </Button>
                   </div>
                 ))}
             </div>
 
             <div className="space-y-2">
-              <h3 className="font-medium">Guests</h3>
-              {guestsLoading ? <p className="text-sm">Loading...</p> : null}
+              <h3 className="font-medium">{t("access.guests.title")}</h3>
+              {guestsLoading ? <p className="text-sm">{t("access.loading")}</p> : null}
               {!guestsLoading && guests.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No guests assigned.</p>
+                <p className="text-sm text-muted-foreground">{t("access.guests.empty")}</p>
               ) : null}
               {!guestsLoading &&
                 guests.map((guest) => (
@@ -2717,10 +2813,13 @@ export default function ServerControlsPage() {
                   >
                     <div>
                       <p>
-                        {guest.name || guest.email} - {guest.permission}
+                        {guest.name || guest.email} - {invitePermissionLabel(guest.permission)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {guest.email} | Added: {new Date(guest.createdAt).toLocaleString()}
+                        {t("access.guests.meta", {
+                          email: guest.email,
+                          createdAt: new Date(guest.createdAt).toLocaleString(),
+                        })}
                       </p>
                     </div>
                     <Button
@@ -2729,7 +2828,9 @@ export default function ServerControlsPage() {
                       onClick={() => removeGuest(guest.userId)}
                       disabled={removingGuestUserId === guest.userId}
                     >
-                      {removingGuestUserId === guest.userId ? "Removing..." : "Remove"}
+                      {removingGuestUserId === guest.userId
+                        ? t("access.buttons.removing")
+                        : t("access.buttons.remove")}
                     </Button>
                   </div>
                 ))}
@@ -2742,11 +2843,11 @@ export default function ServerControlsPage() {
         <DialogContent showCloseButton={false}>
           <DialogHeader>
             <DialogTitle>
-              {selectedVelocityAgreement?.title || "Template agreement required"}
+              {selectedVelocityAgreement?.title || t("velocity.dialog.title")}
             </DialogTitle>
             <DialogDescription>
               {selectedVelocityAgreement?.text ||
-                "You must accept this agreement before creating the backend server."}
+                t("velocity.dialog.description")}
             </DialogDescription>
           </DialogHeader>
           {selectedVelocityAgreement?.linkUrl ? (
@@ -2766,14 +2867,14 @@ export default function ServerControlsPage() {
               onClick={() => setVelocityAgreementOpen(false)}
               disabled={velocityCreating}
             >
-              Cancel
+              {t("velocity.dialog.cancel")}
             </Button>
             <Button
               type="button"
               onClick={confirmVelocityAgreementAndCreate}
               disabled={velocityCreating}
             >
-              {velocityCreating ? "Creating..." : "I agree and create backend"}
+              {velocityCreating ? t("velocity.buttons.creating") : t("velocity.dialog.agreeAndCreate")}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -102,7 +102,7 @@ export default function ChangePasswordSection() {
       if (res.ok) {
         push({
           variant: "success",
-          description: data.message || tMessages("PASSWORD_CHANGED"),
+          description: tMessages("PASSWORD_CHANGED"),
         });
         setCurrentPassword("");
         setNewPassword("");
@@ -129,7 +129,7 @@ export default function ChangePasswordSection() {
         } else {
           push({
             variant: "error",
-            description: data.message || t("messages.passwordChangeError"),
+            description: t("messages.passwordChangeError"),
           });
         }
       }
@@ -216,7 +216,7 @@ export default function ChangePasswordSection() {
                   ) : (
                     <EyeIcon className="h-4 w-4" />
                   )}
-                  <span className="sr-only">{"togglepassword"}</span>
+                  <span className="sr-only">{t("form.togglePassword")}</span>
                 </Button>
               </div>
             </div>
@@ -248,7 +248,7 @@ export default function ChangePasswordSection() {
                   ) : (
                     <EyeIcon className="h-4 w-4" />
                   )}
-                  <span className="sr-only">{"togglepassword"}</span>
+                  <span className="sr-only">{t("form.togglePassword")}</span>
                 </Button>
               </div>
               {newPassword.length > 0 && (

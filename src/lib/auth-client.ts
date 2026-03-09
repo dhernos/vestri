@@ -36,6 +36,9 @@ const defaultFetchInit: RequestInit = {
   credentials: "include",
 };
 
+const isMessageCode = (value: unknown): value is string =>
+  typeof value === "string" && /^[A-Z0-9_]+$/.test(value);
+
 export async function fetchSession(): Promise<GoSession | null> {
   try {
     const res = await fetch("/api/auth/me", { credentials: "include" });
@@ -79,7 +82,10 @@ export async function loginWithPassword(
     if (res.status === 403 && body?.message === "TWO_FACTOR_REQUIRED") {
       return { ok: false, twoFactorRequired: true, message: body?.message };
     }
-    return { ok: false, message: body?.message || "Login failed" };
+    const message = isMessageCode(body?.message)
+      ? body.message
+      : "INVALID_CREDENTIALS";
+    return { ok: false, message };
   }
 
   const data = await safeJson(res);
