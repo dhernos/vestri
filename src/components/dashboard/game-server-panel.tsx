@@ -16,135 +16,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-type NodeRole = "owner" | "admin" | "operator" | "viewer";
-
-type GameServerPermissions = {
-  canCreate: boolean;
-};
-
-type GameServerTemplateAgreement = {
-  required: boolean;
-  title?: string;
-  text?: string;
-  linkText?: string;
-  linkUrl?: string;
-};
-
-type GameServerTemplateVersionField = {
-  label?: string;
-  placeholder?: string;
-  defaultValue?: string;
-  options?: string[];
-  optionsBySoftware?: Record<string, string[]>;
-};
-
-type GameServerTemplateVersionConfig = {
-  software?: GameServerTemplateVersionField;
-  game?: GameServerTemplateVersionField;
-};
-
-type GameServerTemplate = {
-  id: string;
-  name: string;
-  agreement?: GameServerTemplateAgreement;
-  versionConfig?: GameServerTemplateVersionConfig;
-};
-
-type GameServer = {
-  id: string;
-  slug: string;
-  name: string;
-  templateName: string;
-  templateId: string;
-  softwareVersion?: string;
-  gameVersion?: string;
-  status: "up" | "down" | "unknown";
-  permissions: GameServerPermissions;
-};
+import { normalizeFieldOptions, resolveFieldValue } from "@/features/servers/template-version";
+import type { NodeAccessRole } from "@/features/nodes/types";
+import type {
+  GameServerListItem,
+  GameServerTemplate,
+  ServerStatus,
+} from "@/features/servers/types";
 
 type GameServerPanelProps = {
   nodeRef: string;
-  nodeRole: NodeRole | null;
-};
-
-const normalizeFieldOptions = (
-  field?: GameServerTemplateVersionField,
-  software?: string
-): string[] => {
-  if (!field) {
-    return [];
-  }
-
-  let sourceOptions: string[] | undefined;
-  const normalizedSoftware = software?.trim().toLowerCase() || "";
-  if (normalizedSoftware && field.optionsBySoftware) {
-    for (const [softwareKey, values] of Object.entries(field.optionsBySoftware)) {
-      if (softwareKey.trim().toLowerCase() !== normalizedSoftware) {
-        continue;
-      }
-      sourceOptions = Array.isArray(values) ? values : [];
-      break;
-    }
-  }
-  if (!sourceOptions && Array.isArray(field.options)) {
-    sourceOptions = field.options;
-  }
-  if (!Array.isArray(sourceOptions)) {
-    return [];
-  }
-
-  return sourceOptions
-    .map((option) => option.trim())
-    .filter((option) => option.length > 0);
-};
-
-const resolveFieldValue = (
-  current: string,
-  field?: GameServerTemplateVersionField,
-  software?: string
-): string => {
-  if (!field) {
-    return "";
-  }
-
-  const options = normalizeFieldOptions(field, software);
-  const trimmedCurrent = current.trim();
-
-  if (trimmedCurrent) {
-    if (options.length === 0) {
-      return trimmedCurrent;
-    }
-    const matched = options.find((option) => option.toLowerCase() === trimmedCurrent.toLowerCase());
-    if (matched) {
-      return matched;
-    }
-  }
-
-  const defaultValue = (field.defaultValue || "").trim();
-  if (defaultValue) {
-    if (options.length === 0) {
-      return defaultValue;
-    }
-    const matchedDefault = options.find(
-      (option) => option.toLowerCase() === defaultValue.toLowerCase()
-    );
-    if (matchedDefault) {
-      return matchedDefault;
-    }
-  }
-
-  if (options.length > 0) {
-    return options[0];
-  }
-
-  return "";
+  nodeRole: NodeAccessRole | null;
 };
 
 export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelProps) {
   const t = useTranslations("GameServerPanel");
   const [templates, setTemplates] = useState<GameServerTemplate[]>([]);
-  const [servers, setServers] = useState<GameServer[]>([]);
+  const [servers, setServers] = useState<GameServerListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -177,7 +65,7 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
   );
 
   const statusLabel = useCallback(
-    (status: GameServer["status"]) => t(`status.${status}`),
+    (status: ServerStatus) => t(`status.${status}`),
     [t]
   );
 
@@ -204,7 +92,7 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
 
       const errors: string[] = [];
       let nextTemplates: GameServerTemplate[] = [];
-      let nextServers: GameServer[] = [];
+      let nextServers: GameServerListItem[] = [];
 
       if (templatesResult.status === "fulfilled") {
         const templatesRes = templatesResult.value;
@@ -225,7 +113,7 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
       if (serversResult.status === "fulfilled") {
         const serversRes = serversResult.value;
         const serversData = (await serversRes.json().catch(() => ({}))) as {
-          servers?: GameServer[];
+          servers?: GameServerListItem[];
           message?: string;
         };
 

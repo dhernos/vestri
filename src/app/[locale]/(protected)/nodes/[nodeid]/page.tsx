@@ -4,22 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import HealthBlob from "@/components/nodes/health";
+import NodeAccessCard from "@/components/nodes/cards/node-access-card";
+import NodeInfoCard from "@/components/nodes/cards/node-info-card";
+import { deleteNodeById, fetchNodeDetails } from "@/features/nodes/api";
+import type { WorkerNode } from "@/features/nodes/types";
 import { Link, useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-type WorkerNode = {
-  id: string;
-  slug: string;
-  name: string;
-  baseUrl: string;
-  ownerUserId: string;
-  accessRole: "owner" | "admin" | "operator" | "viewer";
-  isOwner: boolean;
-  apiKeyPreview: string;
-  createdAt: string;
-  updatedAt: string;
-};
 
 export default function NodeDetailsPage() {
   const t = useTranslations("NodeDetailsPage");
@@ -42,18 +32,13 @@ export default function NodeDetailsPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/nodes/${encodeURIComponent(ref)}`, {
-        method: "GET",
-        credentials: "include",
-        cache: "no-store",
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data?.message || t("errors.loadNode"));
+      const result = await fetchNodeDetails(ref);
+      if (!result.ok) {
+        setError(result.message || t("errors.loadNode"));
         setLoading(false);
         return;
       }
-      setNode(data?.node || null);
+      setNode(result.data);
     } catch {
       setError(t("errors.loadNode"));
     } finally {
@@ -83,13 +68,9 @@ export default function NodeDetailsPage() {
     setDeletingNode(true);
     setDeleteNodeError("");
     try {
-      const res = await fetch(`/api/nodes/${encodeURIComponent(node.id)}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setDeleteNodeError(data?.message || t("delete.error"));
+      const result = await deleteNodeById(node.id);
+      if (!result.ok) {
+        setDeleteNodeError(result.message || t("delete.error"));
         return;
       }
       router.push("/nodes");
@@ -125,64 +106,17 @@ export default function NodeDetailsPage() {
         <HealthBlob nodeRef={node.id} />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("info.title")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
-          <p>
-            <span className="font-medium">{t("info.labels.id")}</span> {node.id}
-          </p>
-          <p>
-            <span className="font-medium">{t("info.labels.slug")}</span> {node.slug}
-          </p>
-          <p>
-            <span className="font-medium">{t("info.labels.role")}</span> {node.accessRole}
-          </p>
-          <p>
-            <span className="font-medium">{t("info.labels.baseUrl")}</span> {node.baseUrl}
-          </p>
-          <p>
-            <span className="font-medium">{t("info.labels.ownerUserId")}</span> {node.ownerUserId}
-          </p>
-          <p>
-            <span className="font-medium">{t("info.labels.apiKey")}</span> {node.apiKeyPreview}
-          </p>
-          <p>
-            <span className="font-medium">{t("info.labels.createdAt")}</span>{" "}
-            {new Date(node.createdAt).toLocaleString()}
-          </p>
-          <p>
-            <span className="font-medium">{t("info.labels.updatedAt")}</span>{" "}
-            {new Date(node.updatedAt).toLocaleString()}
-          </p>
-          {canDeleteNode ? (
-            <div className="pt-2">
-              <Button
-                variant="destructive"
-                onClick={deleteNode}
-                disabled={deletingNode}
-              >
-                {deletingNode ? t("delete.deleting") : t("delete.button")}
-              </Button>
-              {deleteNodeError ? (
-                <p className="pt-2 text-sm text-red-600">{deleteNodeError}</p>
-              ) : null}
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
+      <NodeInfoCard
+        node={node}
+        canDeleteNode={canDeleteNode}
+        deletingNode={deletingNode}
+        deleteNodeError={deleteNodeError}
+        onDeleteNode={() => {
+          void deleteNode();
+        }}
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("access.title")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            {t("access.description")}
-          </p>
-        </CardContent>
-      </Card>
+      <NodeAccessCard />
 
       <div className="flex gap-2">
         <Button asChild variant="secondary">
