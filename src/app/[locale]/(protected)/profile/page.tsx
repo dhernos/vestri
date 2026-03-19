@@ -2,6 +2,7 @@
 "use client";
 import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
+import { ServerWorkspaceShell } from "@/components/servers/server-workspace-shell";
 import { ProfileImageUploader } from "@/components/profile_page/profilePictureUpload";
 import TwoFactorAuthSection from "@/components/profile_page/2FA";
 import ChangePasswordSection from "@/components/profile_page/changePassword";
@@ -29,29 +30,35 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">
-        <span className="flex items-center justify-between">
-          {t("profilePageHeader")} {session?.user?.name}
-          <ProfileImageUploader />
-        </span>
-      </h1>
+    <ServerWorkspaceShell
+      currentNodeRef=""
+      showServerNavigation={false}
+      pageTitle={t("profilePageHeader")}
+    >
+      <div className="container mx-auto p-4">
+        <h1 className="text-3xl font-bold mb-6">
+          <span className="flex items-center justify-between">
+            {t("profilePageHeader")} {session?.user?.name}
+            <ProfileImageUploader />
+          </span>
+        </h1>
 
-      <UpdateProfileSection />
+        <UpdateProfileSection />
 
-      <hr className="my-8" />
+        <hr className="my-8" />
 
-      <TwoFactorAuthSection />
+        <TwoFactorAuthSection />
 
-      <PasskeySection />
+        <PasskeySection />
 
-      <ChangeEmailSection />
+        <ChangeEmailSection />
 
-      <ChangePasswordSection />
+        <ChangePasswordSection />
 
-      <AcitveSessionsSection />
+        <AcitveSessionsSection />
 
-      <DeleteProfileSection />
-    </div>
+        <DeleteProfileSection />
+      </div>
+    </ServerWorkspaceShell>
   );
 }

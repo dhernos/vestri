@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { buildServerWorkspacePath } from "@/features/servers/navigation";
 import { normalizeFieldOptions, resolveFieldValue } from "@/features/servers/template-version";
 import type { NodeAccessRole } from "@/features/nodes/types";
 import type {
@@ -368,11 +369,7 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
                 </div>
                 <div className="flex items-center gap-2">
                   <Button asChild size="sm">
-                    <Link
-                      href={`/servers/${encodeURIComponent(nodeRef)}/${encodeURIComponent(
-                        server.id
-                      )}`}
-                    >
+                    <Link href={buildServerWorkspacePath(nodeRef, server.id, "dashboard")}>
                       {t("buttons.openControls")}
                     </Link>
                   </Button>

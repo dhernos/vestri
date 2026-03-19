@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { buildServerWorkspacePath } from "@/features/servers/navigation";
 import type {
   GameServerTemplateSummary,
   GameServerTemplateVersionField,
@@ -201,7 +202,7 @@ export default function VelocityCard({
                 </div>
                 <div className="flex items-center gap-2">
                   <Button asChild size="sm" variant="secondary">
-                    <Link href={`/servers/${encodeURIComponent(nodeRef)}/${encodeURIComponent(backend.id)}`}>
+                    <Link href={buildServerWorkspacePath(nodeRef, backend.id, "dashboard")}>
                       {t("buttons.openControls")}
                     </Link>
                   </Button>

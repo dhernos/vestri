@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import HealthBlob from "@/components/nodes/health";
 import NodeAccessCard from "@/components/nodes/cards/node-access-card";
 import NodeInfoCard from "@/components/nodes/cards/node-info-card";
+import { ServerWorkspaceShell } from "@/components/servers/server-workspace-shell";
 import { deleteNodeById, fetchNodeDetails } from "@/features/nodes/api";
 import type { WorkerNode } from "@/features/nodes/types";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -13,6 +14,7 @@ import { Button } from "@/components/ui/button";
 
 export default function NodeDetailsPage() {
   const t = useTranslations("NodeDetailsPage");
+  const tNodes = useTranslations("NodesPage");
   const router = useRouter();
   const params = useParams<{ nodeid: string }>();
   const nodeRef = typeof params?.nodeid === "string" ? params.nodeid : "";
@@ -82,52 +84,72 @@ export default function NodeDetailsPage() {
   };
 
   if (loading) {
-    return <p className="p-6">{t("loading")}</p>;
+    return (
+      <ServerWorkspaceShell
+        currentNodeRef={nodeRef}
+        showServerNavigation={false}
+        pageTitle={tNodes("title")}
+      >
+        <p className="p-6">{t("loading")}</p>
+      </ServerWorkspaceShell>
+    );
   }
 
   if (error || !node) {
     return (
-      <div className="container mx-auto space-y-4 p-6">
-        <p className="text-red-600">{error || t("errors.notFound")}</p>
-        <Button asChild variant="secondary">
-          <Link href="/nodes">{t("buttons.backToNodes")}</Link>
-        </Button>
-      </div>
+      <ServerWorkspaceShell
+        currentNodeRef={nodeRef}
+        showServerNavigation={false}
+        pageTitle={tNodes("title")}
+      >
+        <div className="container mx-auto space-y-4 p-6">
+          <p className="text-red-600">{error || t("errors.notFound")}</p>
+          <Button asChild variant="secondary">
+            <Link href="/nodes">{t("buttons.backToNodes")}</Link>
+          </Button>
+        </div>
+      </ServerWorkspaceShell>
     );
   }
 
   return (
-    <div className="container mx-auto space-y-6 p-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold">{node.name}</h1>
-          <p className="text-sm text-muted-foreground">{t("description")}</p>
+    <ServerWorkspaceShell
+      currentNodeRef={nodeRef}
+      showServerNavigation={false}
+      pageTitle={tNodes("title")}
+    >
+      <div className="container mx-auto space-y-6 p-6">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-bold">{node.name}</h1>
+            <p className="text-sm text-muted-foreground">{t("description")}</p>
+          </div>
+          <HealthBlob nodeRef={node.id} />
         </div>
-        <HealthBlob nodeRef={node.id} />
+
+        <NodeInfoCard
+          node={node}
+          canDeleteNode={canDeleteNode}
+          deletingNode={deletingNode}
+          deleteNodeError={deleteNodeError}
+          onDeleteNode={() => {
+            void deleteNode();
+          }}
+        />
+
+        <NodeAccessCard />
+
+        <div className="flex gap-2">
+          <Button asChild variant="secondary">
+            <Link href="/nodes">{t("buttons.backToNodes")}</Link>
+          </Button>
+          <Button asChild>
+            <Link href={`/dashboard?node=${encodeURIComponent(node.id)}`}>
+              {t("buttons.openDashboardWithNode")}
+            </Link>
+          </Button>
+        </div>
       </div>
-
-      <NodeInfoCard
-        node={node}
-        canDeleteNode={canDeleteNode}
-        deletingNode={deletingNode}
-        deleteNodeError={deleteNodeError}
-        onDeleteNode={() => {
-          void deleteNode();
-        }}
-      />
-
-      <NodeAccessCard />
-
-      <div className="flex gap-2">
-        <Button asChild variant="secondary">
-          <Link href="/nodes">{t("buttons.backToNodes")}</Link>
-        </Button>
-        <Button asChild>
-          <Link href={`/dashboard?node=${encodeURIComponent(node.id)}`}>
-            {t("buttons.openDashboardWithNode")}
-          </Link>
-        </Button>
-      </div>
-    </div>
+    </ServerWorkspaceShell>
   );
 }

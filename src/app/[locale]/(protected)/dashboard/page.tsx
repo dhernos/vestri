@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import GameServerPanel from "@/components/dashboard/game-server-panel";
 import DashboardConnectionCard from "@/components/dashboard/cards/connection-card";
 import DashboardNoNodeCard from "@/components/dashboard/cards/no-node-card";
+import { ServerWorkspaceShell } from "@/components/servers/server-workspace-shell";
 import { useNodesList } from "@/features/nodes/hooks/use-nodes-list";
 import { useAuth } from "@/hooks/useAuth";
 import { usePathname, useRouter } from "@/i18n/navigation";
@@ -96,32 +97,37 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="container mx-auto space-y-6 p-6">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold">{t("benchTitle")}</h1>
-        <p className="text-sm text-muted-foreground">{t("benchDescription")}</p>
+    <ServerWorkspaceShell
+      currentNodeRef={selectedNodeRef}
+      onNodeChange={handleNodeChange}
+    >
+      <div className="container mx-auto space-y-6 p-6">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">{t("benchTitle")}</h1>
+          <p className="text-sm text-muted-foreground">{t("benchDescription")}</p>
+        </div>
+
+        <DashboardConnectionCard
+          nodes={nodes}
+          nodesLoading={nodesLoading}
+          nodesError={nodesError}
+          selectedNodeRef={selectedNodeRef}
+          selectedNodeRole={selectedNode ? selectedNode.accessRole : null}
+          onNodeChange={handleNodeChange}
+          onRefreshNodes={() => {
+            void loadNodes();
+          }}
+        />
+
+        {!nodesLoading && nodes.length === 0 ? (
+          <DashboardNoNodeCard />
+        ) : null}
+
+        <GameServerPanel
+          nodeRef={selectedNodeRef}
+          nodeRole={selectedNode ? selectedNode.accessRole : null}
+        />
       </div>
-
-      <DashboardConnectionCard
-        nodes={nodes}
-        nodesLoading={nodesLoading}
-        nodesError={nodesError}
-        selectedNodeRef={selectedNodeRef}
-        selectedNodeRole={selectedNode ? selectedNode.accessRole : null}
-        onNodeChange={handleNodeChange}
-        onRefreshNodes={() => {
-          void loadNodes();
-        }}
-      />
-
-      {!nodesLoading && nodes.length === 0 ? (
-        <DashboardNoNodeCard />
-      ) : null}
-
-      <GameServerPanel
-        nodeRef={selectedNodeRef}
-        nodeRole={selectedNode ? selectedNode.accessRole : null}
-      />
-    </div>
+    </ServerWorkspaceShell>
   );
 }

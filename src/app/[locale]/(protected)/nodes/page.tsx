@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import CreateNodeCard from "@/components/nodes/cards/create-node-card";
 import IncomingInvitesCard from "@/components/nodes/cards/incoming-invites-card";
 import NodesListCard from "@/components/nodes/cards/nodes-list-card";
+import { ServerWorkspaceShell } from "@/components/servers/server-workspace-shell";
 import {
   acceptIncomingNodeInvite,
   createNode as createNodeRequest,
@@ -78,36 +79,42 @@ export default function NodesPage() {
   };
 
   return (
-    <div className="container mx-auto space-y-6 p-6">
-      <div>
-        <h1 className="text-3xl font-bold">{t("title")}</h1>
-        <p className="text-sm text-muted-foreground">
-          {t("description")}
-        </p>
+    <ServerWorkspaceShell
+      currentNodeRef=""
+      showServerNavigation={false}
+      pageTitle={t("title")}
+    >
+      <div className="container mx-auto space-y-6 p-6">
+        <div>
+          <h1 className="text-3xl font-bold">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">
+            {t("description")}
+          </p>
+        </div>
+
+        <CreateNodeCard
+          name={name}
+          ip={ip}
+          apiKey={apiKey}
+          submitting={submitting}
+          error={error}
+          onNameChange={setName}
+          onIpChange={setIP}
+          onApiKeyChange={setAPIKey}
+          onSubmit={createNode}
+        />
+
+        <IncomingInvitesCard
+          loading={loadingIncoming}
+          invites={incomingInvites}
+          acceptingInviteId={acceptingInviteId}
+          onAcceptInvite={(inviteId) => {
+            void acceptInvite(inviteId);
+          }}
+        />
+
+        <NodesListCard loading={loading} nodes={nodes} />
       </div>
-
-      <CreateNodeCard
-        name={name}
-        ip={ip}
-        apiKey={apiKey}
-        submitting={submitting}
-        error={error}
-        onNameChange={setName}
-        onIpChange={setIP}
-        onApiKeyChange={setAPIKey}
-        onSubmit={createNode}
-      />
-
-      <IncomingInvitesCard
-        loading={loadingIncoming}
-        invites={incomingInvites}
-        acceptingInviteId={acceptingInviteId}
-        onAcceptInvite={(inviteId) => {
-          void acceptInvite(inviteId);
-        }}
-      />
-
-      <NodesListCard loading={loading} nodes={nodes} />
-    </div>
+    </ServerWorkspaceShell>
   );
 }

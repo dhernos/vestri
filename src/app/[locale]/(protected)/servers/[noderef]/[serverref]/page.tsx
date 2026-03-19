@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
-import { Link, useRouter } from "@/i18n/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import AccessCard from "@/components/servers/cards/access-card";
 import ConfigEditorCard from "@/components/servers/cards/config-editor-card";
 import FileBrowserCard from "@/components/servers/cards/file-browser-card";
@@ -27,6 +27,10 @@ import { useServerAccess } from "@/features/servers/hooks/use-server-access";
 import { useServerConsole } from "@/features/servers/hooks/use-server-console";
 import { useServerFiles } from "@/features/servers/hooks/use-server-files";
 import { useVelocityBackends } from "@/features/servers/hooks/use-velocity-backends";
+import {
+  buildServerWorkspacePath,
+  normalizeServerWorkspaceSection,
+} from "@/features/servers/navigation";
 import type {
   GameServerDetails,
   ServerStatus,
@@ -36,9 +40,18 @@ import styles from "./page.module.css";
 export default function ServerControlsPage() {
   const t = useTranslations("ServerPage");
   const router = useRouter();
+  const pathname = usePathname();
   const params = useParams<{ noderef: string; serverref: string }>();
   const nodeRef = typeof params?.noderef === "string" ? params.noderef : "";
   const serverRef = typeof params?.serverref === "string" ? params.serverref : "";
+  const activeSection = useMemo(() => {
+    const segments = pathname.split("/").filter(Boolean);
+    return normalizeServerWorkspaceSection(segments.at(-1));
+  }, [pathname]);
+  const isDashboardSection = activeSection === "dashboard";
+  const isConfigSection = activeSection === "config";
+  const isFilesystemSection = activeSection === "filesystem";
+  const isConsoleSection = activeSection === "console";
 
   const [server, setServer] = useState<GameServerDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -133,7 +146,7 @@ export default function ServerControlsPage() {
     confirmVelocityAgreementAndCreate,
   } = useVelocityBackends({
     nodeRef,
-    server,
+    server: isDashboardSection ? server : null,
     t,
   });
 
@@ -220,7 +233,7 @@ export default function ServerControlsPage() {
     markInvalidFileSelection,
   } = useServerFiles({
     basePath,
-    canManageFiles,
+    canManageFiles: canManageFiles && (isFilesystemSection || isConfigSection),
     configFiles: server?.configFiles || [],
     t,
   });
@@ -243,7 +256,7 @@ export default function ServerControlsPage() {
     removeGuest,
   } = useServerAccess({
     basePath,
-    canManage: canUseInteractiveConsole,
+    canManage: canUseInteractiveConsole && isDashboardSection,
     t,
   });
 
@@ -267,8 +280,8 @@ export default function ServerControlsPage() {
   } = useServerConsole({
     basePath,
     serverId,
-    canReadConsole,
-    canUseInteractiveConsole,
+    canReadConsole: canReadConsole && isConsoleSection,
+    canUseInteractiveConsole: canUseInteractiveConsole && isConsoleSection,
     isServerUp,
     refreshServerStatus,
     t,
@@ -372,188 +385,202 @@ export default function ServerControlsPage() {
         </Button>
         {isVelocityBackendServer && server.parentServerId ? (
           <Button asChild variant="outline">
-            <Link
-              href={`/servers/${encodeURIComponent(nodeRef)}/${encodeURIComponent(
-                server.parentServerId
-              )}`}
-            >
+            <Link href={buildServerWorkspacePath(nodeRef, server.parentServerId, "dashboard")}>
               {t("buttons.backToProxy")}
             </Link>
           </Button>
         ) : null}
       </div>
 
-      <ServerControlsCard
-        canControl={server.permissions.canControl}
-        canReadConsole={server.permissions.canReadConsole}
-        canManage={server.permissions.canManage}
-        stackActionLoading={stackActionLoading}
-        serverDeleting={serverDeleting}
-        stackError={stackError}
-        deleteError={deleteError}
-        onStart={() => {
-          void runStackAction("start");
-        }}
-        onStop={() => {
-          void runStackAction("stop");
-        }}
-        onRefreshStatus={() => {
-          void refreshStatus();
-        }}
-        onDeleteServer={() => {
-          void deleteServer();
-        }}
-      />
-
-      {isVelocityServer ? (
-        <VelocityCard
-          nodeRef={nodeRef}
-          velocityTemplateId={velocityTemplateId}
-          velocityTemplates={velocityTemplates}
-          velocityBackendName={velocityBackendName}
-          velocitySoftwareField={velocitySoftwareField}
-          velocitySoftwareOptions={velocitySoftwareOptions}
-          velocityBackendSoftwareVersion={velocityBackendSoftwareVersion}
-          velocityGameField={velocityGameField}
-          velocityGameOptions={velocityGameOptions}
-          velocityBackendGameVersion={velocityBackendGameVersion}
-          velocityCreating={velocityCreating}
-          velocityLoading={velocityLoading}
-          velocityError={velocityError}
-          velocityCreateError={velocityCreateError}
-          agreementRequired={agreementRequired}
-          velocityBackends={velocityBackends}
-          onTemplateIdChange={setVelocityTemplateId}
-          onBackendNameChange={setVelocityBackendName}
-          onBackendSoftwareVersionChange={setVelocityBackendSoftwareVersion}
-          onBackendGameVersionChange={setVelocityBackendGameVersion}
-          onCreateVelocityBackend={() => {
-            void createVelocityBackend();
-          }}
-          onRefreshVelocityData={() => {
-            void loadVelocityData();
-          }}
-          statusLabel={statusLabel}
-        />
-      ) : null}
-
-      <LogsCard
-        consoleRefreshMode={consoleRefreshMode}
-        canReadConsole={canReadConsole}
-        consoleSnapshotLoading={consoleSnapshotLoading}
-        consoleOutput={consoleOutput}
-        consoleStatus={consoleStatus}
-        isServerUp={isServerUp}
-        consoleError={consoleError}
-        consoleOutputRef={consoleOutputRef}
-        onSetRefreshMode={setConsoleRefreshMode}
-        onRefreshNow={() => {
-          void refreshConsoleOutput();
-        }}
-        onClearOutput={clearLogOutput}
-      />
-
-      {canUseInteractiveConsole ? (
-        <InteractiveConsoleCard
-          canConnectInteractiveConsole={canConnectInteractiveConsole}
-          execSessionActive={execSessionActive}
-          execStatus={execStatus}
-          isServerUp={isServerUp}
-          execError={execError}
-          terminalHostRef={terminalHostRef}
-          terminalScopeClassName={styles.terminalScope}
-          onStartSession={() => {
-            void startExecSession();
-          }}
-          onStopSession={stopExecSession}
-        />
-      ) : null}
-
-      {server.permissions.canManageFiles ? (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <FileBrowserCard
-            browserPath={browserPath}
-            browserLoading={browserLoading}
-            browserUploadInputKey={browserUploadInputKey}
-            browserUploadFile={browserUploadFile}
-            browserUploading={browserUploading}
-            browserError={browserError}
-            browserActionError={browserActionError}
-            browserEntries={browserEntries}
-            browserDownloadingPath={browserDownloadingPath}
-            browserDeletingPath={browserDeletingPath}
-            browserUnzippingPath={browserUnzippingPath}
-            folderNavigationLockedRef={folderNavigationLockedRef}
-            normalizeRelativePath={normalizeRelativePath}
-            formatBytes={formatBytes}
-            isZipArchiveName={isZipArchiveName}
-            onRefresh={() => {
-              void loadBrowserEntries();
+      {isDashboardSection ? (
+        <>
+          <ServerControlsCard
+            canControl={server.permissions.canControl}
+            canReadConsole={server.permissions.canReadConsole}
+            canManage={server.permissions.canManage}
+            stackActionLoading={stackActionLoading}
+            serverDeleting={serverDeleting}
+            stackError={stackError}
+            deleteError={deleteError}
+            onStart={() => {
+              void runStackAction("start");
             }}
-            onGoUp={() => setBrowserPath(parentRelativePath(browserPath))}
-            onGoRoot={() => setBrowserPath("")}
-            onSelectUploadFile={setBrowserUploadFile}
-            onUploadToCurrentFolder={() => {
-              void uploadFileToCurrentFolder();
+            onStop={() => {
+              void runStackAction("stop");
             }}
-            onNavigateDirectory={setBrowserPath}
-            onOpenFile={(relativePath) => {
-              void openFile(relativePath);
+            onRefreshStatus={() => {
+              void refreshStatus();
             }}
-            onInvalidFileSelection={markInvalidFileSelection}
-            onDownload={(relativePath, entryType) => {
-              void downloadBrowserPath(relativePath, entryType);
-            }}
-            onUnzip={(relativePath) => {
-              void unzipArchiveInCurrentFolder(relativePath);
-            }}
-            onDelete={(relativePath, entryType) => {
-              void deleteBrowserPath(relativePath, entryType);
+            onDeleteServer={() => {
+              void deleteServer();
             }}
           />
 
-          <FileEditorCard
-            filePath={filePath}
-            fileContent={fileContent}
-            fileLoading={fileLoading}
-            fileSaving={fileSaving}
-            fileError={fileError}
-            onFileContentChange={setFileContent}
-            onSaveFile={() => {
-              void saveFile();
-            }}
-            onReloadFile={() => {
-              void openFile(filePath);
-            }}
-          />
-        </div>
-      ) : (
-        <FileBrowserRestrictedCard />
-      )}
-
-      {server.permissions.canManageFiles ? (
-        <ConfigEditorCard
-          configFiles={server.configFiles}
-          selectedConfigFileId={selectedConfigFileId}
-          useKeyValueEditor={useKeyValueEditor}
-          configRows={configRows}
-          configLoading={configLoading}
-          configSaving={configSaving}
-          configContent={configContent}
-          hasSelectedConfigFile={hasSelectedConfigFile}
-          configError={configError}
-          onSelectConfigFile={setSelectedConfigFileId}
-          onUpdateConfigRow={updateConfigRow}
-          onRemoveConfigRow={removeConfigRow}
-          onAddConfigRow={addConfigRow}
-          onConfigContentChange={setConfigContent}
-          onSaveConfig={() => {
-            void saveConfig();
-          }}
-        />
+          {isVelocityServer ? (
+            <VelocityCard
+              nodeRef={nodeRef}
+              velocityTemplateId={velocityTemplateId}
+              velocityTemplates={velocityTemplates}
+              velocityBackendName={velocityBackendName}
+              velocitySoftwareField={velocitySoftwareField}
+              velocitySoftwareOptions={velocitySoftwareOptions}
+              velocityBackendSoftwareVersion={velocityBackendSoftwareVersion}
+              velocityGameField={velocityGameField}
+              velocityGameOptions={velocityGameOptions}
+              velocityBackendGameVersion={velocityBackendGameVersion}
+              velocityCreating={velocityCreating}
+              velocityLoading={velocityLoading}
+              velocityError={velocityError}
+              velocityCreateError={velocityCreateError}
+              agreementRequired={agreementRequired}
+              velocityBackends={velocityBackends}
+              onTemplateIdChange={setVelocityTemplateId}
+              onBackendNameChange={setVelocityBackendName}
+              onBackendSoftwareVersionChange={setVelocityBackendSoftwareVersion}
+              onBackendGameVersionChange={setVelocityBackendGameVersion}
+              onCreateVelocityBackend={() => {
+                void createVelocityBackend();
+              }}
+              onRefreshVelocityData={() => {
+                void loadVelocityData();
+              }}
+              statusLabel={statusLabel}
+            />
+          ) : null}
+        </>
       ) : null}
 
-      {server.permissions.canManage ? (
+      {isConsoleSection ? (
+        <>
+          <LogsCard
+            consoleRefreshMode={consoleRefreshMode}
+            canReadConsole={canReadConsole}
+            consoleSnapshotLoading={consoleSnapshotLoading}
+            consoleOutput={consoleOutput}
+            consoleStatus={consoleStatus}
+            isServerUp={isServerUp}
+            consoleError={consoleError}
+            consoleOutputRef={consoleOutputRef}
+            onSetRefreshMode={setConsoleRefreshMode}
+            onRefreshNow={() => {
+              void refreshConsoleOutput();
+            }}
+            onClearOutput={clearLogOutput}
+          />
+
+          {canUseInteractiveConsole ? (
+            <InteractiveConsoleCard
+              canConnectInteractiveConsole={canConnectInteractiveConsole}
+              execSessionActive={execSessionActive}
+              execStatus={execStatus}
+              isServerUp={isServerUp}
+              execError={execError}
+              terminalHostRef={terminalHostRef}
+              terminalScopeClassName={styles.terminalScope}
+              onStartSession={() => {
+                void startExecSession();
+              }}
+              onStopSession={stopExecSession}
+            />
+          ) : null}
+        </>
+      ) : null}
+
+      {isFilesystemSection ? (
+        <>
+          {server.permissions.canManageFiles ? (
+            <div className="grid gap-6 lg:grid-cols-2">
+              <FileBrowserCard
+                browserPath={browserPath}
+                browserLoading={browserLoading}
+                browserUploadInputKey={browserUploadInputKey}
+                browserUploadFile={browserUploadFile}
+                browserUploading={browserUploading}
+                browserError={browserError}
+                browserActionError={browserActionError}
+                browserEntries={browserEntries}
+                browserDownloadingPath={browserDownloadingPath}
+                browserDeletingPath={browserDeletingPath}
+                browserUnzippingPath={browserUnzippingPath}
+                folderNavigationLockedRef={folderNavigationLockedRef}
+                normalizeRelativePath={normalizeRelativePath}
+                formatBytes={formatBytes}
+                isZipArchiveName={isZipArchiveName}
+                onRefresh={() => {
+                  void loadBrowserEntries();
+                }}
+                onGoUp={() => setBrowserPath(parentRelativePath(browserPath))}
+                onGoRoot={() => setBrowserPath("")}
+                onSelectUploadFile={setBrowserUploadFile}
+                onUploadToCurrentFolder={() => {
+                  void uploadFileToCurrentFolder();
+                }}
+                onNavigateDirectory={setBrowserPath}
+                onOpenFile={(relativePath) => {
+                  void openFile(relativePath);
+                }}
+                onInvalidFileSelection={markInvalidFileSelection}
+                onDownload={(relativePath, entryType) => {
+                  void downloadBrowserPath(relativePath, entryType);
+                }}
+                onUnzip={(relativePath) => {
+                  void unzipArchiveInCurrentFolder(relativePath);
+                }}
+                onDelete={(relativePath, entryType) => {
+                  void deleteBrowserPath(relativePath, entryType);
+                }}
+              />
+
+              <FileEditorCard
+                filePath={filePath}
+                fileContent={fileContent}
+                fileLoading={fileLoading}
+                fileSaving={fileSaving}
+                fileError={fileError}
+                onFileContentChange={setFileContent}
+                onSaveFile={() => {
+                  void saveFile();
+                }}
+                onReloadFile={() => {
+                  void openFile(filePath);
+                }}
+              />
+            </div>
+          ) : (
+            <FileBrowserRestrictedCard />
+          )}
+        </>
+      ) : null}
+
+      {isConfigSection ? (
+        <>
+          {server.permissions.canManageFiles ? (
+            <ConfigEditorCard
+              configFiles={server.configFiles}
+              selectedConfigFileId={selectedConfigFileId}
+              useKeyValueEditor={useKeyValueEditor}
+              configRows={configRows}
+              configLoading={configLoading}
+              configSaving={configSaving}
+              configContent={configContent}
+              hasSelectedConfigFile={hasSelectedConfigFile}
+              configError={configError}
+              onSelectConfigFile={setSelectedConfigFileId}
+              onUpdateConfigRow={updateConfigRow}
+              onRemoveConfigRow={removeConfigRow}
+              onAddConfigRow={addConfigRow}
+              onConfigContentChange={setConfigContent}
+              onSaveConfig={() => {
+                void saveConfig();
+              }}
+            />
+          ) : (
+            <FileBrowserRestrictedCard />
+          )}
+        </>
+      ) : null}
+
+      {isDashboardSection && server.permissions.canManage ? (
         <AccessCard
           inviteEmail={inviteEmail}
           invitePermission={invitePermission}
@@ -580,46 +607,50 @@ export default function ServerControlsPage() {
         />
       ) : null}
 
-      <Dialog open={velocityAgreementOpen} onOpenChange={setVelocityAgreementOpen}>
-        <DialogContent showCloseButton={false}>
-          <DialogHeader>
-            <DialogTitle>
-              {selectedVelocityAgreement?.title || t("velocity.dialog.title")}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedVelocityAgreement?.text ||
-                t("velocity.dialog.description")}
-            </DialogDescription>
-          </DialogHeader>
-          {selectedVelocityAgreement?.linkUrl ? (
-            <a
-              href={selectedVelocityAgreement.linkUrl}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="text-sm text-blue-600 underline"
-            >
-              {selectedVelocityAgreement.linkText || selectedVelocityAgreement.linkUrl}
-            </a>
-          ) : null}
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setVelocityAgreementOpen(false)}
-              disabled={velocityCreating}
-            >
-              {t("velocity.dialog.cancel")}
-            </Button>
-            <Button
-              type="button"
-              onClick={confirmVelocityAgreementAndCreate}
-              disabled={velocityCreating}
-            >
-              {velocityCreating ? t("velocity.buttons.creating") : t("velocity.dialog.agreeAndCreate")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {isDashboardSection ? (
+        <Dialog open={velocityAgreementOpen} onOpenChange={setVelocityAgreementOpen}>
+          <DialogContent showCloseButton={false}>
+            <DialogHeader>
+              <DialogTitle>
+                {selectedVelocityAgreement?.title || t("velocity.dialog.title")}
+              </DialogTitle>
+              <DialogDescription>
+                {selectedVelocityAgreement?.text ||
+                  t("velocity.dialog.description")}
+              </DialogDescription>
+            </DialogHeader>
+            {selectedVelocityAgreement?.linkUrl ? (
+              <a
+                href={selectedVelocityAgreement.linkUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="text-sm text-blue-600 underline"
+              >
+                {selectedVelocityAgreement.linkText || selectedVelocityAgreement.linkUrl}
+              </a>
+            ) : null}
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setVelocityAgreementOpen(false)}
+                disabled={velocityCreating}
+              >
+                {t("velocity.dialog.cancel")}
+              </Button>
+              <Button
+                type="button"
+                onClick={confirmVelocityAgreementAndCreate}
+                disabled={velocityCreating}
+              >
+                {velocityCreating
+                  ? t("velocity.buttons.creating")
+                  : t("velocity.dialog.agreeAndCreate")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </div>
   );
 }

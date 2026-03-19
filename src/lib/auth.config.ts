@@ -20,7 +20,8 @@ export const pageAccess: RouteAccess[] = [
   { path: "/profile", roles: ["USER", "ADMIN", "EDITOR"] },
   { path: "/nodes", roles: ["USER", "ADMIN", "EDITOR"] },
   { path: "/servers", roles: ["USER", "ADMIN", "EDITOR"] },
-  { path: "/test", roles: ["USER", "ADMIN", "EDITOR"] },
+  { path: "/test", roles: ["ADMIN"] },
+  { path: "/notifications", roles: ["USER", "ADMIN", "EDITOR"] },
 ];
 
 export const protectedRoutes = pageAccess.filter(
