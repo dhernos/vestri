@@ -23,6 +23,25 @@ interface SessionData {
   twoFactorMethod?: string;
 }
 
+type SessionResponseItem = {
+  sessionId?: string;
+  id?: string;
+  userId?: string;
+  expiresAt?: string;
+  expires?: string;
+  loginTime?: string;
+  role?: string;
+  ttlInSeconds?: number;
+  ttlSeconds?: number;
+  ttl?: number;
+  ipAddress?: string;
+  ip?: string;
+  location?: string;
+  userAgent?: string;
+  twoFactorEnabled?: boolean;
+  twoFactorMethod?: string;
+};
+
 export default function AcitveSessionsSection() {
   const { data: session, status, logout } = useAuth();
   const router = useRouter();
@@ -42,8 +61,8 @@ export default function AcitveSessionsSection() {
       if (!res.ok) {
         throw new Error(t("errors.fetchError"));
       }
-      const data = await res.json();
-      const normalized = (data.sessions || []).map((s: any) => ({
+      const data = (await res.json()) as { sessions?: SessionResponseItem[] };
+      const normalized = (data.sessions || []).map((s) => ({
         sessionId: s.sessionId || s.id,
         userId: s.userId,
         expiresAt: s.expiresAt || s.expires,
@@ -69,7 +88,7 @@ export default function AcitveSessionsSection() {
     fetchSessions();
   }, [fetchSessions]);
 
-  if (status === "loading") {
+  if (status === "loading" || loading) {
     return <p>{tCommon("loading")}</p>;
   }
 

@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { TwoFactorModal } from "@/components/profile_page/TwoFactorModal";
 import { useAuth } from "@/hooks/useAuth";
+import { usePathname, useRouter } from "@/i18n/navigation";
 
 type PendingState = {
   pendingId: string;

@@ -10,11 +10,16 @@ type ServerControlsCardProps = {
   canReadConsole: boolean;
   canManage: boolean;
   stackActionLoading: StackActionLoading;
+  imageUpdateAvailable: boolean;
+  imageStatusError: string;
+  imageRepulling: boolean;
   serverDeleting: boolean;
   stackError: string;
+  imageRepullError: string;
   deleteError: string;
   onStart: () => void;
   onStop: () => void;
+  onRepullImages: () => void;
   onRefreshStatus: () => void;
   onDeleteServer: () => void;
 };
@@ -24,11 +29,16 @@ export default function ServerControlsCard({
   canReadConsole,
   canManage,
   stackActionLoading,
+  imageUpdateAvailable,
+  imageStatusError,
+  imageRepulling,
   serverDeleting,
   stackError,
+  imageRepullError,
   deleteError,
   onStart,
   onStop,
+  onRepullImages,
   onRefreshStatus,
   onDeleteServer,
 }: ServerControlsCardProps) {
@@ -48,6 +58,13 @@ export default function ServerControlsCard({
           <Button variant="destructive" onClick={onStop} disabled={!canControl || stackActionLoading !== ""}>
             {stackActionLoading === "stop" ? t("controls.stopping") : t("controls.stop")}
           </Button>
+          <Button
+            variant="outline"
+            onClick={onRepullImages}
+            disabled={!canControl || imageRepulling || stackActionLoading !== ""}
+          >
+            {imageRepulling ? t("controls.repulling") : t("controls.repullImages")}
+          </Button>
           <Button variant="secondary" onClick={onRefreshStatus} disabled={!canReadConsole}>
             {t("controls.refreshStatus")}
           </Button>
@@ -57,7 +74,23 @@ export default function ServerControlsCard({
             </Button>
           ) : null}
         </div>
+        <span
+          className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
+            imageUpdateAvailable
+              ? "bg-amber-100 text-amber-800"
+              : "bg-emerald-100 text-emerald-800"
+          }`}
+        >
+          {imageUpdateAvailable
+            ? t("controls.imageStatusUpdateAvailable")
+            : t("controls.imageStatusUpToDate")}
+        </span>
+        {imageUpdateAvailable ? (
+          <p className="text-sm text-muted-foreground">{t("controls.imageUpdateAvailable")}</p>
+        ) : null}
+        {imageStatusError ? <p className="text-sm text-red-600">{imageStatusError}</p> : null}
         {stackError ? <p className="text-sm text-red-600">{stackError}</p> : null}
+        {imageRepullError ? <p className="text-sm text-red-600">{imageRepullError}</p> : null}
         {deleteError ? <p className="text-sm text-red-600">{deleteError}</p> : null}
       </CardContent>
     </Card>

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
-import { Link, usePathname, useRouter } from "@/i18n/navigation";
+import { usePathname, useRouter } from "@/i18n/navigation";
 import AccessCard from "@/components/servers/cards/access-card";
 import ConfigEditorCard from "@/components/servers/cards/config-editor-card";
 import FileBrowserCard from "@/components/servers/cards/file-browser-card";
@@ -27,10 +27,7 @@ import { useServerAccess } from "@/features/servers/hooks/use-server-access";
 import { useServerConsole } from "@/features/servers/hooks/use-server-console";
 import { useServerFiles } from "@/features/servers/hooks/use-server-files";
 import { useVelocityBackends } from "@/features/servers/hooks/use-velocity-backends";
-import {
-  buildServerWorkspacePath,
-  normalizeServerWorkspaceSection,
-} from "@/features/servers/navigation";
+import { normalizeServerWorkspaceSection } from "@/features/servers/navigation";
 import type {
   GameServerDetails,
   ServerStatus,
@@ -59,6 +56,8 @@ export default function ServerControlsPage() {
 
   const [stackActionLoading, setStackActionLoading] = useState<"" | "start" | "stop">("");
   const [stackError, setStackError] = useState("");
+  const [imageRepulling, setImageRepulling] = useState(false);
+  const [imageRepullError, setImageRepullError] = useState("");
   const [serverDeleting, setServerDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
@@ -74,7 +73,6 @@ export default function ServerControlsPage() {
   const canUseInteractiveConsole = Boolean(server?.permissions.canManage);
   const canManageFiles = Boolean(server?.permissions.canManageFiles);
   const isVelocityServer = server?.kind === "velocity";
-  const isVelocityBackendServer = server?.kind === "velocity-backend";
   const statusLabel = useCallback((status: ServerStatus) => t(`status.${status}`), [t]);
   const invitePermissionLabel = useCallback(
     (permission: "admin" | "operator" | "viewer") => t(`access.roles.${permission}`),
@@ -91,7 +89,7 @@ export default function ServerControlsPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${basePath}?includeStatus=1`, {
+      const res = await fetch(`${basePath}?includeStatus=1&includeImageStatus=1`, {
         credentials: "include",
         cache: "no-store",
       });
@@ -106,6 +104,7 @@ export default function ServerControlsPage() {
       }
       setServer(data.server);
       setStackError("");
+      setImageRepullError("");
     } catch {
       setServer(null);
       setError(t("errors.loadServer"));
@@ -287,7 +286,6 @@ export default function ServerControlsPage() {
     t,
   });
 
-
   const runStackAction = async (action: "start" | "stop") => {
     if (!server || !basePath) {
       return;
@@ -311,6 +309,30 @@ export default function ServerControlsPage() {
       setStackError(t(`controls.errors.${action}`));
     } finally {
       setStackActionLoading("");
+    }
+  };
+
+  const repullServerImages = async () => {
+    if (!server || !basePath || imageRepulling) {
+      return;
+    }
+
+    setImageRepulling(true);
+    setImageRepullError("");
+    try {
+      const res = await fetch(`${basePath}/images/repull`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        setImageRepullError(t("controls.errors.repull"));
+        return;
+      }
+      await loadServer();
+    } catch {
+      setImageRepullError(t("controls.errors.repull"));
+    } finally {
+      setImageRepulling(false);
     }
   };
 
@@ -357,9 +379,6 @@ export default function ServerControlsPage() {
     return (
       <div className="container mx-auto space-y-4 p-6">
         <p className="text-red-600">{error || t("errors.notFound")}</p>
-        <Button asChild variant="secondary">
-          <Link href="/dashboard">{t("buttons.backToDashboard")}</Link>
-        </Button>
       </div>
     );
   }
@@ -375,21 +394,17 @@ export default function ServerControlsPage() {
           {t("header.templateLabel")}: {server.templateName || server.templateId} |{" "}
           {t("header.stackLabel")}: {server.stackName}
         </p>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        <Button asChild variant="secondary">
-          <Link href={`/dashboard?node=${encodeURIComponent(nodeRef)}`}>
-            {t("buttons.backToDashboard")}
-          </Link>
-        </Button>
-        {isVelocityBackendServer && server.parentServerId ? (
-          <Button asChild variant="outline">
-            <Link href={buildServerWorkspacePath(nodeRef, server.parentServerId, "dashboard")}>
-              {t("buttons.backToProxy")}
-            </Link>
-          </Button>
-        ) : null}
+        <span
+          className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
+            server.imageUpdateAvailable
+              ? "bg-amber-100 text-amber-800"
+              : "bg-emerald-100 text-emerald-800"
+          }`}
+        >
+          {server.imageUpdateAvailable
+            ? t("controls.imageStatusUpdateAvailable")
+            : t("controls.imageStatusUpToDate")}
+        </span>
       </div>
 
       {isDashboardSection ? (
@@ -401,12 +416,19 @@ export default function ServerControlsPage() {
             stackActionLoading={stackActionLoading}
             serverDeleting={serverDeleting}
             stackError={stackError}
+            imageUpdateAvailable={Boolean(server.imageUpdateAvailable)}
+            imageStatusError={server.imageStatusError ? t("controls.errors.imageStatus") : ""}
+            imageRepulling={imageRepulling}
+            imageRepullError={imageRepullError}
             deleteError={deleteError}
             onStart={() => {
               void runStackAction("start");
             }}
             onStop={() => {
               void runStackAction("stop");
+            }}
+            onRepullImages={() => {
+              void repullServerImages();
             }}
             onRefreshStatus={() => {
               void refreshStatus();

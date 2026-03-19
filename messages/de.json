@@ -812,7 +812,9 @@
     },
     "serverList": {
       "title": "Serverliste",
-      "templateLabel": "Template"
+      "templateLabel": "Template",
+      "imageUpdateAvailable": "Image-Update",
+      "imageUpToDate": "Image aktuell"
     },
     "status": {
       "up": "Online",
@@ -849,13 +851,20 @@
       "starting": "Starte...",
       "stop": "Stoppen",
       "stopping": "Stoppe...",
+      "repullImages": "Images repullen",
+      "repulling": "Repulle...",
       "refreshStatus": "Status aktualisieren",
+      "imageStatusUpdateAvailable": "Image-Update verfügbar",
+      "imageStatusUpToDate": "Image aktuell",
+      "imageUpdateAvailable": "Ein neueres Container-Image ist verfügbar. Repulle und starte den Server neu, um es zu übernehmen.",
       "deleteServer": "Server löschen",
       "deleting": "Lösche...",
       "confirmDelete": "Server \"{name}\" dauerhaft löschen?",
       "errors": {
         "start": "Server konnte nicht gestartet werden.",
         "stop": "Server konnte nicht gestoppt werden.",
+        "imageStatus": "Image-Update-Status konnte nicht ermittelt werden.",
+        "repull": "Container-Images konnten nicht gepullt werden.",
         "delete": "Server konnte nicht gelöscht werden."
       }
     },

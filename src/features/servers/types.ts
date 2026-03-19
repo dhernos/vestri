@@ -70,6 +70,8 @@ export type GameServerListItem = {
   status: ServerStatus;
   statusOutput?: string;
   statusError?: string;
+  imageUpdateAvailable?: boolean;
+  imageStatusError?: string;
   permissions: GameServerPermissions;
 };
 
