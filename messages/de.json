@@ -62,6 +62,7 @@
       "welcome": "E-Mail verifizieren",
       "body1": "Verwenden Sie den untenstehenden Code, um Ihre E-Mail zu verifizieren.",
       "textPlain": "Ihr Verifizierungscode ist {code}. Er ist {minutes} Minuten gültig.",
+      "html": "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f4f4f5;padding:24px 0;'><tr><td align='center'><table role='presentation' width='560' cellpadding='0' cellspacing='0' style='max-width:560px;width:100%;background:#ffffff;border:1px solid #e4e4e7;border-radius:14px;padding:28px;font-family:Segoe UI,Roboto,Arial,sans-serif;color:#18181b;'><tr><td align='center'><div style='display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:12px;border:1px solid #e4e4e7;background:#ffffff;'><svg width='28' height='28' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 6L11 8L16 16L21 8L29 6L16 28L3 6Z' fill='#111111'/></svg></div><h2 style='margin:16px 0 8px;font-size:22px;line-height:1.2;'>E-Mail verifizieren</h2><p style='margin:0 0 18px;font-size:14px;color:#52525b;'>Verwenden Sie den untenstehenden Code, um Ihre E-Mail zu verifizieren.</p><div style='display:inline-block;padding:12px 18px;border:1px solid #d4d4d8;border-radius:10px;font-size:28px;letter-spacing:6px;font-weight:700;background:#fafafa;'>{code}</div><p style='margin:16px 0 0;font-size:13px;color:#71717a;'>Gültig für {minutes} Minuten.</p></td></tr></table></td></tr></table>",
       "button": "E-Mail verifizieren",
       "expiry": "Der Code ist in {minutes} Minuten abgelaufen.",
       "ignore": "Wenn Sie dies nicht angefordert haben, können Sie diese E-Mail ignorieren."
@@ -72,6 +73,7 @@
       "body1": "Klicken Sie auf den Button, um Ihr Passwort zurückzusetzen.",
       "body2": "Wenn Sie dies nicht angefordert haben, ignorieren Sie diese E-Mail.",
       "textPlain": "Setzen Sie Ihr Passwort zurück: {link}",
+      "html": "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f4f4f5;padding:24px 0;'><tr><td align='center'><table role='presentation' width='560' cellpadding='0' cellspacing='0' style='max-width:560px;width:100%;background:#ffffff;border:1px solid #e4e4e7;border-radius:14px;padding:28px;font-family:Segoe UI,Roboto,Arial,sans-serif;color:#18181b;'><tr><td align='center'><div style='display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:12px;border:1px solid #e4e4e7;background:#ffffff;'><svg width='28' height='28' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 6L11 8L16 16L21 8L29 6L16 28L3 6Z' fill='#111111'/></svg></div><h2 style='margin:16px 0 8px;font-size:22px;line-height:1.2;'>Passwort zurücksetzen</h2><p style='margin:0 0 18px;font-size:14px;color:#52525b;'>Klicken Sie auf den Button unten, um Ihr Passwort zurückzusetzen.</p><a href='{link}' style='display:inline-block;padding:12px 18px;background:#111111;color:#ffffff;text-decoration:none;border-radius:10px;font-size:14px;font-weight:600;'>Passwort zurücksetzen</a><p style='margin:16px 0 0;font-size:13px;color:#71717a;'>Der Link ist {hours} Stunde(n) gültig.</p></td></tr></table></td></tr></table>",
       "button": "Passwort zurücksetzen",
       "expiry": "Der Link ist {hours} Stunde(n) gültig.",
       "ignore": "Wenn Sie dies nicht angefordert haben, ignorieren Sie diese E-Mail."
@@ -79,7 +81,7 @@
     "oauthNotice": {
       "subject": "Konto nutzt externe Anmeldung",
       "textPlain": "Dieses Konto wurde über eine externe Anmeldung erstellt. Bitte melden Sie sich mit dem Anbieter an, um auf Ihr Konto zuzugreifen.",
-      "html": "Dieses Konto wurde über eine externe Anmeldung erstellt. Bitte melden Sie sich mit dem Anbieter an, um auf Ihr Konto zuzugreifen."
+      "html": "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f4f4f5;padding:24px 0;'><tr><td align='center'><table role='presentation' width='560' cellpadding='0' cellspacing='0' style='max-width:560px;width:100%;background:#ffffff;border:1px solid #e4e4e7;border-radius:14px;padding:28px;font-family:Segoe UI,Roboto,Arial,sans-serif;color:#18181b;'><tr><td align='center'><div style='display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:12px;border:1px solid #e4e4e7;background:#ffffff;'><svg width='28' height='28' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 6L11 8L16 16L21 8L29 6L16 28L3 6Z' fill='#111111'/></svg></div><h2 style='margin:16px 0 8px;font-size:22px;line-height:1.2;'>Externe Anmeldung</h2><p style='margin:0;font-size:14px;color:#52525b;'>Dieses Konto wurde über eine externe Anmeldung erstellt. Bitte melden Sie sich mit dem Anbieter an, um auf Ihr Konto zuzugreifen.</p></td></tr></table></td></tr></table>"
     }
   },
   "TwoFactorModal": {
@@ -150,7 +152,7 @@
     "emails": {
       "subject": "Ihr 2FA-Code",
       "textPlain": "Ihr 2FA-Code ist {code} (gültig für {minutes} Minuten).",
-      "html": "Ihr 2FA-Code ist <strong>{code}</strong> (gültig für {minutes} Minuten)."
+      "html": "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f4f4f5;padding:24px 0;'><tr><td align='center'><table role='presentation' width='560' cellpadding='0' cellspacing='0' style='max-width:560px;width:100%;background:#ffffff;border:1px solid #e4e4e7;border-radius:14px;padding:28px;font-family:Segoe UI,Roboto,Arial,sans-serif;color:#18181b;'><tr><td align='center'><div style='display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:12px;border:1px solid #e4e4e7;background:#ffffff;'><svg width='28' height='28' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 6L11 8L16 16L21 8L29 6L16 28L3 6Z' fill='#111111'/></svg></div><h2 style='margin:16px 0 8px;font-size:22px;line-height:1.2;'>Zwei-Faktor-Verifizierung</h2><p style='margin:0 0 18px;font-size:14px;color:#52525b;'>Verwenden Sie den folgenden Code, um fortzufahren.</p><div style='display:inline-block;padding:12px 18px;border:1px solid #d4d4d8;border-radius:10px;font-size:28px;letter-spacing:6px;font-weight:700;background:#fafafa;'>{code}</div><p style='margin:16px 0 0;font-size:13px;color:#71717a;'>Gültig für {minutes} Minuten.</p></td></tr></table></td></tr></table>"
     },
     "messages": {
       "qrGenerated": "QR-Code erstellt. Bitte scannen.",
@@ -199,6 +201,12 @@
   "Register": {
     "title": "Konto erstellen",
     "description": "Geben Sie Ihre Daten ein, um ein Konto zu erstellen.",
+    "marketing": {
+      "kicker": "VESTRI",
+      "subtitle": "Startpunkt für Provisioning",
+      "headline": "Erstellen Sie Ihren Workspace und verbinden Sie die erste Node.",
+      "body": "Richten Sie Teamzugriffe ein und rollen Sie konsistente Server-Deployments über Ihre Infrastruktur aus."
+    },
     "form": {
       "nameLabel": "Name",
       "emailLabel": "E-Mail",
@@ -226,6 +234,12 @@
   "Login": {
     "title": "Anmelden",
     "description": "Melden Sie sich an.",
+    "marketing": {
+      "kicker": "VESTRI",
+      "subtitle": "Server-Management-Plattform",
+      "headline": "Steuern Sie Ihre Game-Server-Infrastruktur in einem sicheren Workspace.",
+      "body": "Überwachen Sie Nodes, öffnen Sie Server-Konsolen, bearbeiten Sie Konfigurationen und verwalten Sie Teamzugriffe mit klaren Berechtigungen."
+    },
     "form": {
       "emailLabel": "E-Mail",
       "passwordLabel": "Passwort",
@@ -236,9 +250,7 @@
       "loginButton": "Anmelden",
       "orContinueWith": "oder fortfahren mit",
       "githubButton": "Mit GitHub anmelden",
-      "discordButton": "Mit Discord anmelden",
-      "githubIconAlt": "GitHub-Logo",
-      "discordIconAlt": "Discord-Logo"
+      "githubIconAlt": "GitHub-Logo"
     },
     "passkeys": {
       "button": "Mit Passkey anmelden",
@@ -334,7 +346,8 @@
       "accountDeleted": "Konto gelöscht."
     },
     "errors": {
-      "accountDeleteError": "Konto konnte nicht gelöscht werden."
+      "accountDeleteError": "Konto konnte nicht gelöscht werden.",
+      "accountDeleteStepUpRequired": "Zusätzliche Verifizierung zum Löschen des Kontos erforderlich."
     }
   },
   "ResetPassword": {
@@ -416,7 +429,10 @@
       "loginRpIdMismatch": "Passkey-Login benötigt {rpId} oder dessen Subdomains.",
       "loginBlocked": "Passkey-Login ist blockiert. Verwenden Sie HTTPS oder localhost."
     },
-    "stepUpActionLabel": "Passkey-Verwaltung"
+    "stepUpActionLabel": "Passkey-Verwaltung",
+    "oauthAccount": {
+      "disabled": "Passkeys sind für OAuth-Konten deaktiviert."
+    }
   },
   "QueryToasts": {
     "oauth": {
@@ -475,8 +491,15 @@
     "deleteError": "Sitzung konnte nicht beendet werden."
   },
   "Home": {
-    "title": "Willkommen beim Next.js Template",
-    "subtitle": "Erkunden Sie Authentifizierung, Sitzungen und Sicherheitsflows mit dem Go-Backend.",
+    "kicker": "VESTRI PLATTFORM",
+    "tagline": "Infrastructure Control für Game-Server",
+    "title": "Verwalte Nodes, Server und Zugriffe in einer Oberfläche.",
+    "subtitle": "Vestri hält deine Infrastruktur übersichtlich mit klaren Berechtigungen, sichtbaren Deployments und sicheren Nutzer-Flows.",
+    "highlights": {
+      "nodeOps": "Node-Orchestrierung",
+      "deployments": "Server-Deployments",
+      "access": "Team-Zugriffssteuerung"
+    },
     "session": {
       "loggedInAs": "Angemeldet als",
       "roleLabel": "Rolle: {role}",
@@ -489,12 +512,177 @@
     },
     "cta": {
       "notLoggedIn": "Sie sind nicht angemeldet.",
+      "preview": "Melde dich an, um dein Dashboard zu öffnen und Nodes, Templates sowie laufende Game-Server zu verwalten.",
+      "dashboard": "Dashboard",
       "login": "Anmelden",
-      "register": "Registrieren"
+      "register": "Registrieren",
+      "howTo": "How-to"
     },
     "errors": {
       "invalidSession": "Ihre Sitzung ist abgelaufen oder ungültig. Bitte erneut anmelden.",
       "sessionDetails": "Sitzungsdetails konnten nicht geladen werden."
+    }
+  },
+  "HowToPage": {
+    "hero": {
+      "kicker": "HOW-TO",
+      "tagline": "Vestri Leitfaden für Server-Betrieb",
+      "title": "Richte deine Game-Server-Plattform strukturiert und sicher ein.",
+      "subtitle": "Dieser Leitfaden führt dich durch Worker-Onboarding, Server-Lifecycle und Sicherheitskontrollen mit praxisnahen Defaults.",
+      "actions": {
+        "register": "Konto erstellen",
+        "login": "Anmelden",
+        "home": "Zur Startseite"
+      }
+    },
+    "chapters": {
+      "title": "Kapitel",
+      "nodeOnboarding": "Node onboarding",
+      "nodeOnboardingDescription": "Bereite Worker-Defaults, Trust-Chain und Node-Zugangsdaten vor, bevor du Server provisionierst.",
+      "serverLifecycle": "Server lifecycle",
+      "serverLifecycleDescription": "Erstelle, betreibe und aktualisiere Server in einem wiederholbaren Ablauf.",
+      "accessSecurity": "Access and security",
+      "accessSecurityDescription": "Steuere Berechtigungen sauber und schütze kritische Aktionen mit Step-up-Prüfungen."
+    },
+    "prerequisites": {
+      "title": "Vorbereitung",
+      "description": "Wenn diese Grundlagen einmal sauber stehen, läuft die Einrichtung deutlich ruhiger.",
+      "items": {
+        "1": "Ein Vestri-Konto mit Zugriff auf deinen Workspace",
+        "2": "Ein erreichbarer Worker-Endpunkt inkl. API-Key für die Node-Registrierung",
+        "3": "Eine Template-Strategie für deine Game-Server (Versionen und Defaults)"
+      }
+    },
+    "configReference": {
+      "title": "Konfigurations-Referenz",
+      "description": "Vollständige Übersicht aller aktuell genutzten Environment-Variablen und Worker-Settings.",
+      "environment": {
+        "title": "Environment-Variablen",
+        "description": "Variablen für Frontend, Backend, Migration und die mitgelieferte Compose-Infrastruktur."
+      },
+      "workerSettings": {
+        "title": "Worker settings.json Optionen",
+        "description": "Alle verfügbaren Keys aus /etc/vestri/settings.json mit aktuellen Defaults und Laufzeitverhalten."
+      },
+      "columns": {
+        "variable": "Variable",
+        "required": "Pflicht",
+        "default": "Default",
+        "scope": "Bereich",
+        "description": "Beschreibung",
+        "key": "Key"
+      },
+      "required": {
+        "required": "Pflicht",
+        "recommended": "Empfohlen",
+        "optional": "Optional"
+      },
+      "parsingHint": "Backend-Bool-Parsing akzeptiert: 1, true, yes. Listenwerte sind komma-separiert."
+    },
+    "bootstrap": {
+      "title": "Config- und Trust-Bootstrap",
+      "description": "Bevor du die erste Node anlegst, reichen ein paar einfache Checks. Starte am besten mit den Defaults.",
+      "steps": {
+        "1": "Starte den Worker einmal, damit die Default-Dateien automatisch erzeugt werden.",
+        "2": "Wenn TLS in den Worker-Settings aktiv ist, kopiere das Worker-CA-Zertifikat ins Backend-Trust.",
+        "3": "Nutze den Worker-API-Key beim Anlegen der Node in Vestri.",
+        "4": "Achte auf das URL-Schema der Node: https bei TLS, explizit http nur bei bewusstem HTTP-Modus."
+      },
+      "pathsTitle": "Standard-Dateipfade",
+      "paths": {
+        "settings": "Worker-Settings-Datei: /etc/vestri/settings.json",
+        "apiKey": "Worker-API-Key-Datei: /etc/vestri/api.key",
+        "workerCA": "Worker-CA-Zertifikat (Default): /etc/vestri/certs/ca.crt",
+        "backendCADir": "Backend-CA-Trust-Verzeichnis (Default): ./certs/worker-cas"
+      },
+      "rulesTitle": "Einfache Regeln (mit Defaults)",
+      "rules": {
+        "1": "Wenn TLS auf dem Worker aktiv ist, kopiere das CA-Zertifikat vom Worker ins Backend-Trust (Default: /etc/vestri/certs/ca.crt -> ./certs/worker-cas/node-name.crt).",
+        "2": "Wenn TLS aktiv ist, verwende https in der Node Host/Base-URL (Default-URL-Stil des Workers: https://worker-host:8031).",
+        "3": "Verwende http:// nur, wenn TLS auf dem Worker bewusst deaktiviert wurde.",
+        "4": "Beim Node-Anlegen in der UI den API-Key aus der Worker-Key-Datei verwenden (Default: /etc/vestri/api.key)."
+      },
+      "screenshotLabel": "Settings, API-Key und CA-Trust-Ablage"
+    },
+    "systemd": {
+      "title": "Services mit systemd starten",
+      "description": "Für einen stabilen Produktivstart solltest du den Docker-Stack und den Worker als systemd-Services betreiben.",
+      "steps": {
+        "1": "Erstelle einen Service für den Docker-Compose-Stack (Frontend/Backend/Postgres/Redis).",
+        "2": "Erstelle einen Service für den standalone Worker-Prozess.",
+        "3": "Lade systemd neu und aktiviere beide Services.",
+        "4": "Prüfe den Status nach einem Neustart mit systemctl status."
+      },
+      "workerServiceTitle": "Beispiel: vestri-worker.service",
+      "enableHint": "Beide Services einmal aktivieren:",
+      "screenshotLabel": "systemd-Service-Statusübersicht"
+    },
+    "stepPrefix": "Schritt",
+    "sections": {
+      "connectNode": {
+        "title": "Erste Node verbinden",
+        "description": "Nodes sind die Ausführungsebene. Vor der Server-Erstellung muss mindestens eine Worker-Node registriert sein.",
+        "steps": {
+          "1": "Öffne den Bereich Nodes und lege eine neue Worker-Node an.",
+          "2": "Trage Host/Base-URL und API-Key des Workers ein.",
+          "3": "Speichere die Node und führe einen Health-Check aus.",
+          "4": "Prüfe deine Rolle und Berechtigungen auf dieser Node."
+        },
+        "screenshotLabel": "Node-Registrierung und Health-Check"
+      },
+      "createServer": {
+        "title": "Server erstellen und provisionieren",
+        "description": "Erstelle Server über Templates, damit Deployments konsistent und reproduzierbar bleiben.",
+        "steps": {
+          "1": "Öffne das Dashboard und wähle die Ziel-Node aus.",
+          "2": "Wähle ein Template und setze Identifier sowie Versionsfelder.",
+          "3": "Bestätige ggf. erforderliche Agreements und erstelle den Server.",
+          "4": "Öffne den Workspace und prüfe Status + Start."
+        },
+        "screenshotLabel": "Server-Erstellung aus Template"
+      },
+      "operateServer": {
+        "title": "Server im Betrieb steuern",
+        "description": "Nutze einen Workspace für Lifecycle-Aktionen, Logs, Konsole, Dateisystem und Konfiguration.",
+        "steps": {
+          "1": "Verwende Start/Stop und Status-Refresh zur Stack-Steuerung.",
+          "2": "Beobachte Logs mit Auto-Update und manuellem Fallback.",
+          "3": "Nutze File-Browser und Editor für Konfigurationsänderungen.",
+          "4": "Validiere Änderungen in der Konsole vor und nach Neustarts."
+        },
+        "screenshotLabel": "Runtime-Steuerung und Konsole"
+      },
+      "teamAndAccess": {
+        "title": "Team-Zugriff sicher verwalten",
+        "description": "Vergib Rollen explizit und schütze kritische Aktionen mit Step-up-Verifikation.",
+        "steps": {
+          "1": "Setze pro Server minimale Rechte (viewer/operator/admin).",
+          "2": "Nutze Einladungen und entferne veraltete Gastzugriffe regelmäßig.",
+          "3": "Erzwinge Step-up für kritische Aktionen (Löschen, Passkey-Änderungen).",
+          "4": "Prüfe aktive Sessions und rotiere Zugangsdaten bei Bedarf."
+        },
+        "screenshotLabel": "Rollenmodell und Schutz kritischer Aktionen"
+      },
+      "updateRoutine": {
+        "title": "Saubere Update-Routine etablieren",
+        "description": "Behandle Image-Updates als geplante Wartungsaktion, um Überraschungen im Betrieb zu reduzieren.",
+        "steps": {
+          "1": "Prüfe Indicators für veraltete Server-Images.",
+          "2": "Führe Repulls bewusst in Wartungsfenstern aus.",
+          "3": "Starte neu und validiere Health + Logs.",
+          "4": "Dokumentiere den Update-Rhythmus je Umgebung."
+        },
+        "screenshotLabel": "Image-Repull und Post-Update-Check"
+      }
+    },
+    "screenshotPlaceholder": "Screenshot-Platzhalter - hier später deinen Screenshot einfügen.",
+    "nextSteps": {
+      "title": "Nächste Schritte",
+      "description": "Starte mit einer Node und einem Template und baue daraus einen wiederholbaren Deployment-Flow.",
+      "actions": {
+        "login": "Anmelden",
+        "register": "Konto erstellen"
+      }
     }
   },
   "NodesPage": {

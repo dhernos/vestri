@@ -1,7 +1,6 @@
 // src/components/SessionTTL.jsx
 "use client";
 
-import React from "react";
 import { useTranslations } from "next-intl"; // already present (keine Änderung am Import nötig)
 
 const SessionTTL = ({ ttlInSeconds }: { ttlInSeconds: number }) => {

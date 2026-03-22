@@ -27,6 +27,12 @@ export type GoPasskey = {
   transports?: string[];
 };
 
+export type ApiActionResult = {
+  ok: boolean;
+  message?: string;
+  status: number;
+};
+
 type LoginResult =
   | { ok: true; user: GoUser; sessionId: string }
   | { ok: false; twoFactorRequired?: boolean; message: string };
@@ -119,18 +125,74 @@ export async function fetchPasskeys(): Promise<GoPasskey[]> {
   const res = await fetch("/api/passkeys", { credentials: "include" });
   if (!res.ok) return [];
   const data = await res.json().catch(() => ({}));
-  return data?.passkeys || [];
+  const list = Array.isArray(data?.passkeys) ? data.passkeys : [];
+
+  return list
+    .map((item: unknown): GoPasskey | null => {
+      if (!item || typeof item !== "object") return null;
+      const pk = item as Record<string, unknown>;
+
+      const id =
+        typeof pk.id === "string"
+          ? pk.id
+          : typeof pk.ID === "string"
+            ? pk.ID
+            : null;
+      if (!id || !id.trim()) {
+        return null;
+      }
+
+      const label =
+        typeof pk.label === "string"
+          ? pk.label
+          : typeof pk.Label === "string"
+            ? pk.Label
+            : null;
+
+      const createdAt =
+        typeof pk.createdAt === "string"
+          ? pk.createdAt
+          : typeof pk.CreatedAt === "string"
+            ? pk.CreatedAt
+            : undefined;
+
+      const transportsRaw = Array.isArray(pk.transports)
+        ? pk.transports
+        : Array.isArray(pk.Transports)
+          ? pk.Transports
+          : [];
+      const transports = transportsRaw.filter(
+        (value): value is string => typeof value === "string"
+      );
+
+      return {
+        id,
+        label,
+        createdAt,
+        transports,
+      };
+    })
+    .filter((pk: GoPasskey | null): pk is GoPasskey => pk !== null);
 }
 
-export async function deletePasskey(id: string): Promise<boolean> {
+export async function deletePasskey(id: string): Promise<ApiActionResult> {
   const res = await fetch(`/api/passkeys/${encodeURIComponent(id)}`, {
     method: "DELETE",
     credentials: "include",
   });
-  return res.ok;
+  if (res.ok) {
+    return { ok: true, status: res.status };
+  }
+  const data = await safeJson(res);
+  const message = isMessageCode(data?.message)
+    ? data.message
+    : isMessageCode(data?.error)
+      ? data.error
+      : undefined;
+  return { ok: false, message, status: res.status };
 }
 
-export function startOAuth(provider: "github" | "discord", returnTo: string = "/") {
+export function startOAuth(provider: "github", returnTo: string = "/") {
   const url = new URL(`/api/oauth/${provider}/start`, window.location.origin);
   url.searchParams.set("returnTo", returnTo);
   window.location.href = url.toString();

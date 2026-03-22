@@ -2,7 +2,6 @@
 
 import { useRouter } from "@/i18n/navigation";
 import { useState, FormEvent } from "react";
-import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,6 +14,11 @@ import {
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/toast";
+import {
+  isThemeMode,
+  useTheme,
+  type ThemeMode,
+} from "@/components/theme-provider";
 
 export default function UpdateProfileSection() {
   const { data: session, status, refresh } = useAuth();
@@ -23,7 +27,10 @@ export default function UpdateProfileSection() {
   const { push } = useToast();
 
   const [name, setName] = useState(session?.user?.name || "");
-  const [theme, setTheme] = useState(session?.user?.theme || "system");
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    const initialTheme = session?.user?.theme;
+    return isThemeMode(initialTheme) ? initialTheme : "system";
+  });
 
   const t = useTranslations("ProfilePage");
   const tCommon = useTranslations("Common");
@@ -105,7 +112,9 @@ export default function UpdateProfileSection() {
             <Select
               value={theme}
               onValueChange={(value) => {
-                setTheme(value);
+                if (isThemeMode(value)) {
+                  setTheme(value);
+                }
               }}
             >
               <SelectTrigger className="mt-1 p-2 w-full border rounded-md cursor-pointer">
@@ -126,7 +135,7 @@ export default function UpdateProfileSection() {
           </div>
           <Button
             type="submit"
-            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded cursor-pointer"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold py-2 px-4 rounded cursor-pointer"
           >
             {t("buttons.updateProfile")}
           </Button>

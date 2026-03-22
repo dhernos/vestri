@@ -17,6 +17,7 @@ import { TwoFactorModal } from "@/components/profile_page/TwoFactorModal";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/toast";
+import { sendStepUpEmailCode } from "@/lib/step-up";
 
 export default function TwoFactorAuthSection() {
   const { data: session, refresh } = useAuth();
@@ -164,15 +165,7 @@ export default function TwoFactorAuthSection() {
       return;
     }
 
-    // If using email 2FA, send a code before showing the modal
-    if (session?.user.twoFactorMethod === "email" && session.user.email) {
-      fetch("/api/two-factor/send-email-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email: session.user.email }),
-      }).catch(() => {});
-    }
+    void sendStepUpEmailCode(session?.user);
 
     // Öffne das Modal und setze die zu schützende Aktion
     setActionToProtect("disable2FA");
@@ -198,7 +191,7 @@ export default function TwoFactorAuthSection() {
 
       <section className="mb-8 p-6 border rounded-lg shadow-md">
         <h2 className="text-2xl font-semibold mb-4 flex items-center space-x-2">
-          <Shield className="h-6 w-6 text-blue-600" />
+          <Shield className="h-6 w-6 text-primary" />
           <span>{t("header")}</span>
         </h2>
 
@@ -207,8 +200,8 @@ export default function TwoFactorAuthSection() {
           <span
             className={`font-bold ${
               session?.user.isTwoFactorEnabled
-                ? "text-green-600"
-                : "text-red-600"
+                ? "text-success"
+                : "text-destructive"
             }`}
           >
             {session?.user.isTwoFactorEnabled ? t("enabled") : t("disabled")}
@@ -237,13 +230,13 @@ export default function TwoFactorAuthSection() {
           <div className="flex space-x-4">
             <Button
               onClick={() => handleStart2FASetup("app")}
-              className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded cursor-pointer"
+              className="bg-info text-info-foreground hover:bg-info/90 font-bold py-2 px-4 rounded cursor-pointer"
             >
               {tCommon("buttons.enableAppButton")}
             </Button>
             <Button
               onClick={() => handleStart2FASetup("email")}
-              className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded cursor-pointer"
+              className="bg-warning text-warning-foreground hover:bg-warning/90 font-bold py-2 px-4 rounded cursor-pointer"
             >
               {tCommon("buttons.enableEmailButton")}
             </Button>
@@ -298,13 +291,13 @@ export default function TwoFactorAuthSection() {
                   variant="outline"
                   onClick={() => setIs2FASetupModalOpen(false)}
                   type="button"
-                  className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded cursor-pointer"
+                  className="bg-secondary text-secondary-foreground hover:bg-secondary/85 font-bold py-2 px-4 rounded cursor-pointer"
                 >
                   {tCommon("buttons.cancel")}
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded cursor-pointer"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold py-2 px-4 rounded cursor-pointer"
                 >
                   {tCommon("buttons.activateButton")}
                 </Button>

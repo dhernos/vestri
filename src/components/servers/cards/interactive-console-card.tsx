@@ -54,11 +54,11 @@ export default function InteractiveConsoleCard({
           {t("interactive.sessionStatusLabel")} {t(`connectionStatus.${execStatus}`)}
         </p>
         {!isServerUp ? <p className="text-xs text-muted-foreground">{t("interactive.offlineHint")}</p> : null}
-        {execError ? <p className="text-sm text-red-600">{execError}</p> : null}
+        {execError ? <p className="text-sm text-destructive">{execError}</p> : null}
         {execSessionActive ? (
           <div
             ref={terminalHostRef}
-            className={`h-96 w-full overflow-hidden rounded-md border bg-black p-2 ${terminalScopeClassName}`}
+            className={`h-96 w-full overflow-hidden rounded-md border bg-[var(--terminal-bg)] p-2 ${terminalScopeClassName}`}
           />
         ) : (
           <div className="flex h-32 items-center justify-center rounded-md border border-dashed text-xs text-muted-foreground">

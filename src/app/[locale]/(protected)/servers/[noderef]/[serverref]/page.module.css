@@ -38,8 +38,8 @@
 }
 
 .terminalScope :global(.xterm .composition-view) {
-  background: #000;
-  color: #fff;
+  background: var(--terminal-bg);
+  color: var(--terminal-fg);
   display: none;
   position: absolute;
   white-space: nowrap;
@@ -51,7 +51,7 @@
 }
 
 .terminalScope :global(.xterm .xterm-viewport) {
-  background-color: #000;
+  background-color: var(--terminal-bg);
   overflow-y: scroll;
   cursor: default;
   position: absolute;

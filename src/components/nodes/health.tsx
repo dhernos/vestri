@@ -65,12 +65,12 @@ export default function HealthBlob({ nodeRef }: HealthBlobProps) {
       aria-label={statusReason}
       className={`h-4 w-4 rounded-full ${
         state === "green"
-          ? "bg-green-500"
+          ? "bg-success"
           : state === "orange"
-            ? "bg-orange-500"
+            ? "bg-warning"
             : state === "red"
-              ? "bg-red-500"
-              : "bg-gray-400"
+              ? "bg-destructive"
+              : "bg-muted-foreground/50"
       }`}
     />
   );

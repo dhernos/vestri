@@ -11,20 +11,40 @@ import { TwoFactorModal } from "./TwoFactorModal";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/toast";
+import { prepareStepUpCode } from "@/lib/step-up";
+
+type PendingPasskeyAction =
+  | { type: "add"; label?: string }
+  | { type: "delete"; id: string }
+  | null;
 
 export default function PasskeySection() {
   const t = useTranslations("Passkeys");
   const tErrors = useTranslations("Errors");
   const { data: session } = useAuth();
+  const oauthLinked = session?.user?.oauthLinked ?? false;
   const { push } = useToast();
   const [passkeys, setPasskeys] = useState<GoPasskey[]>([]);
   const [loading, setLoading] = useState(false);
   const [needsStepUp, setNeedsStepUp] = useState(false);
+  const [pendingAction, setPendingAction] = useState<PendingPasskeyAction>(null);
 
   const load = useCallback(async () => {
+    if (oauthLinked) {
+      setPasskeys([]);
+      return;
+    }
     const data = await fetchPasskeys();
-    setPasskeys(data);
-  }, []);
+    const seen = new Set<string>();
+    const unique = data.filter((pk) => {
+      if (typeof pk.id !== "string") return false;
+      const id = pk.id.trim();
+      if (!id || seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+    setPasskeys(unique);
+  }, [oauthLinked]);
 
   useEffect(() => {
     load();
@@ -84,22 +104,33 @@ export default function PasskeySection() {
     }
   };
 
-  const handleAdd = async () => {
-    const label = prompt(t("prompts.nameOptional")) || undefined;
+  const mapStepUpSendError = (code?: string) => {
+    if (code && /^[A-Z0-9_]+$/.test(code) && tErrors.has(code as never)) {
+      return tErrors(code as never);
+    }
+    return tErrors("SEND_CODE_ERROR");
+  };
+
+  const handleAdd = async (label?: string) => {
+    if (oauthLinked) {
+      push({ variant: "error", description: t("oauthAccount.disabled") });
+      return;
+    }
     setLoading(true);
     const res = await registerPasskey(label);
     if (!res.ok) {
       if (res.error === "LOGIN_START_FAILED" && res.fallback === "STEP_UP_REQUIRED") {
-        // Trigger email code if needed before showing the modal
-        if (session?.user?.twoFactorMethod === "email" && session?.user?.email) {
-          await fetch("/api/two-factor/send-email-code", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ email: session.user.email }),
-          }).catch(() => {});
+        const stepUp = await prepareStepUpCode(session?.user, "passkey_manage");
+        if (!stepUp.ok) {
+          push({ variant: "error", description: mapStepUpSendError(stepUp.code) });
+          setLoading(false);
+          return;
         }
+        setPendingAction({ type: "add", label });
         setNeedsStepUp(true);
+        push({ variant: "error", description: t("errors.stepUpRequired") });
+        setLoading(false);
+        return;
       }
       const message = mapPasskeyError(res.error, res.fallback);
       push({ variant: "error", description: message });
@@ -109,20 +140,34 @@ export default function PasskeySection() {
     setLoading(false);
   };
 
+  const handlePromptedAdd = async () => {
+    const label = prompt(t("prompts.nameOptional")) || undefined;
+    await handleAdd(label);
+  };
+
   const handleDelete = async (id: string) => {
+    if (oauthLinked) {
+      push({ variant: "error", description: t("oauthAccount.disabled") });
+      return;
+    }
     setLoading(true);
-    const ok = await deletePasskey(id);
-    if (!ok) {
-      if (session?.user?.twoFactorMethod === "email" && session?.user?.email) {
-        await fetch("/api/two-factor/send-email-code", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ email: session.user.email }),
-        }).catch(() => {});
+    const result = await deletePasskey(id);
+    if (!result.ok) {
+      if (result.status === 403 && result.message === "STEP_UP_REQUIRED") {
+        const stepUp = await prepareStepUpCode(session?.user, "passkey_manage");
+        if (!stepUp.ok) {
+          push({ variant: "error", description: mapStepUpSendError(stepUp.code) });
+          setLoading(false);
+          return;
+        }
+        setPendingAction({ type: "delete", id });
+        setNeedsStepUp(true);
+        push({ variant: "error", description: t("errors.stepUpRequired") });
+        setLoading(false);
+        return;
+      } else {
+        push({ variant: "error", description: t("errors.generic") });
       }
-      setNeedsStepUp(true);
-      push({ variant: "error", description: t("errors.stepUpRequired") });
     } else {
       await load();
     }
@@ -134,7 +179,7 @@ export default function PasskeySection() {
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>{t("title")}</span>
-          <Button onClick={handleAdd} disabled={loading}>
+          <Button onClick={handlePromptedAdd} disabled={loading || oauthLinked}>
             {loading ? t("buttons.loading") : t("buttons.add")}
           </Button>
         </CardTitle>
@@ -142,16 +187,32 @@ export default function PasskeySection() {
       <CardContent>
         <TwoFactorModal
           isOpen={needsStepUp}
-          onClose={() => setNeedsStepUp(false)}
+          onClose={() => {
+            setNeedsStepUp(false);
+            setPendingAction(null);
+          }}
           mode="stepup"
           purpose="passkey_manage"
           actionLabel={t("stepUpActionLabel")}
           onSuccess={async () => {
             setNeedsStepUp(false);
-            await load();
+            const action = pendingAction;
+            setPendingAction(null);
+
+            if (!action) {
+              await load();
+              return;
+            }
+            if (action.type === "delete") {
+              await handleDelete(action.id);
+              return;
+            }
+            await handleAdd(action.label);
           }}
         />
-        {passkeys.length === 0 ? (
+        {oauthLinked ? (
+          <p className="text-sm text-muted-foreground">{t("oauthAccount.disabled")}</p>
+        ) : passkeys.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("emptyState")}</p>
         ) : (
           <ul className="space-y-2">

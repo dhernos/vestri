@@ -26,7 +26,6 @@ export default function ProtectedLayout({
   useEffect(() => {
     // If the session becomes invalid, we redirect
     if (status === "unauthenticated" || session?.error) {
-      console.log("ProtectedLayout: Session invalid, redirecting.");
       router.push("/logout");
     }
   }, [status, session?.error, router]);

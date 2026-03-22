@@ -1,8 +1,21 @@
+"use client";
+
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
-export default function ToggleLanguage() {
+type ToggleLanguageProps = {
+  compact?: boolean;
+  className?: string;
+  buttonClassName?: string;
+};
+
+export default function ToggleLanguage({
+  compact = false,
+  className,
+  buttonClassName,
+}: ToggleLanguageProps) {
   const t = useTranslations("LanguageToggle");
   const locale = useLocale();
   const router = useRouter();
@@ -20,19 +33,28 @@ export default function ToggleLanguage() {
   const flag = flagByLocale[nextLocale];
 
   return (
-    <div className="mb-6 flex w-full max-w-4xl justify-end">
+    <div
+      className={cn(
+        compact ? "flex justify-end" : "mb-6 flex w-full max-w-4xl justify-end",
+        className
+      )}
+    >
       <button
         onClick={handleLanguageSwitch}
         aria-label={t("switchTo", { locale: t(`localeName.${nextLocale}` as never) })}
         title={t("switchTo", { locale: t(`localeName.${nextLocale}` as never) })}
-        className="flex h-5 w-7 items-center justify-center border border-gray-200 shadow-sm transition hover:-translate-y-0.5 hover:shadow focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer"
+        className={cn(
+          "flex h-5 w-7 items-center justify-center rounded-sm border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer",
+          compact ? "h-7 w-10 rounded-md" : "",
+          buttonClassName
+        )}
       >
         <Image
           src={flag.src}
           alt={flag.alt}
           width={28}
           height={20}
-          className="h-5 w-7"
+          className={cn("h-5 w-7", compact ? "h-6 w-9 rounded-sm" : "")}
         />
       </button>
     </div>

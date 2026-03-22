@@ -21,7 +21,7 @@ interface TwoFactorModalProps {
   onClose: () => void;
 
   mode: "login" | "stepup" | "setup-finalize" | "oauth";
-  provider?: string;
+  provider?: "github";
   pendingId?: string;
   purpose?: string;
   method?: "app" | "email";
@@ -201,9 +201,9 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({
               : t("description", { action: actionLabel })}
 
             {mode === "stepup" && purpose && (
-              <div className="text-xs text-muted-foreground mt-1">
+              <span className="mt-1 block text-xs text-muted-foreground">
                 ({t("stepUpTitle", { purpose })})
-              </div>
+              </span>
             )}
           </DialogDescription>
         </DialogHeader>

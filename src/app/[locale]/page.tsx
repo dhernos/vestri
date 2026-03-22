@@ -1,15 +1,16 @@
-// src/app/page.tsx
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
-import SessionTTL from "@/components/profile_page/SessionTTL";
+import Image from "next/image";
+import { Link } from "@/i18n/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslations } from "next-intl";
 import { useToast } from "@/components/ui/toast";
+import { Button } from "@/components/ui/button";
+import SessionTTL from "@/components/profile_page/SessionTTL";
 import ToggleLanguage from "@/components/language-toggle";
+import ThemeToggle from "@/components/theme-toggle";
 
-// Define a type for the additional session data we're fetching from the backend
 interface SessionInfo {
   expires: string;
   loginTime: string;
@@ -21,19 +22,18 @@ export default function Home() {
   const { data: session, status, logout } = useAuth();
   const t = useTranslations("Home");
   const tCommon = useTranslations("Common");
+  const tProfile = useTranslations("ProfilePage");
   const { push } = useToast();
   const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
   const [loadingSessionInfo, setLoadingSessionInfo] = useState(false);
   const [showLoading, setShowLoading] = useState(false);
 
-  // Handle session errors that the JWT callback might set
   useEffect(() => {
     if (session?.error) {
       push({ variant: "error", description: t("errors.invalidSession") });
     }
   }, [session, t, push]);
 
-  // Debounce loading state to avoid flicker on fast transitions
   useEffect(() => {
     if (status === "loading") {
       const timer = setTimeout(() => setShowLoading(true), 200);
@@ -42,8 +42,6 @@ export default function Home() {
     setShowLoading(false);
   }, [status]);
 
-  // Function to fetch the session details from your new API
-  // This would get the actual TTLs from Redis
   const fetchSessionDetails = async () => {
     setLoadingSessionInfo(true);
     try {
@@ -55,17 +53,12 @@ export default function Home() {
       }
       const data = await response.json();
       setSessionInfo(data);
-      console.log(data);
     } catch (err) {
       console.error(err);
       push({ variant: "error", description: t("errors.sessionDetails") });
     } finally {
       setLoadingSessionInfo(false);
     }
-  };
-
-  const handleSignOut = async () => {
-    await logout();
   };
 
   if (status === "loading" && showLoading) {
@@ -77,90 +70,144 @@ export default function Home() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-8">
-      {/* Language Switcher */}
-      <ToggleLanguage />
-      <h1 className="mb-8 text-4xl font-bold">{t("title")}</h1>
-      <p className="mb-6 text-lg text-center max-w-2xl">{t("subtitle")}</p>
+    <div className="relative min-h-screen overflow-hidden">
+      <div className="absolute right-4 top-4 z-20 flex items-center gap-2">
+        <ThemeToggle />
+        <ToggleLanguage compact />
+      </div>
 
-      {session ? (
-        <div className="rounded-lg p-8 shadow-md text-center max-w-xl w-full">
-          <p className="mb-4 text-lg">
-            {t("session.loggedInAs")}{" "}
-            <span className="font-semibold">{session.user?.email}</span>
-            {session.user?.role && (
-              <span className="ml-2 text-sm">
-                {t("session.roleLabel", { role: session.user.role })}
-              </span>
-            )}
-          </p>
-
-          {/* Buttons to fetch and display the Redis session information */}
-          <div className="mt-6">
-            <h2 className="mb-2 text-xl font-bold">
-              {t("session.detailsTitle")}
-            </h2>
-            <button
-              onClick={fetchSessionDetails}
-              disabled={loadingSessionInfo}
-              className="rounded-md bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-600 disabled:opacity-50 cursor-pointer"
-            >
-              {loadingSessionInfo
-                ? t("session.detailsLoading")
-                : t("session.detailsCta")}
-            </button>
-
-            {sessionInfo && (
-              <div className="mt-4 p-4 rounded-md text-left border border-gray-200">
-                <p>
-                  <span className="font-semibold">
-                    {t("session.loginTime")}
-                  </span>{" "}
-                  {new Date(sessionInfo.loginTime).toLocaleString()}
-                </p>
-                <p>
-                  <span className="font-semibold">
-                    {t("session.expiresAt")}
-                  </span>{" "}
-                  {new Date(
-                    sessionInfo.expires || sessionInfo.expires
-                  ).toLocaleString()}
-                </p>
-                <SessionTTL
-                  ttlInSeconds={
-                    sessionInfo.ttlInSeconds ??
-                    (sessionInfo as any).ttlSeconds ??
-                    0
-                  }
+      <main className="relative mx-auto flex min-h-screen w-full max-w-6xl items-center px-4 py-12">
+        <div className="grid w-full gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <section className="rounded-2xl border bg-card/85 p-6 backdrop-blur-sm md:p-8">
+            <div className="mb-6 flex items-center gap-4">
+              <div className="flex size-18 items-center justify-center rounded-2xl border border-primary/25 bg-card shadow-sm shadow-primary/20 md:size-20">
+                <Image
+                  src="/logos/vestri/vestri_transparent.svg"
+                  alt="Vestri logo"
+                  width={56}
+                  height={56}
+                  className="size-12 object-contain md:size-14 dark:invert dark:brightness-125"
+                  priority
                 />
               </div>
-            )}
-          </div>
+              <div>
+                <p className="text-xs font-semibold tracking-[0.22em] text-primary">
+                  {t("kicker")}
+                </p>
+                <p className="text-sm text-muted-foreground">{t("tagline")}</p>
+              </div>
+            </div>
 
-          <button
-            onClick={handleSignOut}
-            className="mt-6 rounded-md bg-red-500 px-6 py-3 font-bold text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 cursor-pointer"
-          >
-            {t("session.signOut")}
-          </button>
+            <h1 className="text-3xl font-semibold leading-tight md:text-5xl">
+              {t("title")}
+            </h1>
+            <p className="mt-4 max-w-2xl text-base text-muted-foreground md:text-lg">
+              {t("subtitle")}
+            </p>
+
+            <div className="mt-8 grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
+              <div className="rounded-lg border bg-background/55 px-3 py-2">
+                {t("highlights.nodeOps")}
+              </div>
+              <div className="rounded-lg border bg-background/55 px-3 py-2">
+                {t("highlights.deployments")}
+              </div>
+              <div className="rounded-lg border bg-background/55 px-3 py-2">
+                {t("highlights.access")}
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border bg-card/88 p-6 backdrop-blur-sm">
+            {session ? (
+              <div className="space-y-5">
+                <p className="text-sm text-muted-foreground">
+                  {t("session.loggedInAs")}
+                </p>
+                <div className="rounded-xl border bg-background/60 p-4">
+                  <p className="text-base font-semibold break-all">
+                    {session.user?.email}
+                  </p>
+                  {session.user?.role ? (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {t("session.roleLabel", { role: session.user.role })}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Button asChild>
+                    <Link href="/dashboard">{t("cta.dashboard")}</Link>
+                  </Button>
+                  <Button asChild variant="secondary">
+                    <Link href="/profile">{tProfile("profilePageHeader")}</Link>
+                  </Button>
+                </div>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/how-to">{t("cta.howTo")}</Link>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={fetchSessionDetails}
+                  disabled={loadingSessionInfo}
+                >
+                  {loadingSessionInfo
+                    ? t("session.detailsLoading")
+                    : t("session.detailsCta")}
+                </Button>
+
+                {sessionInfo ? (
+                  <div className="rounded-xl border bg-background/60 p-4 text-sm">
+                    <p>
+                      <span className="font-semibold">{t("session.loginTime")}</span>{" "}
+                      {new Date(sessionInfo.loginTime).toLocaleString()}
+                    </p>
+                    <p className="mt-1">
+                      <span className="font-semibold">{t("session.expiresAt")}</span>{" "}
+                      {new Date(sessionInfo.expires).toLocaleString()}
+                    </p>
+                    <div className="mt-2">
+                      <SessionTTL ttlInSeconds={sessionInfo.ttlInSeconds ?? 0} />
+                    </div>
+                  </div>
+                ) : null}
+
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={() => {
+                    void logout();
+                  }}
+                >
+                  {t("session.signOut")}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                <p className="text-sm text-muted-foreground">
+                  {t("cta.notLoggedIn")}
+                </p>
+                <div className="rounded-xl border bg-background/60 p-4 text-sm text-muted-foreground">
+                  {t("cta.preview")}
+                </div>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <Button asChild>
+                    <Link href="/login">{t("cta.login")}</Link>
+                  </Button>
+                  <Button asChild variant="secondary">
+                    <Link href="/register">{t("cta.register")}</Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link href="/how-to">{t("cta.howTo")}</Link>
+                  </Button>
+                </div>
+              </div>
+            )}
+          </section>
         </div>
-      ) : (
-        <div className="text-center">
-          <p className="mb-4 text-lg">{t("cta.notLoggedIn")}</p>
-          <Link
-            href="/login"
-            className="rounded-md bg-blue-500 px-6 py-3 font-bold text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 cursor-pointer"
-          >
-            {t("cta.login")}
-          </Link>
-          <Link
-            href="/register"
-            className="ml-4 rounded-md bg-purple-500 px-6 py-3 font-bold text-white hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 cursor-pointer"
-          >
-            {t("cta.register")}
-          </Link>
-        </div>
-      )}
+      </main>
     </div>
   );
 }

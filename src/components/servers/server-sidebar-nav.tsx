@@ -37,11 +37,11 @@ type ServerSidebarNavProps = {
 const statusDotClass = (status: ServerStatus) => {
   switch (status) {
     case "up":
-      return "bg-emerald-500";
+      return "bg-success";
     case "down":
-      return "bg-rose-500";
+      return "bg-destructive";
     default:
-      return "bg-gray-400";
+      return "bg-muted-foreground/50";
   }
 };
 

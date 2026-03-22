@@ -78,76 +78,30 @@ export default function ServerControlsPage() {
     (permission: "admin" | "operator" | "viewer") => t(`access.roles.${permission}`),
     [t]
   );
-
-  const loadServer = useCallback(async () => {
-    if (!basePath) {
-      setLoading(false);
-      setError(t("errors.missingRouteParams"));
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch(`${basePath}?includeStatus=1&includeImageStatus=1`, {
-        credentials: "include",
-        cache: "no-store",
-      });
-      const data = (await res.json().catch(() => ({}))) as {
-        server?: GameServerDetails;
-        message?: string;
-      };
-      if (!res.ok || !data.server) {
-        setServer(null);
-        setError(t("errors.loadServer"));
+  const notifyServersChanged = useCallback(
+    (detail?: {
+      changeType?: "structure" | "status";
+      serverRef?: string;
+      status?: ServerStatus;
+      statusOutput?: string;
+      statusError?: string;
+    }) => {
+      if (!nodeRef) {
         return;
       }
-      setServer(data.server);
-      setStackError("");
-      setImageRepullError("");
-    } catch {
-      setServer(null);
-      setError(t("errors.loadServer"));
-    } finally {
-      setLoading(false);
-    }
-  }, [basePath, t]);
+      window.dispatchEvent(
+        new CustomEvent("vestri:servers-changed", {
+          detail: {
+            nodeRef,
+            ...detail,
+          },
+        })
+      );
+    },
+    [nodeRef]
+  );
 
-  useEffect(() => {
-    loadServer();
-  }, [loadServer]);
-
-  const {
-    velocityTemplateId,
-    velocityTemplates,
-    velocityBackendName,
-    velocitySoftwareField,
-    velocitySoftwareOptions,
-    velocityBackendSoftwareVersion,
-    velocityGameField,
-    velocityGameOptions,
-    velocityBackendGameVersion,
-    velocityCreating,
-    velocityLoading,
-    velocityError,
-    velocityCreateError,
-    agreementRequired,
-    velocityBackends,
-    velocityAgreementOpen,
-    selectedVelocityAgreement,
-    setVelocityTemplateId,
-    setVelocityBackendName,
-    setVelocityBackendSoftwareVersion,
-    setVelocityBackendGameVersion,
-    setVelocityAgreementOpen,
-    loadVelocityData,
-    createVelocityBackend,
-    confirmVelocityAgreementAndCreate,
-  } = useVelocityBackends({
-    nodeRef,
-    server: isDashboardSection ? server : null,
-    t,
-  });
+  const wait = useCallback((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)), []);
 
   const refreshServerStatus = useCallback(async (): Promise<ServerStatus | null> => {
     if (!basePath) {
@@ -182,6 +136,133 @@ export default function ServerControlsPage() {
       return null;
     }
   }, [basePath]);
+
+  const pollServerStatusUntil = useCallback(
+    async (expected: ServerStatus) => {
+      let latest = await refreshServerStatus();
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        if (latest === expected) {
+          break;
+        }
+        await wait(700);
+        latest = await refreshServerStatus();
+      }
+      return latest;
+    },
+    [refreshServerStatus, wait]
+  );
+
+  const loadServer = useCallback(async () => {
+    if (!nodeRef) {
+      return;
+    }
+    if (!basePath) {
+      setLoading(false);
+      setError(t("errors.missingRouteParams"));
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`${basePath}?includeStatus=1`, {
+        credentials: "include",
+        cache: "no-store",
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        server?: GameServerDetails;
+        message?: string;
+      };
+      if (!res.ok || !data.server) {
+        setServer(null);
+        setError(t("errors.loadServer"));
+        return;
+      }
+      setServer(data.server);
+      setStackError("");
+      setImageRepullError("");
+    } catch {
+      setServer(null);
+      setError(t("errors.loadServer"));
+    } finally {
+      setLoading(false);
+    }
+  }, [basePath, nodeRef, t]);
+
+  useEffect(() => {
+    loadServer();
+  }, [loadServer]);
+
+  useEffect(() => {
+    const onServersChanged = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        nodeRef?: string;
+        changeType?: "structure" | "status";
+        serverRef?: string;
+        status?: ServerStatus;
+        statusOutput?: string;
+        statusError?: string;
+      }>;
+      const detail = customEvent.detail;
+      if (!detail || detail.changeType !== "status") {
+        return;
+      }
+      if (detail.nodeRef && detail.nodeRef !== nodeRef) {
+        return;
+      }
+      const nextStatus = detail.status;
+      if (detail.serverRef !== serverRef || !nextStatus) {
+        return;
+      }
+      setServer((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: nextStatus,
+              statusOutput: detail.statusOutput ?? prev.statusOutput,
+              statusError: detail.statusError ?? prev.statusError,
+            }
+          : prev
+      );
+    };
+
+    window.addEventListener("vestri:servers-changed", onServersChanged);
+    return () => {
+      window.removeEventListener("vestri:servers-changed", onServersChanged);
+    };
+  }, [nodeRef, serverRef]);
+
+  const {
+    velocityTemplateId,
+    velocityTemplates,
+    velocityBackendName,
+    velocitySoftwareField,
+    velocitySoftwareOptions,
+    velocityBackendSoftwareVersion,
+    velocityGameField,
+    velocityGameOptions,
+    velocityBackendGameVersion,
+    velocityCreating,
+    velocityLoading,
+    velocityError,
+    velocityCreateError,
+    agreementRequired,
+    velocityBackends,
+    velocityAgreementOpen,
+    selectedVelocityAgreement,
+    setVelocityTemplateId,
+    setVelocityBackendName,
+    setVelocityBackendSoftwareVersion,
+    setVelocityBackendGameVersion,
+    setVelocityAgreementOpen,
+    loadVelocityData,
+    createVelocityBackend,
+    confirmVelocityAgreementAndCreate,
+  } = useVelocityBackends({
+    nodeRef,
+    server: isDashboardSection ? server : null,
+    t,
+  });
 
   const {
     browserPath,
@@ -304,7 +385,17 @@ export default function ServerControlsPage() {
         setStackError(t(`controls.errors.${action}`));
         return;
       }
-      await loadServer();
+      const expectedStatus: ServerStatus = action === "start" ? "up" : "down";
+      const nextStatus = await pollServerStatusUntil(expectedStatus);
+      if (nextStatus) {
+        notifyServersChanged({
+          changeType: "status",
+          serverRef: server.id,
+          status: nextStatus,
+        });
+      } else {
+        notifyServersChanged();
+      }
     } catch {
       setStackError(t(`controls.errors.${action}`));
     } finally {
@@ -328,7 +419,7 @@ export default function ServerControlsPage() {
         setImageRepullError(t("controls.errors.repull"));
         return;
       }
-      await loadServer();
+      void refreshServerStatus();
     } catch {
       setImageRepullError(t("controls.errors.repull"));
     } finally {
@@ -340,7 +431,14 @@ export default function ServerControlsPage() {
     if (!server || !basePath) {
       return;
     }
-    await refreshServerStatus();
+    const nextStatus = await refreshServerStatus();
+    if (nextStatus) {
+      notifyServersChanged({
+        changeType: "status",
+        serverRef: server.id,
+        status: nextStatus,
+      });
+    }
   };
 
   const deleteServer = async () => {
@@ -363,6 +461,7 @@ export default function ServerControlsPage() {
         setDeleteError(t("controls.errors.delete"));
         return;
       }
+      notifyServersChanged({ changeType: "structure" });
       router.push(`/dashboard?node=${encodeURIComponent(nodeRef)}`);
     } catch {
       setDeleteError(t("controls.errors.delete"));
@@ -378,7 +477,7 @@ export default function ServerControlsPage() {
   if (error || !server) {
     return (
       <div className="container mx-auto space-y-4 p-6">
-        <p className="text-red-600">{error || t("errors.notFound")}</p>
+        <p className="text-destructive">{error || t("errors.notFound")}</p>
       </div>
     );
   }
@@ -394,17 +493,6 @@ export default function ServerControlsPage() {
           {t("header.templateLabel")}: {server.templateName || server.templateId} |{" "}
           {t("header.stackLabel")}: {server.stackName}
         </p>
-        <span
-          className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
-            server.imageUpdateAvailable
-              ? "bg-amber-100 text-amber-800"
-              : "bg-emerald-100 text-emerald-800"
-          }`}
-        >
-          {server.imageUpdateAvailable
-            ? t("controls.imageStatusUpdateAvailable")
-            : t("controls.imageStatusUpToDate")}
-        </span>
       </div>
 
       {isDashboardSection ? (
@@ -413,11 +501,10 @@ export default function ServerControlsPage() {
             canControl={server.permissions.canControl}
             canReadConsole={server.permissions.canReadConsole}
             canManage={server.permissions.canManage}
+            isServerUp={isServerUp}
             stackActionLoading={stackActionLoading}
             serverDeleting={serverDeleting}
             stackError={stackError}
-            imageUpdateAvailable={Boolean(server.imageUpdateAvailable)}
-            imageStatusError={server.imageStatusError ? t("controls.errors.imageStatus") : ""}
             imageRepulling={imageRepulling}
             imageRepullError={imageRepullError}
             deleteError={deleteError}
@@ -646,7 +733,7 @@ export default function ServerControlsPage() {
                 href={selectedVelocityAgreement.linkUrl}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="text-sm text-blue-600 underline"
+                className="text-sm text-primary underline"
               >
                 {selectedVelocityAgreement.linkText || selectedVelocityAgreement.linkUrl}
               </a>

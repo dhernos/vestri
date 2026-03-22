@@ -190,6 +190,11 @@ export const useVelocityBackends = ({ nodeRef, server, t }: UseVelocityBackendsP
 
         setVelocityBackendName("");
         await loadVelocityData();
+        window.dispatchEvent(
+          new CustomEvent("vestri:servers-changed", {
+            detail: { nodeRef },
+          })
+        );
       } catch {
         setVelocityCreateError(t("velocity.errors.createBackend"));
       } finally {

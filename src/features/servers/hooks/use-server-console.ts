@@ -617,15 +617,16 @@ export const useServerConsole = ({
           return;
         }
 
-        terminal = new runtime.TerminalCtor({
-          cursorBlink: true,
-          convertEol: true,
-          fontSize: 13,
-          scrollback: 5000,
-          theme: {
-            background: "#111111",
-          },
-        });
+          terminal = new runtime.TerminalCtor({
+            cursorBlink: true,
+            convertEol: true,
+            fontSize: 13,
+            scrollback: 5000,
+            theme: {
+              background: "var(--terminal-bg)",
+              foreground: "var(--terminal-fg)",
+            },
+          });
         fitAddon = new runtime.FitAddonCtor();
         terminal.loadAddon(fitAddon);
         terminal.open(host);

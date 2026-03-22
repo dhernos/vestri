@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ConnectionStatus, ConsoleRefreshMode } from "@/components/servers/cards/types";
+import { cn } from "@/lib/utils";
 
 type LogsCardProps = {
   consoleRefreshMode: ConsoleRefreshMode;
@@ -43,20 +44,49 @@ export default function LogsCard({
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex flex-wrap gap-2">
-          <Button
-            variant={consoleRefreshMode === "auto" ? "secondary" : "outline"}
-            onClick={() => onSetRefreshMode("auto")}
-            disabled={!canReadConsole}
+          <div
+            className={cn(
+              "inline-flex items-center gap-2 rounded-full border px-2 py-1",
+              !canReadConsole && "opacity-60"
+            )}
           >
-            {t("logs.buttons.autoUpdate")}
-          </Button>
-          <Button
-            variant={consoleRefreshMode === "manual" ? "secondary" : "outline"}
-            onClick={() => onSetRefreshMode("manual")}
-            disabled={!canReadConsole}
-          >
-            {t("logs.buttons.manualRefresh")}
-          </Button>
+            <span
+              className={cn(
+                "text-xs",
+                consoleRefreshMode === "manual" ? "text-foreground" : "text-muted-foreground"
+              )}
+            >
+              {t("logs.buttons.manualRefresh")}
+            </span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={consoleRefreshMode === "auto"}
+              aria-label={t("logs.refreshModeLabel")}
+              onClick={() => onSetRefreshMode(consoleRefreshMode === "auto" ? "manual" : "auto")}
+              disabled={!canReadConsole}
+              className={cn(
+                "relative h-5 w-10 rounded-full border transition-colors",
+                consoleRefreshMode === "auto" ? "bg-primary border-primary" : "bg-muted border-border",
+                !canReadConsole && "cursor-not-allowed"
+              )}
+            >
+              <span
+                className={cn(
+                  "absolute top-0.5 block h-4 w-4 rounded-full bg-background transition-transform",
+                  consoleRefreshMode === "auto" ? "translate-x-5" : "translate-x-0.5"
+                )}
+              />
+            </button>
+            <span
+              className={cn(
+                "text-xs",
+                consoleRefreshMode === "auto" ? "text-foreground" : "text-muted-foreground"
+              )}
+            >
+              {t("logs.buttons.autoUpdate")}
+            </span>
+          </div>
           <Button
             variant="outline"
             onClick={onRefreshNow}
@@ -80,7 +110,7 @@ export default function LogsCard({
         {!isServerUp && consoleRefreshMode === "auto" ? (
           <p className="text-xs text-muted-foreground">{t("logs.serverOfflineHint")}</p>
         ) : null}
-        {consoleError ? <p className="text-sm text-red-600">{consoleError}</p> : null}
+        {consoleError ? <p className="text-sm text-destructive">{consoleError}</p> : null}
         <pre
           ref={consoleOutputRef}
           className="max-h-80 overflow-auto whitespace-pre-wrap rounded-md border bg-muted/40 p-3 text-xs"

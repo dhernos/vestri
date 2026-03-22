@@ -10,9 +10,9 @@ import {
 } from "react";
 import {
   fetchSession,
-  loginWithPassword,
   logout as apiLogout,
   GoSession,
+  GoUser,
 } from "@/lib/auth-client";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
@@ -20,8 +20,9 @@ type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 type AuthContextValue = {
   data: GoSession | null;
   status: AuthStatus;
-  refresh: () => Promise<void>;
+  refresh: (opts?: { silent?: boolean }) => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (patch: Partial<GoUser>) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -30,8 +31,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<GoSession | null>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
 
-  const load = useCallback(async () => {
-    setStatus("loading");
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    const silent = opts?.silent === true;
+    if (!silent) {
+      setStatus("loading");
+    }
     const s = await fetchSession();
     setSession(s);
     setStatus(s ? "authenticated" : "unauthenticated");
@@ -47,14 +51,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setStatus("unauthenticated");
   }, []);
 
+  const updateUser = useCallback((patch: Partial<GoUser>) => {
+    setSession((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        user: {
+          ...prev.user,
+          ...patch,
+        },
+      };
+    });
+  }, []);
+
   const value = useMemo(
     () => ({
       data: session,
       status,
       refresh: load,
       logout: handleLogout,
+      updateUser,
     }),
-    [session, status, load, handleLogout]
+    [session, status, load, handleLogout, updateUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

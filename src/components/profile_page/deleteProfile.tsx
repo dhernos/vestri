@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { TwoFactorModal } from "@/components/profile_page/TwoFactorModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/toast";
+import { prepareStepUpCode } from "@/lib/step-up";
 
 export default function DeleteProfileSection() {
   const { data: session, logout } = useAuth();
@@ -14,56 +15,29 @@ export default function DeleteProfileSection() {
   const t = useTranslations("DeleteProfile");
   const tCommon = useTranslations("Common");
   const tErrors = useTranslations("Errors");
+  const stepUpPurpose = "account_delete";
 
   const [is2FAModalOpen, setIs2FAModalOpen] = useState(false);
-  const [actionToProtect, setActionToProtect] = useState<
-    "deleteAccount" | null // 'disable2FA' hinzugefügt
-  >(null);
 
-  // Funktion zur Zurücksetzung der Nachrichten und Fehler
-  // --- NEU: Handler für Konto löschen (Verwendung des Modals) ---
-  const handleDeleteAccount = async () => {
-
-    // Prüfen, ob 2FA aktiviert ist
-    if (!session?.user.isTwoFactorEnabled) {
-      // Wenn 2FA NICHT aktiv ist, nur eine Standard-Bestätigung anzeigen
-      if (confirm(t("confirmDeleteAccount"))) {
-        const errorMessage = await handleFinalDeleteAccount(null);
-        if (errorMessage) {
-          push({ variant: "error", description: errorMessage });
-        }
-      }
-    } else {
-      // Wenn 2FA aktiv ist, Modal anzeigen
-      if (session?.user.twoFactorMethod === "email" && session.user.email) {
-        fetch("/api/two-factor/send-email-code", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ email: session.user.email }),
-        }).catch(() => {});
-      }
-      setActionToProtect("deleteAccount");
-      setIs2FAModalOpen(true);
+  const mapErrorCode = (code: unknown) => {
+    if (typeof code !== "string" || !/^[A-Z0-9_]+$/.test(code)) {
+      return null;
     }
+    if (tErrors.has(code as never)) {
+      return tErrors(code as never);
+    }
+    return null;
   };
 
-  // --- NEU: Callback für die geschützte Aktion (Kontolöschung) ---
-  // Wird vom TwoFactorModal.tsx aufgerufen
-  const handleFinalDeleteAccount = async (
-    code: string | null
-  ): Promise<string | null> => {
-
+  const executeDeleteAccount = async () => {
     try {
       const res = await fetch("/api/profile/delete-account", {
-        method: "DELETE", // Verwenden Sie DELETE für REST-Konformität (oder POST mit Body)
+        method: "DELETE",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          // Der Code wird nur gesendet, wenn 2FA aktiviert ist und vom Modal übergeben wurde
-          ...(code && { totpCode: code }),
-        }),
+        body: JSON.stringify({}),
       });
+      const data = await res.json().catch(() => ({}));
 
       if (res.ok) {
         push({
@@ -71,18 +45,56 @@ export default function DeleteProfileSection() {
           description: t("messages.accountDeleted"),
         });
         await logout();
-        return null; // Kein Fehler
-      } else {
-        // Fehler, z.B. falscher 2FA-Code
-        return t("errors.accountDeleteError");
+        return { kind: "ok" as const };
       }
+
+      const apiCode = data?.message || data?.error;
+      if (res.status === 403 && apiCode === "STEP_UP_REQUIRED") {
+        return { kind: "stepup" as const };
+      }
+
+      return {
+        kind: "error" as const,
+        message: mapErrorCode(apiCode) || t("errors.accountDeleteError"),
+      };
     } catch (err) {
       console.error(err);
-      return tErrors("UNEXPECTED_ERROR");
-    } finally {
-      setIs2FAModalOpen(false); // Modal schließen
-      setActionToProtect(null);
+      return {
+        kind: "error" as const,
+        message: tErrors("UNEXPECTED_ERROR"),
+      };
     }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!confirm(t("confirmDeleteAccount"))) {
+      return;
+    }
+
+    const result = await executeDeleteAccount();
+    if (result.kind === "ok") {
+      return;
+    }
+
+    if (result.kind === "stepup") {
+      const stepUp = await prepareStepUpCode(session?.user, stepUpPurpose);
+      if (!stepUp.ok) {
+        const description =
+          stepUp.code && tErrors.has(stepUp.code as never)
+            ? tErrors(stepUp.code as never)
+            : tErrors("SEND_CODE_ERROR");
+        push({ variant: "error", description });
+        return;
+      }
+      setIs2FAModalOpen(true);
+      push({
+        variant: "error",
+        description: t("errors.accountDeleteStepUpRequired"),
+      });
+      return;
+    }
+
+    push({ variant: "error", description: result.message });
   };
 
   return (
@@ -90,14 +102,30 @@ export default function DeleteProfileSection() {
       {/* 2FA Modal für kritische Aktionen (Kontolöschung) */}
       <TwoFactorModal
         mode="stepup"
-        isOpen={is2FAModalOpen && actionToProtect === "deleteAccount"}
+        isOpen={is2FAModalOpen}
         onClose={() => setIs2FAModalOpen(false)}
-        onVerify={handleFinalDeleteAccount}
+        purpose={stepUpPurpose}
         actionLabel={tCommon("buttons.deleteAccount")}
+        onSuccess={async () => {
+          setIs2FAModalOpen(false);
+          const result = await executeDeleteAccount();
+          if (result.kind === "ok") {
+            return;
+          }
+          if (result.kind === "stepup") {
+            push({
+              variant: "error",
+              description: t("errors.accountDeleteStepUpRequired"),
+            });
+            setIs2FAModalOpen(true);
+            return;
+          }
+          push({ variant: "error", description: result.message });
+        }}
       />
       {/* Sektion für Konto löschen (Danger Zone) */}
-      <section className="mb-8 p-6 border rounded-lg shadow-md outline-red-700">
-        <h2 className="text-2xl font-semibold mb-4 text-red-700">
+      <section className="mb-8 p-6 border border-destructive/35 rounded-lg shadow-md">
+        <h2 className="text-2xl font-semibold mb-4 text-destructive">
           {t("dangerZone")}
         </h2>
         <p className="mb-4">{t("dangerZoneDescription")}</p>

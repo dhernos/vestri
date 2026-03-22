@@ -14,18 +14,16 @@ const variants: Record<
   { container: string; dot: string }
 > = {
   info: {
-    container: "border-border bg-card/90 text-foreground",
-    dot: "bg-blue-500",
+    container: "border-info/30 bg-info/12 text-info-foreground",
+    dot: "bg-info",
   },
   success: {
-    container:
-      "border-green-200 bg-green-50/90 text-green-950 dark:border-green-900/60 dark:bg-green-950/50 dark:text-green-100",
-    dot: "bg-green-500",
+    container: "border-success/30 bg-success/12 text-success-foreground",
+    dot: "bg-success",
   },
   error: {
-    container:
-      "border-rose-200 bg-rose-50/90 text-rose-950 dark:border-rose-900/60 dark:bg-rose-950/50 dark:text-rose-50",
-    dot: "bg-rose-500",
+    container: "border-destructive/30 bg-destructive/12 text-destructive",
+    dot: "bg-destructive",
   },
 };
 
@@ -81,7 +79,7 @@ export function ToastViewport() {
                   <p className="font-semibold leading-5">{toast.title}</p>
                 )}
                 {toast.description && (
-                  <p className="mt-1 text-sm text-muted-foreground">
+                  <p className="mt-1 text-sm text-current/90">
                     {toast.description}
                   </p>
                 )}

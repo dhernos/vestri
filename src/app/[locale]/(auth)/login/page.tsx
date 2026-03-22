@@ -18,7 +18,6 @@ import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { ForgotPasswordDialog } from "@/components/forgot-password-dialog";
 import { getRemoteVersion } from "@/actions/version";
 import Image from "next/image";
-import { useTheme } from "next-themes";
 import { TwoFactorModal } from "@/components/profile_page/TwoFactorModal";
 import { loginWithPassword, useAuth } from "@/hooks/useAuth";
 import {
@@ -28,6 +27,8 @@ import {
 } from "@/lib/webauthn";
 import { startOAuth } from "@/lib/auth-client";
 import { useToast } from "@/components/ui/toast";
+import ToggleLanguage from "@/components/language-toggle";
+import ThemeToggle from "@/components/theme-toggle";
 
 const stripLocalePrefix = (target: string, locale: string) => {
   if (!target || !target.startsWith("/")) {
@@ -53,8 +54,6 @@ export default function LoginPage() {
   const locale = useLocale();
   const { push } = useToast();
 
-  const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeLocale = locale || "en";
@@ -86,10 +85,6 @@ export default function LoginPage() {
 
   const LOCAL_FILE_PATH = "/version.txt";
   const [isOutdated, setIsOutdated] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (initialMessage) {
@@ -176,7 +171,7 @@ export default function LoginPage() {
     setLoading(false);
   };
 
-  const handleOAuthSignIn = (provider: "github" | "discord") => {
+  const handleOAuthSignIn = (provider: "github") => {
     setLoading(false);
     startOAuth(provider, rawCallbackUrl);
   };
@@ -233,8 +228,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div>
-      {/* ------------------ 2FA MODAL ------------------ */}
+    <div className="relative min-h-screen overflow-hidden">
       <TwoFactorModal
         mode="login"
         isOpen={requires2FA}
@@ -248,201 +242,216 @@ export default function LoginPage() {
         }}
       />
 
-      {/* ------------------ LOGIN FORM ------------------ */}
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="w-full max-w-md mx-auto p-4 space-y-4 shadow-lg rounded-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">{t("title")}</CardTitle>
-            <CardDescription>{t("description")}</CardDescription>
+      <div className="absolute right-4 top-4 z-20 flex items-center gap-2">
+        <ThemeToggle />
+        <ToggleLanguage compact />
+      </div>
 
-            {isOutdated && (
-              <div
-                style={{
-                  color: "red",
-                  border: "1px solid red",
-                  padding: "10px",
-                }}
+      <div className="mx-auto flex min-h-screen w-full max-w-6xl items-center px-4 py-12">
+        <div className="grid w-full gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+          <section className="hidden rounded-2xl border bg-card/80 p-8 backdrop-blur-sm lg:block">
+            <div className="mb-6 flex items-center gap-4">
+              <div className="flex size-20 items-center justify-center rounded-2xl border border-primary/30 bg-card shadow-sm shadow-primary/25">
+                <Image
+                  src="/logos/vestri/vestri_transparent.svg"
+                  alt="Vestri logo"
+                  width={58}
+                  height={58}
+                  className="size-14 object-contain dark:invert dark:brightness-125"
+                  priority
+                />
+              </div>
+              <div>
+                <p className="text-xs font-semibold tracking-[0.24em] text-primary">
+                  {t("marketing.kicker")}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {t("marketing.subtitle")}
+                </p>
+              </div>
+            </div>
+            <h2 className="text-3xl font-semibold leading-tight">
+              {t("marketing.headline")}
+            </h2>
+            <p className="mt-4 text-sm text-muted-foreground">
+              {t("marketing.body")}
+            </p>
+          </section>
+
+          <Card className="mx-auto w-full max-w-md p-4 space-y-4 shadow-lg rounded-md">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-2 flex size-16 items-center justify-center rounded-2xl border bg-card shadow-xs">
+                <Image
+                  src="/logos/vestri/vestri_transparent.svg"
+                  alt="Vestri logo"
+                  width={50}
+                  height={50}
+                  className="size-12 object-contain dark:invert dark:brightness-125"
+                  priority
+                />
+              </div>
+              <CardTitle className="text-2xl font-bold">{t("title")}</CardTitle>
+              <CardDescription>{t("description")}</CardDescription>
+
+              {isOutdated && (
+                <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  ⚠️{" "}
+                  {t.rich("messages.versionOutdated", {
+                    link: (chunks) => (
+                      <Link
+                        href="https://github.com/dhernos/auth_template"
+                        target="_blank"
+                        className="text-primary underline"
+                      >
+                        {chunks}
+                      </Link>
+                    ),
+                  })}
+                </div>
+              )}
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <form onSubmit={handleSubmit}>
+                <div className="mb-4">
+                  <label htmlFor="email" className="mb-2 block text-sm font-bold">
+                    {t("form.emailLabel")}
+                  </label>
+                  <Input
+                    id="email"
+                    type="email"
+                    className="w-full"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className="mb-6">
+                  <label
+                    htmlFor="password"
+                    className="mb-2 block text-sm font-bold"
+                  >
+                    {t("form.passwordLabel")}
+                  </label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      className="w-full"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={loading}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute bottom-1 right-1 h-7 w-7"
+                      onClick={() => setShowPassword(!showPassword)}
+                      type="button"
+                    >
+                      {showPassword ? (
+                        <EyeOffIcon className="h-4 w-4" />
+                      ) : (
+                        <EyeIcon className="h-4 w-4" />
+                      )}
+                      <span className="sr-only">{t("form.togglePassword")}</span>
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="mb-6 flex items-center justify-between">
+                  <div className="flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      id="rememberMe"
+                      className="mr-2 h-4 w-4 cursor-pointer"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      disabled={loading}
+                    />
+                    <label
+                      htmlFor="rememberMe"
+                      className="text-sm cursor-pointer"
+                    >
+                      {t("form.rememberMe")}
+                    </label>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsForgotPasswordDialogOpen(true)}
+                    className="text-sm font-medium text-primary hover:text-primary/80 cursor-pointer"
+                  >
+                    {t("form.forgotPassword")}
+                  </button>
+                </div>
+
+                <Button className="w-full" type="submit" disabled={loading}>
+                  {loading ? t("form.loadingButton") : t("form.loginButton")}
+                </Button>
+
+                <Button
+                  className="mt-3 w-full"
+                  type="button"
+                  variant="outline"
+                  disabled={passkeyLoading || loading || !email}
+                  onClick={handlePasskeyLogin}
+                >
+                  {passkeyLoading ? t("passkeys.loading") : t("passkeys.button")}
+                </Button>
+              </form>
+
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    {t("form.orContinueWith")}
+                  </span>
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => handleOAuthSignIn("github")}
+                disabled={loading}
               >
-                ⚠️{" "}
-                {t.rich("messages.versionOutdated", {
-                  link: (chunks) => (
+                <Image
+                  src="/logos/github.svg"
+                  alt={t("form.githubIconAlt")}
+                  height={4}
+                  width={4}
+                  className="mr-2 h-4 w-4 dark:invert dark:brightness-125"
+                />
+                {t("form.githubButton")}
+              </Button>
+
+              <p className="mt-6 text-center text-sm">
+                {t.rich("footer.noAccount", {
+                  registerLink: (chunks) => (
                     <Link
-                      href="https://github.com/dhernos/auth_template"
-                      target="_blank"
-                      className="text-blue-500 underline"
+                      href="/register"
+                      className="font-medium text-primary hover:text-primary/80"
                     >
                       {chunks}
                     </Link>
                   ),
                 })}
-              </div>
-            )}
-          </CardHeader>
-
-          <CardContent className="space-y-4">
-            <form onSubmit={handleSubmit}>
-              {/* EMAIL */}
-              <div className="mb-4">
-                <label htmlFor="email" className="mb-2 block text-sm font-bold">
-                  {t("form.emailLabel")}
-                </label>
-                <Input
-                  id="email"
-                  type="email"
-                  className="w-full"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  disabled={loading}
-                />
-              </div>
-
-              {/* PASSWORD */}
-              <div className="mb-6">
-                <label
-                  htmlFor="password"
-                  className="mb-2 block text-sm font-bold"
-                >
-                  {t("form.passwordLabel")}
-                </label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    className="w-full"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={loading}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute bottom-1 right-1 h-7 w-7"
-                    onClick={() => setShowPassword(!showPassword)}
-                    type="button"
-                  >
-                    {showPassword ? (
-                      <EyeOffIcon className="h-4 w-4" />
-                    ) : (
-                      <EyeIcon className="h-4 w-4" />
-                    )}
-                    <span className="sr-only">{t("form.togglePassword")}</span>
-                  </Button>
-                </div>
-              </div>
-
-              {/* REMEMBER / FORGOT */}
-              <div className="mb-6 flex items-center justify-between">
-                <div className="flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    id="rememberMe"
-                    className="mr-2 h-4 w-4 cursor-pointer"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    disabled={loading}
-                  />
-                  <label
-                    htmlFor="rememberMe"
-                    className="text-sm cursor-pointer"
-                  >
-                    {t("form.rememberMe")}
-                  </label>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setIsForgotPasswordDialogOpen(true)}
-                  className="text-sm font-medium text-blue-600 hover:text-blue-500 cursor-pointer"
-                >
-                  {t("form.forgotPassword")}
-                </button>
-              </div>
-
-              <Button className="w-full" type="submit" disabled={loading}>
-                {loading ? t("form.loadingButton") : t("form.loginButton")}
-              </Button>
-
-              <Button
-                className="w-full mt-3"
-                type="button"
-                variant="outline"
-                disabled={passkeyLoading || loading || !email}
-                onClick={handlePasskeyLogin}
-              >
-                {passkeyLoading ? t("passkeys.loading") : t("passkeys.button")}
-              </Button>
-            </form>
-
-            {/* Divider */}
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  {t("form.orContinueWith")}
-                </span>
-              </div>
-            </div>
-
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => handleOAuthSignIn("github")}
-              disabled={loading}
-            >
-              <Image
-                src="/logos/github.svg"
-                alt={t("form.githubIconAlt")}
-                height={4}
-                width={4}
-                className="mr-2 h-4 w-4"
-              />
-              {t("form.githubButton")}
-            </Button>
-
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => handleOAuthSignIn("discord")}
-              disabled={loading}
-            >
-              <Image
-                src={
-                  mounted && resolvedTheme === "dark"
-                    ? "/logos/discord-white.svg"
-                    : "/logos/discord.svg"
-                }
-                alt={t("form.discordIconAlt")}
-                height={4}
-                width={4}
-                className="mr-2 h-4 w-4"
-              />
-              {t("form.discordButton")}
-            </Button>
-
-            <p className="mt-6 text-center text-sm">
-              {t.rich("footer.noAccount", {
-                registerLink: (chunks) => (
-                  <Link
-                    href="/register"
-                    className="font-medium text-blue-600 hover:text-blue-500"
-                  >
-                    {chunks}
-                  </Link>
-                ),
-              })}
-            </p>
-          </CardContent>
-        </Card>
-
-        <ForgotPasswordDialog
-          isOpen={isForgotPasswordDialogOpen}
-          onClose={() => setIsForgotPasswordDialogOpen(false)}
-        />
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
+
+      <ForgotPasswordDialog
+        isOpen={isForgotPasswordDialogOpen}
+        onClose={() => setIsForgotPasswordDialogOpen(false)}
+      />
     </div>
   );
 }

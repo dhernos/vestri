@@ -9,6 +9,7 @@ import { useRouter } from "@/i18n/navigation"; // <-- neu: für clientseitige Re
 import { useAuth } from "@/hooks/useAuth";
 import { TwoFactorModal } from "@/components/profile_page/TwoFactorModal";
 import { useToast } from "@/components/ui/toast";
+import { prepareStepUpCode } from "@/lib/step-up";
 
 export default function ChangePasswordSection() {
   const { status, data: sessData, logout } = useAuth();
@@ -54,7 +55,7 @@ export default function ChangePasswordSection() {
       <section className="mb-8 p-6 border rounded-lg shadow-md">
         <h2 className="text-2xl font-semibold mb-4">{t("changePassword")}</h2>
         <p className="text-sm mb-4">{t("changePasswordDescription")}</p>
-        <div className="p-3 mb-4 bg-yellow-50 text-yellow-800 rounded-md">
+        <div className="p-3 mb-4 bg-warning/15 text-warning-foreground border border-warning/35 rounded-md">
           {t("oauthAccount.cannotChangePassword")}
         </div>
         <div className="space-y-4">
@@ -114,16 +115,15 @@ export default function ChangePasswordSection() {
         }
       } else {
         if (res.status === 403 && data.message === "STEP_UP_REQUIRED") {
-          if (
-            sessData?.user?.twoFactorMethod === "email" &&
-            sessData?.user?.email
-          ) {
-            await fetch("/api/two-factor/send-email-code", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              credentials: "include",
-              body: JSON.stringify({ email: sessData.user.email }),
-            }).catch(() => {});
+          const stepUp = await prepareStepUpCode(sessData?.user, "password_change");
+          if (!stepUp.ok) {
+            const description =
+              stepUp.code && tErrors.has(stepUp.code as never)
+                ? tErrors(stepUp.code as never)
+                : tErrors("SEND_CODE_ERROR");
+            push({ variant: "error", description });
+            setLoading(false);
+            return;
           }
           setNeedsStepUp(true);
         } else {
@@ -146,15 +146,15 @@ export default function ChangePasswordSection() {
     switch (strength) {
       case 0:
       case 1:
-        return "bg-red-500"; // Schwach (Rot)
+        return "bg-destructive"; // Schwach (Rot)
       case 2:
       case 3:
       case 4:
-        return "bg-yellow-500"; // Moderat (Gelb)
+        return "bg-warning"; // Moderat (Gelb)
       case 5:
-        return "bg-green-500"; // Stark (Grün)
+        return "bg-success"; // Stark (Grün)
       default:
-        return "bg-gray-200";
+        return "bg-muted";
     }
   };
 
@@ -276,7 +276,7 @@ export default function ChangePasswordSection() {
             </div>
             <Button
               type="submit"
-              className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded cursor-pointer"
+              className="bg-success text-success-foreground hover:bg-success/90 font-bold py-2 px-4 rounded cursor-pointer"
               disabled={loading || !isFormValid}
             >
               {t("buttons.changePassword")}

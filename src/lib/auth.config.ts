@@ -16,6 +16,7 @@ export const pageAccess: RouteAccess[] = [
   { path: "/reset-password", roles: ["PUBLIC"] },
   { path: "/logout", roles: ["PUBLIC"] },
   { path: "/access-denied", roles: ["PUBLIC"] },
+  { path: "/how-to", roles: ["PUBLIC"] },
   { path: "/dashboard", roles: ["USER", "ADMIN", "EDITOR"] },
   { path: "/profile", roles: ["USER", "ADMIN", "EDITOR"] },
   { path: "/nodes", roles: ["USER", "ADMIN", "EDITOR"] },
@@ -23,7 +24,3 @@ export const pageAccess: RouteAccess[] = [
   { path: "/test", roles: ["ADMIN"] },
   { path: "/notifications", roles: ["USER", "ADMIN", "EDITOR"] },
 ];
-
-export const protectedRoutes = pageAccess.filter(
-  (route) => !route.roles.includes(PUBLIC_ROLE),
-);

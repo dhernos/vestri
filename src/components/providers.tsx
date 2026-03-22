@@ -1,7 +1,7 @@
 // src/app/providers.tsx
 "use client";
 
-import { ThemeProvider } from "next-themes";
+import { ThemeProvider } from "@/components/theme-provider";
 import { useSyncUserTheme } from "@/hooks/syncTheme";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ToastViewport } from "@/components/ui/toast";

@@ -189,8 +189,8 @@ export function ProfileImageUploader() {
               cursor-pointer p-4 space-y-2
               ${
                 isDragActive
-                  ? "bg-blue-50 border-blue-500 text-blue-700"
-                  : "bg-gray-50 border-gray-300 hover:bg-gray-100"
+                  ? "bg-info/12 border-info text-info-foreground"
+                  : "bg-muted/35 border-border hover:bg-muted/55"
               }
             `}
             onClick={() => inputRef.current?.click()}
@@ -199,16 +199,16 @@ export function ProfileImageUploader() {
 
             {/* Icon basierend auf Zustand */}
             {isDragActive ? (
-              <UploadCloud className="w-8 h-8 animate-pulse text-blue-600" />
+              <UploadCloud className="w-8 h-8 animate-pulse text-primary" />
             ) : (
-              <ImageIcon className="w-8 h-8 text-gray-500" />
+              <ImageIcon className="w-8 h-8 text-muted-foreground" />
             )}
 
-            <p className="text-center font-semibold text-gray-700">
+            <p className="text-center font-semibold text-foreground">
               {isDragActive ? t("upload.dragActive") : t("upload.dragIdle")}
             </p>
 
-            <p className="text-center text-xs text-gray-500">
+            <p className="text-center text-xs text-muted-foreground">
               {t.rich("upload.hint", {
                 types: "PNG, JPG, JPEG, WEBP",
                 max: 3,
@@ -220,7 +220,7 @@ export function ProfileImageUploader() {
         {/* --- CROP UI --- */}
         {imageSrc && (
           <>
-            <div className="relative w-full h-64 bg-black/70 rounded-md overflow-hidden">
+            <div className="relative w-full h-64 bg-[var(--terminal-bg)] rounded-md overflow-hidden">
               <Cropper
                 image={imageSrc}
                 crop={crop}
@@ -237,9 +237,9 @@ export function ProfileImageUploader() {
             <div className="mt-4">
               <label className="text-sm font-medium flex items-center gap-2 mb-2">
                 <div className="flex justify-between items-center w-full">
-                  <ZoomOut className="w-4 h-4 text-gray-500" />
+                  <ZoomOut className="w-4 h-4 text-muted-foreground" />
                   <p className="flex-grow text-center">{t("upload.zoom")}</p>
-                  <ZoomIn className="w-4 h-4 text-gray-500" />
+                  <ZoomIn className="w-4 h-4 text-muted-foreground" />
                 </div>
               </label>
               <Slider

@@ -8,7 +8,7 @@ import { usePathname, useRouter } from "@/i18n/navigation";
 
 type PendingState = {
   pendingId: string;
-  provider: string;
+  provider: "github";
   returnTo: string;
 };
 
@@ -37,7 +37,7 @@ export function OAuthTwoFactorListener() {
     const pendingId = params.get("oauth_pending");
     const provider = params.get("oauth_provider");
     const returnTo = params.get("oauth_return") || "/";
-    if (!pendingId || !provider) {
+    if (!pendingId || provider !== "github") {
       return;
     }
     const safeReturn = returnTo.startsWith("/") ? returnTo : "/";

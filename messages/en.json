@@ -62,6 +62,7 @@
       "welcome": "Verify your email",
       "body1": "Use the code below to verify your email address.",
       "textPlain": "Your verification code is {code}. It is valid for {minutes} minutes.",
+      "html": "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f4f4f5;padding:24px 0;'><tr><td align='center'><table role='presentation' width='560' cellpadding='0' cellspacing='0' style='max-width:560px;width:100%;background:#ffffff;border:1px solid #e4e4e7;border-radius:14px;padding:28px;font-family:Segoe UI,Roboto,Arial,sans-serif;color:#18181b;'><tr><td align='center'><div style='display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:12px;border:1px solid #e4e4e7;background:#ffffff;'><svg width='28' height='28' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 6L11 8L16 16L21 8L29 6L16 28L3 6Z' fill='#111111'/></svg></div><h2 style='margin:16px 0 8px;font-size:22px;line-height:1.2;'>Verify your email</h2><p style='margin:0 0 18px;font-size:14px;color:#52525b;'>Use the code below to verify your email address.</p><div style='display:inline-block;padding:12px 18px;border:1px solid #d4d4d8;border-radius:10px;font-size:28px;letter-spacing:6px;font-weight:700;background:#fafafa;'>{code}</div><p style='margin:16px 0 0;font-size:13px;color:#71717a;'>Valid for {minutes} minutes.</p></td></tr></table></td></tr></table>",
       "button": "Verify email",
       "expiry": "The code expires in {minutes} minutes.",
       "ignore": "If you did not request this, you can ignore this email."
@@ -72,6 +73,7 @@
       "body1": "Click the button to reset your password.",
       "body2": "If you didn't request this, ignore this email.",
       "textPlain": "Reset your password: {link}",
+      "html": "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f4f4f5;padding:24px 0;'><tr><td align='center'><table role='presentation' width='560' cellpadding='0' cellspacing='0' style='max-width:560px;width:100%;background:#ffffff;border:1px solid #e4e4e7;border-radius:14px;padding:28px;font-family:Segoe UI,Roboto,Arial,sans-serif;color:#18181b;'><tr><td align='center'><div style='display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:12px;border:1px solid #e4e4e7;background:#ffffff;'><svg width='28' height='28' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 6L11 8L16 16L21 8L29 6L16 28L3 6Z' fill='#111111'/></svg></div><h2 style='margin:16px 0 8px;font-size:22px;line-height:1.2;'>Reset your password</h2><p style='margin:0 0 18px;font-size:14px;color:#52525b;'>Click the button below to reset your password.</p><a href='{link}' style='display:inline-block;padding:12px 18px;background:#111111;color:#ffffff;text-decoration:none;border-radius:10px;font-size:14px;font-weight:600;'>Reset password</a><p style='margin:16px 0 0;font-size:13px;color:#71717a;'>The link expires in {hours} hour(s).</p></td></tr></table></td></tr></table>",
       "button": "Reset password",
       "expiry": "The link expires in {hours} hour(s).",
       "ignore": "If you did not request this, ignore this email."
@@ -79,7 +81,7 @@
     "oauthNotice": {
       "subject": "Account uses external sign-in",
       "textPlain": "This account uses an external sign-in method. Please sign in with your provider to access your account.",
-      "html": "This account uses an external sign-in method. Please sign in with your provider to access your account."
+      "html": "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f4f4f5;padding:24px 0;'><tr><td align='center'><table role='presentation' width='560' cellpadding='0' cellspacing='0' style='max-width:560px;width:100%;background:#ffffff;border:1px solid #e4e4e7;border-radius:14px;padding:28px;font-family:Segoe UI,Roboto,Arial,sans-serif;color:#18181b;'><tr><td align='center'><div style='display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:12px;border:1px solid #e4e4e7;background:#ffffff;'><svg width='28' height='28' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 6L11 8L16 16L21 8L29 6L16 28L3 6Z' fill='#111111'/></svg></div><h2 style='margin:16px 0 8px;font-size:22px;line-height:1.2;'>External sign-in account</h2><p style='margin:0;font-size:14px;color:#52525b;'>This account uses an external sign-in method. Please sign in with your provider to access your account.</p></td></tr></table></td></tr></table>"
     }
   },
   "TwoFactorModal": {
@@ -150,7 +152,7 @@
     "emails": {
       "subject": "Your 2FA code",
       "textPlain": "Your 2FA code is {code} (valid for {minutes} minutes).",
-      "html": "Your 2FA code is <strong>{code}</strong> (valid for {minutes} minutes)."
+      "html": "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f4f4f5;padding:24px 0;'><tr><td align='center'><table role='presentation' width='560' cellpadding='0' cellspacing='0' style='max-width:560px;width:100%;background:#ffffff;border:1px solid #e4e4e7;border-radius:14px;padding:28px;font-family:Segoe UI,Roboto,Arial,sans-serif;color:#18181b;'><tr><td align='center'><div style='display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:12px;border:1px solid #e4e4e7;background:#ffffff;'><svg width='28' height='28' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 6L11 8L16 16L21 8L29 6L16 28L3 6Z' fill='#111111'/></svg></div><h2 style='margin:16px 0 8px;font-size:22px;line-height:1.2;'>Two-factor verification</h2><p style='margin:0 0 18px;font-size:14px;color:#52525b;'>Use the code below to continue.</p><div style='display:inline-block;padding:12px 18px;border:1px solid #d4d4d8;border-radius:10px;font-size:28px;letter-spacing:6px;font-weight:700;background:#fafafa;'>{code}</div><p style='margin:16px 0 0;font-size:13px;color:#71717a;'>Valid for {minutes} minutes.</p></td></tr></table></td></tr></table>"
     },
     "messages": {
       "qrGenerated": "QR code generated. Please scan it.",
@@ -199,6 +201,12 @@
   "Register": {
     "title": "Create account",
     "description": "Fill in details to create an account.",
+    "marketing": {
+      "kicker": "VESTRI",
+      "subtitle": "Provisioning Starts Here",
+      "headline": "Create your workspace and connect your first node.",
+      "body": "Set up access for your team and ship consistent server deployments across your infrastructure."
+    },
     "form": {
       "nameLabel": "Name",
       "emailLabel": "Email",
@@ -226,6 +234,12 @@
   "Login": {
     "title": "Sign in",
     "description": "Sign in to your account.",
+    "marketing": {
+      "kicker": "VESTRI",
+      "subtitle": "Server Management Platform",
+      "headline": "Control game-server infrastructure from one secure workspace.",
+      "body": "Monitor nodes, open server consoles, edit configs, and manage team access with clear permissions."
+    },
     "form": {
       "emailLabel": "Email",
       "passwordLabel": "Password",
@@ -236,9 +250,7 @@
       "loginButton": "Sign in",
       "orContinueWith": "or continue with",
       "githubButton": "Sign in with GitHub",
-      "discordButton": "Sign in with Discord",
-      "githubIconAlt": "GitHub logo",
-      "discordIconAlt": "Discord logo"
+      "githubIconAlt": "GitHub logo"
     },
     "passkeys": {
       "button": "Sign in with a passkey",
@@ -334,7 +346,8 @@
       "accountDeleted": "Account deleted."
     },
     "errors": {
-      "accountDeleteError": "Failed to delete account."
+      "accountDeleteError": "Failed to delete account.",
+      "accountDeleteStepUpRequired": "Additional verification required to delete this account."
     }
   },
   "ResetPassword": {
@@ -416,7 +429,10 @@
       "loginRpIdMismatch": "Passkey login requires {rpId} or its subdomains.",
       "loginBlocked": "Passkey login is blocked. Use HTTPS or localhost."
     },
-    "stepUpActionLabel": "Passkey management"
+    "stepUpActionLabel": "Passkey management",
+    "oauthAccount": {
+      "disabled": "Passkeys are disabled for external sign-in accounts."
+    }
   },
   "QueryToasts": {
     "oauth": {
@@ -475,8 +491,15 @@
     "deleteError": "Failed to end the session."
   },
   "Home": {
-    "title": "Welcome to the Next.js template",
-    "subtitle": "Explore authentication, sessions, and security flows backed by the Go API.",
+    "kicker": "VESTRI PLATFORM",
+    "tagline": "Infrastructure Control for Game Servers",
+    "title": "Operate nodes, servers, and access in one control surface.",
+    "subtitle": "Vestri keeps your infrastructure organized with clear permissions, deployment visibility, and secure user flows.",
+    "highlights": {
+      "nodeOps": "Node orchestration",
+      "deployments": "Server deployments",
+      "access": "Team access control"
+    },
     "session": {
       "loggedInAs": "Logged in as",
       "roleLabel": "Role: {role}",
@@ -489,12 +512,177 @@
     },
     "cta": {
       "notLoggedIn": "You are not logged in.",
+      "preview": "Sign in to open your dashboard and manage nodes, templates, and active game servers.",
+      "dashboard": "Dashboard",
       "login": "Log in",
-      "register": "Register"
+      "register": "Register",
+      "howTo": "How-to"
     },
     "errors": {
       "invalidSession": "Your session has expired or is invalid. Please log in again.",
       "sessionDetails": "Could not load session details."
+    }
+  },
+  "HowToPage": {
+    "hero": {
+      "kicker": "HOW-TO",
+      "tagline": "Vestri Server Operations Guide",
+      "title": "Set up and run your game server platform with confidence.",
+      "subtitle": "This guide walks you through worker onboarding, server lifecycle operations, and security controls with practical defaults.",
+      "actions": {
+        "register": "Create account",
+        "login": "Sign in",
+        "home": "Back to home"
+      }
+    },
+    "chapters": {
+      "title": "Chapters",
+      "nodeOnboarding": "Node onboarding",
+      "nodeOnboardingDescription": "Prepare worker defaults, trust chain, and node credentials before provisioning servers.",
+      "serverLifecycle": "Server lifecycle",
+      "serverLifecycleDescription": "Create, operate, and update servers in a repeatable flow.",
+      "accessSecurity": "Access and security",
+      "accessSecurityDescription": "Control permissions and protect critical operations with step-up checks."
+    },
+    "prerequisites": {
+      "title": "Before You Start",
+      "description": "Prepare these basics once so the complete setup flow is smooth.",
+      "items": {
+        "1": "A Vestri account with access to your workspace",
+        "2": "A reachable worker endpoint and API key for node registration",
+        "3": "A template strategy for your game servers (versions and defaults)"
+      }
+    },
+    "configReference": {
+      "title": "Configuration Reference",
+      "description": "Complete reference of environment variables and worker settings options currently used by the stack.",
+      "environment": {
+        "title": "Environment variables",
+        "description": "Frontend, backend, migration, and bundled compose infrastructure variables."
+      },
+      "workerSettings": {
+        "title": "Worker settings.json options",
+        "description": "All available keys from /etc/vestri/settings.json with current defaults and runtime behavior."
+      },
+      "columns": {
+        "variable": "Variable",
+        "required": "Required",
+        "default": "Default",
+        "scope": "Scope",
+        "description": "Description",
+        "key": "Key"
+      },
+      "required": {
+        "required": "Required",
+        "recommended": "Recommended",
+        "optional": "Optional"
+      },
+      "parsingHint": "Backend bool env parsing accepts: 1, true, yes. List env values are comma-separated."
+    },
+    "bootstrap": {
+      "title": "Config and trust bootstrap",
+      "description": "Before creating your first node, do these lightweight checks. Keep it simple and use defaults first.",
+      "steps": {
+        "1": "Start the worker once so default files are created automatically.",
+        "2": "If TLS is enabled in worker settings, copy the worker CA certificate to backend trust.",
+        "3": "Use the worker API key when creating the node in Vestri.",
+        "4": "Match the node URL scheme: https with TLS, explicit http only for intentional HTTP mode."
+      },
+      "pathsTitle": "Default file locations",
+      "paths": {
+        "settings": "Worker settings file: /etc/vestri/settings.json",
+        "apiKey": "Worker API key file: /etc/vestri/api.key",
+        "workerCA": "Worker CA certificate (default): /etc/vestri/certs/ca.crt",
+        "backendCADir": "Backend CA trust directory (default): ./certs/worker-cas"
+      },
+      "rulesTitle": "Simple rules (with defaults)",
+      "rules": {
+        "1": "If TLS is enabled on the worker, copy CA cert from worker to backend trust (default: /etc/vestri/certs/ca.crt -> ./certs/worker-cas/node-name.crt).",
+        "2": "If TLS is enabled, use https in node host/base URL (default worker URL style: https://worker-host:8031).",
+        "3": "Only use http:// if TLS is intentionally disabled on the worker.",
+        "4": "When adding the node in UI, use API key from the worker key file (default: /etc/vestri/api.key)."
+      },
+      "screenshotLabel": "Settings, API key, and CA trust placement"
+    },
+    "systemd": {
+      "title": "Start services with systemd",
+      "description": "For stable production startup, run the Docker stack and worker as systemd services.",
+      "steps": {
+        "1": "Create one service for the Docker Compose stack (frontend/backend/postgres/redis).",
+        "2": "Create one service for the standalone worker process.",
+        "3": "Reload systemd and enable both services.",
+        "4": "Verify status after reboot with systemctl status."
+      },
+      "workerServiceTitle": "Example: vestri-worker.service",
+      "enableHint": "Enable both services once:",
+      "screenshotLabel": "systemd service status overview"
+    },
+    "stepPrefix": "Step",
+    "sections": {
+      "connectNode": {
+        "title": "Connect Your First Node",
+        "description": "Nodes are the execution layer. Register at least one worker node before creating servers.",
+        "steps": {
+          "1": "Open Nodes and create a new worker entry.",
+          "2": "Enter host/base URL and API key for the worker.",
+          "3": "Save and run a health check to verify connectivity.",
+          "4": "Confirm your role and permissions on that node."
+        },
+        "screenshotLabel": "Node registration and health check"
+      },
+      "createServer": {
+        "title": "Create and Provision a Server",
+        "description": "Provision servers from templates to keep deployments consistent and predictable.",
+        "steps": {
+          "1": "Open Dashboard and select the target node.",
+          "2": "Choose a template and set identifier and version fields.",
+          "3": "Confirm required agreements and create the server.",
+          "4": "Open the workspace and verify status + startup."
+        },
+        "screenshotLabel": "Server creation from template"
+      },
+      "operateServer": {
+        "title": "Operate During Runtime",
+        "description": "Use one workspace for lifecycle actions, logs, console sessions, files, and configs.",
+        "steps": {
+          "1": "Use Start/Stop and status refresh to control the stack.",
+          "2": "Watch logs with auto-update and manual refresh fallback.",
+          "3": "Use the file browser/editor for config and content updates.",
+          "4": "Validate changes in console before and after restart."
+        },
+        "screenshotLabel": "Runtime controls and console"
+      },
+      "teamAndAccess": {
+        "title": "Manage Team Access Safely",
+        "description": "Invite users with explicit roles and keep sensitive actions protected by step-up verification.",
+        "steps": {
+          "1": "Grant least-privilege access per server (viewer/operator/admin).",
+          "2": "Use invite flows and remove stale guests regularly.",
+          "3": "Require step-up checks for critical actions (delete, passkey changes).",
+          "4": "Review active sessions and rotate credentials when needed."
+        },
+        "screenshotLabel": "Access roles and critical-action protection"
+      },
+      "updateRoutine": {
+        "title": "Build a Clean Update Routine",
+        "description": "Treat image updates as an explicit maintenance action to reduce operational surprises.",
+        "steps": {
+          "1": "Check indicators for outdated server images.",
+          "2": "Repull images intentionally during maintenance windows.",
+          "3": "Restart and validate service health and logs.",
+          "4": "Document update cadence per environment."
+        },
+        "screenshotLabel": "Image repull and post-update verification"
+      }
+    },
+    "screenshotPlaceholder": "Screenshot placeholder - add your capture here.",
+    "nextSteps": {
+      "title": "Next Steps",
+      "description": "Start with one node and one template, then expand to a repeatable deployment workflow.",
+      "actions": {
+        "login": "Sign in",
+        "register": "Create account"
+      }
     }
   },
   "NodesPage": {

@@ -385,7 +385,7 @@ export default function DashboardPage() {
                 <Link href="/nodes">{t("buttons.manageNodes")}</Link>
               </Button>
             </div>
-            {nodesError && <p className="text-xs text-red-600">{nodesError}</p>}
+            {nodesError && <p className="text-xs text-destructive">{nodesError}</p>}
             <p className="text-xs text-muted-foreground">
               {t("connection.proxyInfo")}
             </p>
@@ -918,7 +918,7 @@ export default function DashboardPage() {
                       {entry.time} - {entry.method} {entry.path}
                     </span>
                     <span
-                      className={entry.ok ? "text-green-600" : "text-red-600"}
+                      className={entry.ok ? "text-success" : "text-destructive"}
                     >
                       {entry.ok ? t("requestLog.status.ok") : t("requestLog.status.err")} {entry.status}
                     </span>
@@ -931,7 +931,7 @@ export default function DashboardPage() {
                     })}
                   </div>
                   {entry.error && (
-                    <div className="text-red-600">{entry.error}</div>
+                    <div className="text-destructive">{entry.error}</div>
                   )}
                 </div>
               ))}

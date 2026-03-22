@@ -97,8 +97,8 @@ export default function FileBrowserCard({
               : t("fileBrowser.buttons.uploadToCurrentFolder")}
           </Button>
         </div>
-        {browserError ? <p className="text-sm text-red-600">{browserError}</p> : null}
-        {browserActionError ? <p className="text-sm text-red-600">{browserActionError}</p> : null}
+        {browserError ? <p className="text-sm text-destructive">{browserError}</p> : null}
+        {browserActionError ? <p className="text-sm text-destructive">{browserActionError}</p> : null}
         <div className="max-h-72 space-y-2 overflow-auto">
           {browserEntries.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("fileBrowser.empty")}</p>

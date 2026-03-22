@@ -48,7 +48,7 @@ export default function FileEditorCard({
             {t("fileEditor.buttons.reload")}
           </Button>
         </div>
-        {fileError ? <p className="text-sm text-red-600">{fileError}</p> : null}
+        {fileError ? <p className="text-sm text-destructive">{fileError}</p> : null}
       </CardContent>
     </Card>
   );

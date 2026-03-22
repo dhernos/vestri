@@ -62,19 +62,28 @@ export default function AcitveSessionsSection() {
         throw new Error(t("errors.fetchError"));
       }
       const data = (await res.json()) as { sessions?: SessionResponseItem[] };
-      const normalized = (data.sessions || []).map((s) => ({
-        sessionId: s.sessionId || s.id,
-        userId: s.userId,
-        expiresAt: s.expiresAt || s.expires,
-        loginTime: s.loginTime,
-        role: s.role,
-        ttlInSeconds: s.ttlInSeconds ?? s.ttlSeconds ?? s.ttl,
-        ipAddress: s.ipAddress || s.ip,
-        location: s.location,
-        userAgent: s.userAgent,
-        isTwoFactorEnabled: s.twoFactorEnabled,
-        twoFactorMethod: s.twoFactorMethod,
-      }));
+      const normalized = (data.sessions || []).flatMap((s): SessionData[] => {
+        const sessionId = s.sessionId || s.id;
+        if (!sessionId) {
+          return [];
+        }
+
+        return [
+          {
+            sessionId,
+            userId: s.userId || "",
+            expiresAt: s.expiresAt || s.expires || "",
+            loginTime: s.loginTime || "",
+            role: s.role || "USER",
+            ttlInSeconds: s.ttlInSeconds ?? s.ttlSeconds ?? s.ttl ?? 0,
+            ipAddress: s.ipAddress || s.ip || "-",
+            location: s.location,
+            userAgent: s.userAgent || "-",
+            isTwoFactorEnabled: s.twoFactorEnabled,
+            twoFactorMethod: s.twoFactorMethod,
+          },
+        ];
+      });
       setSessions(normalized);
     } catch (err: unknown) {
       push({ variant: "error", description: t("errors.fetchError") });
@@ -168,7 +177,7 @@ export default function AcitveSessionsSection() {
                   <tr key={s.sessionId}>
                     <td className="py-2 px-4 border-b text-center">
                       {isCurrentSession ? (
-                        <Circle className="h-4 w-4 fill-green-500 text-green-500 mx-auto" />
+                        <Circle className="h-4 w-4 fill-success text-success mx-auto" />
                       ) : (
                         "-"
                       )}
@@ -201,7 +210,7 @@ export default function AcitveSessionsSection() {
                             handleDeleteSession(s.sessionId);
                           }
                         }}
-                        className="bg-red-500 text-white px-3 py-1 rounded-md text-xs hover:bg-red-600 transition-colors cursor-pointer flex items-center justify-center mx-auto"
+                        className="bg-destructive text-destructive-foreground px-3 py-1 rounded-md text-xs hover:bg-destructive/90 transition-colors cursor-pointer flex items-center justify-center mx-auto"
                       >
                         <div className="flex items-center space-x-1">
                           <LogOut className="h-3 w-3" />

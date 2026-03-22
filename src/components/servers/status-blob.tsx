@@ -15,9 +15,9 @@ const sizeClasses: Record<NonNullable<ServerStatusBlobProps["size"]>, string> = 
 };
 
 const colorClasses: Record<ServerStatus, string> = {
-  up: "bg-green-500",
-  down: "bg-red-500",
-  unknown: "bg-gray-400",
+  up: "bg-success",
+  down: "bg-destructive",
+  unknown: "bg-muted-foreground/50",
 };
 
 export default function ServerStatusBlob({ status, label, size = "md" }: ServerStatusBlobProps) {

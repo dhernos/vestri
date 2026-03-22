@@ -99,15 +99,15 @@ export default function ResetPasswordPage() {
     switch (strength) {
       case 0:
       case 1:
-        return "bg-red-500"; // Schwach (Rot)
+        return "bg-destructive"; // Schwach (Rot)
       case 2:
       case 3:
       case 4:
-        return "bg-yellow-500"; // Moderat (Gelb)
+        return "bg-warning"; // Moderat (Gelb)
       case 5:
-        return "bg-green-500"; // Stark (Grün)
+        return "bg-success"; // Stark (Grün)
       default:
-        return "bg-gray-200";
+        return "bg-muted";
     }
   };
 

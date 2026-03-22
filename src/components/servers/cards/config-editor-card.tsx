@@ -114,7 +114,7 @@ export default function ConfigEditorCard({
             {configSaving ? t("configEditor.buttons.saving") : t("configEditor.buttons.saveConfig")}
           </Button>
         </div>
-        {configError ? <p className="text-sm text-red-600">{configError}</p> : null}
+        {configError ? <p className="text-sm text-destructive">{configError}</p> : null}
       </CardContent>
     </Card>
   );

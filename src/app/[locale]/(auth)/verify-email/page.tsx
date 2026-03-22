@@ -195,7 +195,7 @@ export default function VerifyEmailPage() {
               variant="link"
               onClick={handleResend}
               disabled={resendLoading || !email || cooldown > 0}
-              className="text-blue-600 hover:text-blue-500 cursor-pointer"
+              className="text-primary hover:text-primary/80 cursor-pointer"
             >
               {resendLoading
                 ? t("resend.resendingButton")
@@ -210,7 +210,7 @@ export default function VerifyEmailPage() {
           <p className="mt-2 text-center text-sm">
             <Link
               href="/register"
-              className="font-medium text-blue-600 hover:text-blue-500"
+              className="font-medium text-primary hover:text-primary/80"
             >
               {t("backToRegister")}
             </Link>

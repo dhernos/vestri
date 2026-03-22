@@ -83,7 +83,7 @@ export default function AccessCard({
             {inviteSubmitting ? t("access.buttons.sendingInvite") : t("access.buttons.createInvite")}
           </Button>
         </div>
-        {inviteError ? <p className="text-sm text-red-600">{inviteError}</p> : null}
+        {inviteError ? <p className="text-sm text-destructive">{inviteError}</p> : null}
 
         <div className="space-y-2">
           <h3 className="font-medium">{t("access.pendingInvites.title")}</h3>

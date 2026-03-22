@@ -64,7 +64,7 @@ export default function NodeInfoCard({
             <Button variant="destructive" onClick={onDeleteNode} disabled={deletingNode}>
               {deletingNode ? t("delete.deleting") : t("delete.button")}
             </Button>
-            {deleteNodeError ? <p className="pt-2 text-sm text-red-600">{deleteNodeError}</p> : null}
+            {deleteNodeError ? <p className="pt-2 text-sm text-destructive">{deleteNodeError}</p> : null}
           </div>
         ) : null}
       </CardContent>

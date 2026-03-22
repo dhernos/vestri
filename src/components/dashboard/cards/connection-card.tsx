@@ -74,7 +74,7 @@ export default function DashboardConnectionCard({
               <Link href="/nodes">{t("buttons.manageNodes")}</Link>
             </Button>
           </div>
-          {nodesError && <p className="text-xs text-red-600">{nodesError}</p>}
+          {nodesError && <p className="text-xs text-destructive">{nodesError}</p>}
           <p className="text-xs text-muted-foreground">{t("connection.proxyInfo")}</p>
           {selectedNodeRole ? (
             <p className="text-xs text-muted-foreground">

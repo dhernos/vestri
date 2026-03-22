@@ -25,6 +25,25 @@ type UseServerFilesParams = {
 
 const folderNavigationDelayMs = 180;
 
+const responseMessage = async (res: Response, fallback: string): Promise<string> => {
+  const raw = (await res.text().catch(() => "")).trim();
+  if (!raw) {
+    return fallback;
+  }
+  try {
+    const parsed = JSON.parse(raw) as { message?: unknown; error?: unknown };
+    if (typeof parsed?.message === "string" && parsed.message.trim()) {
+      return parsed.message.trim();
+    }
+    if (typeof parsed?.error === "string" && parsed.error.trim()) {
+      return parsed.error.trim();
+    }
+  } catch {
+    // ignore JSON parse error and return raw payload
+  }
+  return raw;
+};
+
 export const useServerFiles = ({
   basePath,
   canManageFiles,
@@ -95,9 +114,9 @@ export const useServerFiles = ({
         cache: "no-store",
       });
       if (!res.ok) {
-        const message = await res.text().catch(() => "");
+        const message = await responseMessage(res, t("fileBrowser.errors.loadDirectory"));
         setBrowserEntries([]);
-        setBrowserError(message || t("fileBrowser.errors.loadDirectory"));
+        setBrowserError(message);
         return;
       }
       const data = (await res.json().catch(() => [])) as WorkerListEntry[];
@@ -152,9 +171,9 @@ export const useServerFiles = ({
         cache: "no-store",
       });
       if (!res.ok) {
-        const message = await res.text().catch(() => "");
+        const message = await responseMessage(res, t("fileEditor.errors.loadFile"));
         setFileContent("");
-        setFileError(message || t("fileEditor.errors.loadFile"));
+        setFileError(message);
         return;
       }
       const raw = await res.text();
@@ -184,8 +203,8 @@ export const useServerFiles = ({
         }),
       });
       if (!res.ok) {
-        const message = await res.text().catch(() => "");
-        setFileError(message || t("fileEditor.errors.saveFile"));
+        const message = await responseMessage(res, t("fileEditor.errors.saveFile"));
+        setFileError(message);
         return;
       }
       await loadBrowserEntries();
@@ -218,8 +237,8 @@ export const useServerFiles = ({
         credentials: "include",
       });
       if (!res.ok) {
-        const message = await res.text().catch(() => "");
-        setBrowserActionError(message || t("fileBrowser.errors.downloadPath"));
+        const message = await responseMessage(res, t("fileBrowser.errors.downloadPath"));
+        setBrowserActionError(message);
         return;
       }
 
@@ -268,8 +287,8 @@ export const useServerFiles = ({
         body: formData,
       });
       if (!res.ok) {
-        const message = await res.text().catch(() => "");
-        setBrowserActionError(message || t("fileBrowser.errors.uploadFile"));
+        const message = await responseMessage(res, t("fileBrowser.errors.uploadFile"));
+        setBrowserActionError(message);
         return;
       }
 
@@ -315,8 +334,8 @@ export const useServerFiles = ({
         }),
       });
       if (!res.ok) {
-        const message = await res.text().catch(() => "");
-        setBrowserActionError(message || t("fileBrowser.errors.deletePath"));
+        const message = await responseMessage(res, t("fileBrowser.errors.deletePath"));
+        setBrowserActionError(message);
         return;
       }
 
@@ -355,8 +374,8 @@ export const useServerFiles = ({
         }),
       });
       if (!res.ok) {
-        const message = await res.text().catch(() => "");
-        setBrowserActionError(message || t("fileBrowser.errors.unzipArchive"));
+        const message = await responseMessage(res, t("fileBrowser.errors.unzipArchive"));
+        setBrowserActionError(message);
         return;
       }
 
@@ -385,10 +404,10 @@ export const useServerFiles = ({
           cache: "no-store",
         });
         if (!res.ok) {
-          const message = await res.text().catch(() => "");
+          const message = await responseMessage(res, t("configEditor.errors.loadConfig"));
           setConfigContent("");
           setConfigRows([]);
-          setConfigError(message || t("configEditor.errors.loadConfig"));
+          setConfigError(message);
           setUseKeyValueEditor(false);
           return;
         }
@@ -433,8 +452,8 @@ export const useServerFiles = ({
         }),
       });
       if (!res.ok) {
-        const message = await res.text().catch(() => "");
-        setConfigError(message || t("configEditor.errors.saveConfig"));
+        const message = await responseMessage(res, t("configEditor.errors.saveConfig"));
+        setConfigError(message);
         return;
       }
       await loadBrowserEntries();

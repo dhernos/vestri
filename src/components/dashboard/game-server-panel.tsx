@@ -85,7 +85,7 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
           credentials: "include",
           cache: "no-store",
         }),
-        fetch(`${basePath}?includeStatus=1&includeImageStatus=1`, {
+        fetch(`${basePath}?includeStatus=1`, {
           credentials: "include",
           cache: "no-store",
         }),
@@ -191,6 +191,11 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
 
       setServerName("");
       await loadData();
+      window.dispatchEvent(
+        new CustomEvent("vestri:servers-changed", {
+          detail: { nodeRef },
+        })
+      );
     } catch {
       setError(t("errors.createServer"));
     } finally {
@@ -341,7 +346,7 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
               {t("agreement.requiredInfo")}
             </p>
           ) : null}
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+          {error ? <p className="text-sm text-destructive">{error}</p> : null}
         </CardContent>
       </Card>
 
@@ -362,17 +367,6 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
                   <p className="flex items-center gap-2 text-sm font-medium">
                     <ServerStatusBlob status={server.status} size="md" label={statusLabel(server.status)} />
                     <span>{server.name}</span>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                        server.imageUpdateAvailable
-                          ? "bg-amber-100 text-amber-800"
-                          : "bg-emerald-100 text-emerald-800"
-                      }`}
-                    >
-                      {server.imageUpdateAvailable
-                        ? t("serverList.imageUpdateAvailable")
-                        : t("serverList.imageUpToDate")}
-                    </span>
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {t("serverList.templateLabel")}: {server.templateName || server.templateId}
@@ -404,7 +398,7 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
               href={selectedAgreement.linkUrl}
               target="_blank"
               rel="noreferrer noopener"
-              className="text-sm text-blue-600 underline"
+              className="text-sm text-primary underline"
             >
               {selectedAgreement.linkText || selectedAgreement.linkUrl}
             </a>

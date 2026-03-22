@@ -17,14 +17,11 @@ export default function LogOut() {
         credentials: "include",
         body: JSON.stringify({ sessionId: sessionId }),
       });
-      if (!res.ok) {
-        if (res.status === 401) {
-          return;
-        }
-        throw new Error(t("deleteError"));
+      if (!res.ok && res.status !== 401 && res.status !== 404) {
+        return;
       }
-    } catch (err: unknown) {
-      console.error("Delete error:", err);
+    } catch {
+      return;
     }
   };
   useEffect(() => {

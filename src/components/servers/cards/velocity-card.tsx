@@ -178,8 +178,8 @@ export default function VelocityCard({
         {agreementRequired ? (
           <p className="text-xs text-muted-foreground">{t("velocity.agreementRequired")}</p>
         ) : null}
-        {velocityError ? <p className="text-sm text-red-600">{velocityError}</p> : null}
-        {velocityCreateError ? <p className="text-sm text-red-600">{velocityCreateError}</p> : null}
+        {velocityError ? <p className="text-sm text-destructive">{velocityError}</p> : null}
+        {velocityCreateError ? <p className="text-sm text-destructive">{velocityCreateError}</p> : null}
 
         {velocityBackends.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("velocity.empty.backends")}</p>

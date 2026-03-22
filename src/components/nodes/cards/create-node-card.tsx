@@ -75,7 +75,7 @@ export default function CreateNodeCard({
             </Button>
           </div>
         </form>
-        {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
+        {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
       </CardContent>
     </Card>
   );

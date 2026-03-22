@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { useAuth } from "@/hooks/useAuth";
 import { TwoFactorModal } from "@/components/profile_page/TwoFactorModal";
 import { useToast } from "@/components/ui/toast";
+import { prepareStepUpCode } from "@/lib/step-up";
 
 export default function ChangeEmailSection() {
   const { data: session, logout, refresh } = useAuth();
@@ -64,14 +65,14 @@ export default function ChangeEmailSection() {
         }, 3000);
       } else {
         if (res.status === 403 && data.message === "STEP_UP_REQUIRED") {
-          // Send email code ahead of opening the modal (email-based 2FA)
-          if (session?.user?.twoFactorMethod === "email" && session?.user?.email) {
-            await fetch("/api/two-factor/send-email-code", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              credentials: "include",
-              body: JSON.stringify({ email: session.user.email }),
-            }).catch(() => {});
+          const stepUp = await prepareStepUpCode(session?.user, "email_change");
+          if (!stepUp.ok) {
+            const description =
+              stepUp.code && tErrors.has(stepUp.code as never)
+                ? tErrors(stepUp.code as never)
+                : tErrors("SEND_CODE_ERROR");
+            push({ variant: "error", description });
+            return;
           }
           setNeedsStepUp(true);
         } else {
@@ -111,7 +112,7 @@ export default function ChangeEmailSection() {
           {t("emailChangeWarning")}
         </p>
         {oauthLinked && (
-          <div className="p-3 mb-4 bg-yellow-50 text-yellow-800 rounded-md">
+          <div className="p-3 mb-4 bg-warning/15 text-warning-foreground border border-warning/35 rounded-md">
             {t("oauthAccount.emailReadOnly")}
           </div>
         )}
@@ -132,7 +133,7 @@ export default function ChangeEmailSection() {
           </div>
           <Button
             type="submit"
-            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded cursor-pointer"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold py-2 px-4 rounded cursor-pointer"
             disabled={oauthLinked}
           >
             {tCommon("buttons.updateEmail")}

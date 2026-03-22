@@ -103,7 +103,7 @@ export default function NodeDetailsPage() {
         pageTitle={tNodes("title")}
       >
         <div className="container mx-auto space-y-4 p-6">
-          <p className="text-red-600">{error || t("errors.notFound")}</p>
+          <p className="text-destructive">{error || t("errors.notFound")}</p>
           <Button asChild variant="secondary">
             <Link href="/nodes">{t("buttons.backToNodes")}</Link>
           </Button>

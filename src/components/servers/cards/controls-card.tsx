@@ -9,9 +9,8 @@ type ServerControlsCardProps = {
   canControl: boolean;
   canReadConsole: boolean;
   canManage: boolean;
+  isServerUp: boolean;
   stackActionLoading: StackActionLoading;
-  imageUpdateAvailable: boolean;
-  imageStatusError: string;
   imageRepulling: boolean;
   serverDeleting: boolean;
   stackError: string;
@@ -28,9 +27,8 @@ export default function ServerControlsCard({
   canControl,
   canReadConsole,
   canManage,
+  isServerUp,
   stackActionLoading,
-  imageUpdateAvailable,
-  imageStatusError,
   imageRepulling,
   serverDeleting,
   stackError,
@@ -52,10 +50,14 @@ export default function ServerControlsCard({
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex flex-wrap gap-2">
-          <Button onClick={onStart} disabled={!canControl || stackActionLoading !== ""}>
+          <Button onClick={onStart} disabled={!canControl || stackActionLoading !== "" || isServerUp}>
             {stackActionLoading === "start" ? t("controls.starting") : t("controls.start")}
           </Button>
-          <Button variant="destructive" onClick={onStop} disabled={!canControl || stackActionLoading !== ""}>
+          <Button
+            variant="destructive"
+            onClick={onStop}
+            disabled={!canControl || stackActionLoading !== "" || !isServerUp}
+          >
             {stackActionLoading === "stop" ? t("controls.stopping") : t("controls.stop")}
           </Button>
           <Button
@@ -74,24 +76,9 @@ export default function ServerControlsCard({
             </Button>
           ) : null}
         </div>
-        <span
-          className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
-            imageUpdateAvailable
-              ? "bg-amber-100 text-amber-800"
-              : "bg-emerald-100 text-emerald-800"
-          }`}
-        >
-          {imageUpdateAvailable
-            ? t("controls.imageStatusUpdateAvailable")
-            : t("controls.imageStatusUpToDate")}
-        </span>
-        {imageUpdateAvailable ? (
-          <p className="text-sm text-muted-foreground">{t("controls.imageUpdateAvailable")}</p>
-        ) : null}
-        {imageStatusError ? <p className="text-sm text-red-600">{imageStatusError}</p> : null}
-        {stackError ? <p className="text-sm text-red-600">{stackError}</p> : null}
-        {imageRepullError ? <p className="text-sm text-red-600">{imageRepullError}</p> : null}
-        {deleteError ? <p className="text-sm text-red-600">{deleteError}</p> : null}
+        {stackError ? <p className="text-sm text-destructive">{stackError}</p> : null}
+        {imageRepullError ? <p className="text-sm text-destructive">{imageRepullError}</p> : null}
+        {deleteError ? <p className="text-sm text-destructive">{deleteError}</p> : null}
       </CardContent>
     </Card>
   );
