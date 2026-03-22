@@ -30,7 +30,7 @@ export default function ToggleLanguage({
     router.replace(pathname, { locale: nextLocale });
   };
 
-  const flag = flagByLocale[nextLocale];
+  const flag = flagByLocale[locale];
 
   return (
     <div

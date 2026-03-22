@@ -676,6 +676,7 @@
       }
     },
     "screenshotPlaceholder": "Screenshot placeholder - add your capture here.",
+    "backToTop": "Back to top",
     "nextSteps": {
       "title": "Next Steps",
       "description": "Start with one node and one template, then expand to a repeatable deployment workflow.",

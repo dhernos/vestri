@@ -271,27 +271,6 @@ WantedBy=multi-user.target`;
       description: "GitHub OAuth callback URL.",
     },
     {
-      variable: "DISCORD_CLIENT_ID",
-      required: "optional",
-      defaultValue: "unset",
-      scope: "backend",
-      description: "Discord OAuth client ID.",
-    },
-    {
-      variable: "DISCORD_CLIENT_SECRET",
-      required: "optional",
-      defaultValue: "unset",
-      scope: "backend",
-      description: "Discord OAuth client secret.",
-    },
-    {
-      variable: "DISCORD_REDIRECT_URL",
-      required: "optional",
-      defaultValue: "<APP_BASE_URL>/api/oauth/discord/callback",
-      scope: "backend",
-      description: "Discord OAuth callback URL.",
-    },
-    {
       variable: "AUTO_MIGRATE",
       required: "optional",
       defaultValue: "true",
@@ -446,7 +425,7 @@ WantedBy=multi-user.target`;
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <div id="top" className="relative min-h-screen overflow-hidden">
       <div className="absolute right-4 top-4 z-20 flex items-center gap-2">
         <ThemeToggle />
         <ToggleLanguage compact />
@@ -700,6 +679,13 @@ WantedBy=multi-user.target`;
           </div>
         </section>
       </main>
+
+      <Button asChild variant="outline" size="sm" className="fixed bottom-4 right-4 z-30 shadow-md">
+        <a href="#top" aria-label={t("backToTop")}>
+          <span aria-hidden="true">↑</span>
+          {t("backToTop")}
+        </a>
+      </Button>
     </div>
   );
 }

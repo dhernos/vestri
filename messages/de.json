@@ -676,6 +676,7 @@
       }
     },
     "screenshotPlaceholder": "Screenshot-Platzhalter - hier später deinen Screenshot einfügen.",
+    "backToTop": "Nach oben",
     "nextSteps": {
       "title": "Nächste Schritte",
       "description": "Starte mit einer Node und einem Template und baue daraus einen wiederholbaren Deployment-Flow.",

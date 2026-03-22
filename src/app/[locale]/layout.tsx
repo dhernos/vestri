@@ -123,7 +123,7 @@ export default async function RootLayout({
       className={initialThemeClass}
     >
       <head>
-        <Script id="theme-init" strategy="beforeInteractive">
+        <Script id="theme-init" strategy="afterInteractive">
           {themeInitScript}
         </Script>
       </head>

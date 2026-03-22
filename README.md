@@ -87,9 +87,6 @@ List variables use comma-separated values.
 | `GITHUB_CLIENT_ID`            | Optional    | unset                                                      | GitHub OAuth client ID.                                                            |
 | `GITHUB_CLIENT_SECRET`        | Optional    | unset                                                      | GitHub OAuth client secret.                                                        |
 | `GITHUB_REDIRECT_URL`         | Optional    | `<APP_BASE_URL>/api/oauth/github/callback`                 | GitHub OAuth callback URL.                                                         |
-| `DISCORD_CLIENT_ID`           | Optional    | unset                                                      | Discord OAuth client ID.                                                           |
-| `DISCORD_CLIENT_SECRET`       | Optional    | unset                                                      | Discord OAuth client secret.                                                       |
-| `DISCORD_REDIRECT_URL`        | Optional    | `<APP_BASE_URL>/api/oauth/discord/callback`                | Discord OAuth callback URL.                                                        |
 | `AUTO_MIGRATE`                | Optional    | `true`                                                     | Auto-apply SQL migrations on backend startup.                                      |
 | `MIGRATIONS_DIR`              | Optional    | `./migrations`                                             | Migration directory path used by backend startup and migrate CLI.                  |
 
