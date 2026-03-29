@@ -11,9 +11,6 @@ It is designed for teams that operate game server infrastructure and need one se
 
 ## Product Focus
 
-Vestri is not a generic auth demo.  
-The frontend is optimized for real server operations:
-
 - Manage worker nodes and game servers from one workspace
 - Keep permissions explicit (viewer/operator/admin style access patterns)
 - Support operational safety with 2FA + step-up verification
@@ -125,48 +122,91 @@ List variables use comma-separated values.
 | `trust_proxy_headers`       | `false`                           | Trusts `X-Forwarded-*` / `X-Real-IP` headers for TLS/IP decisions.    |
 | `health_requires_auth`      | `false`                           | Requires API auth for `/health` endpoint.                             |
 
-## Docker Compose Quick Start
+## Docker Compose Quick Start (Frontend + Backend)
 
-Use this for local Docker Compose or Portainer Stacks.
+Use this for local Docker Compose or Portainer Stacks.  
+The worker is intentionally not part of this Docker setup.
 
-1. Get the stack file:
+1. Create stack env file:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dhernos/vestri/main/docker-compose.yml -o docker-compose.yml
+cp .env.stack.example .env.stack
 ```
 
 2. Start the core stack:
 
 ```bash
-docker compose pull
-docker compose up -d
-```
-
-3. Optional: start worker container too:
-
-```bash
-docker compose --profile worker up -d worker
+docker compose --env-file .env.stack pull
+docker compose --env-file .env.stack up -d
 ```
 
 Images used by default:
 
 - `dhernos/vestri:latest`
 - `dhernos/vestri-backend:latest`
-- `dhernos/vestri-worker:latest` (profile `worker`)
+
+Named volumes used by this stack:
+
+- `vestri-postgres-data`
+- `vestri-redis-data`
+- `vestri-backend-uploads`
+- `vestri-backend-logs`
+- `vestri-backend-worker-cas`
+
+On standard rootful Docker Engine (Linux), named volumes are stored under  
+`/var/lib/docker/volumes/<volume-name>/_data`.
 
 Portainer flow:
 
 1. `Stacks` -> `Add stack`
-2. Paste `docker-compose.yml` content (or use the raw URL above)
+2. Use this repository `docker-compose.yml` and `.env.stack` values
 3. Deploy stack
 
-## Worker Startup
+## Worker Standalone Installation (Per Node Host)
 
-Recommended: run `vestri-worker` standalone on each node host.
+Install `vestri-worker` directly on each node host from `https://github.com/dhernos/vestri-worker.git`.
+
+Clone and build:
 
 ```bash
-/usr/local/bin/vestri-worker
+# stable
+git clone --branch main https://github.com/dhernos/vestri-worker.git /opt/vestri-worker
+
+cd /opt/vestri-worker
+go version   # requires Go >= 1.22.2
+go build -o vestri-worker ./cmd/worker
+sudo install -m 0755 vestri-worker /usr/local/bin/vestri-worker
 ```
+
+First startup (generates defaults under `/etc/vestri` if missing):
+
+```bash
+sudo /usr/local/bin/vestri-worker
+sudo ls -la /etc/vestri
+sudo cat /etc/vestri/api.key
+```
+
+## Connect Worker to Backend and Frontend
+
+1. Copy each worker CA certificate into the named CA trust volume:
+
+```bash
+docker volume inspect vestri-backend-worker-cas --format '{{ .Mountpoint }}'
+sudo cp /etc/vestri/certs/ca.crt /var/lib/docker/volumes/vestri-backend-worker-cas/_data/<node-name>.crt
+docker compose --env-file .env.stack restart backend
+```
+
+2. Ensure backend trusts `WORKER_TLS_CA_CERT_DIR` (default `./certs/worker-cas`, mounted from `vestri-backend-worker-cas`).
+3. In Vestri UI, open `Nodes -> Create node`, then enter Host/Base URL (usually `https://<worker-host>:8031`) and API key from `/etc/vestri/api.key`.
+4. Run the node health check immediately and verify status before provisioning servers.
+
+## Node Server Setup and Management Workflow
+
+1. Select the target node in the dashboard.
+2. Create servers from templates only (identifier/version filled explicitly).
+3. Start server and validate first boot via logs.
+4. Manage runtime with start/stop/status, console, and file/config editor.
+5. Apply updates with repull + restart in planned maintenance windows.
 
 ## Local Development
 
@@ -206,34 +246,13 @@ Vestri includes a public setup guide:
 
 - Route: `/{locale}/how-to` (e.g. `/en/how-to`, `/de/how-to`)
 - Purpose: onboarding + operational workflow documentation
-- Screenshot placeholders are already integrated in the UI so you can drop product screenshots in later
 
 ## systemd Startup (Production)
 
 Recommended production pattern:
 
-- Frontend + backend + databases via Docker Compose
+- Frontend + backend + databases via Docker Compose or Portainer
 - Worker as standalone process (host-near execution)
-
-Example `vestri-stack.service`:
-
-```ini
-[Unit]
-Description=Vestri stack (frontend + backend + databases)
-After=docker.service
-Requires=docker.service
-
-[Service]
-Type=oneshot
-RemainAfterExit=yes
-WorkingDirectory=/opt/vestri
-ExecStart=/usr/bin/docker compose up -d
-ExecStop=/usr/bin/docker compose down
-TimeoutStartSec=0
-
-[Install]
-WantedBy=multi-user.target
-```
 
 Example `vestri-worker.service`:
 
@@ -245,7 +264,8 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=root
+User=vestri
+Group=vestri
 WorkingDirectory=/opt/vestri-worker
 ExecStart=/usr/local/bin/vestri-worker
 Restart=always
@@ -255,12 +275,20 @@ RestartSec=3
 WantedBy=multi-user.target
 ```
 
-Enable services:
+Create worker user once:
+
+```bash
+id -u vestri 2>/dev/null || sudo useradd --system --create-home --home-dir /opt/vestri-worker --shell /usr/sbin/nologin vestri
+sudo mkdir -p /opt/vestri-worker
+sudo chown -R vestri:vestri /opt/vestri-worker
+```
+
+Enable worker service:
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable --now vestri-stack
 sudo systemctl enable --now vestri-worker
+sudo systemctl status vestri-worker --no-pager
 ```
 
 ## Log Retention Defaults
@@ -272,19 +300,6 @@ Backend file log rotation is intentionally short by default:
 
 When the file reaches the limit, rotation occurs and the oldest backup is removed first.
 
-## i18n
-
-Translation files:
-
-- `messages/en.json`
-- `messages/de.json`
-
-When adding UI text:
-
-1. Add keys in both languages
-2. Keep namespace structure aligned
-3. Prefer domain-based namespaces (`HowToPage`, `ServerPage`, `NodesPage`, etc.)
-
 ## Architecture Notes
 
 - Frontend calls backend APIs and proxies through Next route handlers under `src/app/api/...`
@@ -295,15 +310,4 @@ When adding UI text:
 
 ## Security Notes
 
-- Critical actions are guarded with step-up verification paths
-- Passkey/OAuth behavior is restricted by account type and policy
-- Session and auth routes are access-controlled in `src/lib/auth.config.ts`
-
-## Release Readiness Checklist
-
-- [ ] Environment variables set correctly for production
-- [ ] Build and type checks pass (`npm run check`)
-- [ ] Locale coverage verified (`en` and `de`)
-- [ ] `/how-to` content reviewed and screenshots inserted
-- [ ] Backend + worker connectivity tested with real nodes
-- [ ] Step-up critical action flows verified end-to-end
+- Even tho I try to make this as secure as possible I do not recommend to host it public. If you want other userers to access the application use a tool like Cloudflare tunnel or Twingate

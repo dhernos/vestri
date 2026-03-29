@@ -17,7 +17,6 @@ type GuideSection = {
   title: string;
   description: string;
   steps: string[];
-  screenshotLabel: string;
 };
 
 type EnvVarGuideEntry = {
@@ -36,21 +35,9 @@ type WorkerSettingGuideEntry = {
 
 export default async function HowToPage() {
   const t = await getTranslations("HowToPage");
-  const workerServiceSnippet = `[Unit]
-Description=Vestri Worker
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/opt/vestri-worker
-ExecStart=/usr/local/bin/vestri-worker
-Restart=always
-RestartSec=3
-
-[Install]
-WantedBy=multi-user.target`;
+  const sslCaTrustSnippet = `docker volume inspect vestri-backend-worker-cas --format '{{ .Mountpoint }}'
+sudo cp /etc/vestri/certs/ca.crt /var/lib/docker/volumes/vestri-backend-worker-cas/_data/<node-name>.crt
+docker compose --env-file .env.stack restart backend`;
 
   const envVariables: EnvVarGuideEntry[] = [
     {
@@ -58,7 +45,8 @@ WantedBy=multi-user.target`;
       required: "required",
       defaultValue: "http://localhost:8080",
       scope: "frontend",
-      description: "Backend base URL used by rewrites, proxy middleware, and API proxy routes.",
+      description:
+        "Backend base URL used by rewrites, proxy middleware, and API proxy routes.",
     },
     {
       variable: "NODE_ENV",
@@ -308,27 +296,112 @@ WantedBy=multi-user.target`;
   ];
 
   const workerSettingsOptions: WorkerSettingGuideEntry[] = [
-    { keyName: "useTLS", defaultValue: "true", description: "Enable HTTPS/TLS listener." },
-    { keyName: "TLSCert", defaultValue: "/etc/vestri/certs/worker.crt", description: "Worker TLS certificate path." },
-    { keyName: "TLSKey", defaultValue: "/etc/vestri/certs/worker.key", description: "Worker TLS private key path." },
-    { keyName: "tls_ca_cert", defaultValue: "/etc/vestri/certs/ca.crt", description: "Worker CA certificate path." },
-    { keyName: "tls_ca_key", defaultValue: "/etc/vestri/certs/ca.key", description: "Worker CA private key path." },
-    { keyName: "tls_auto_generate", defaultValue: "true", description: "Auto-generate missing TLS CA/server cert assets." },
-    { keyName: "tls_sans", defaultValue: "[\"localhost\",\"127.0.0.1\",\"::1\"]", description: "Extra SAN entries for generated server cert." },
-    { keyName: "http_port", defaultValue: ":8031", description: "Worker listen address/port." },
-    { keyName: "worker_name", defaultValue: "", description: "Optional worker name included in cert SAN generation." },
-    { keyName: "fs_base_path", defaultValue: "/etc/vestri/servers", description: "Safe base path for all worker filesystem operations." },
-    { keyName: "replay_window_seconds", defaultValue: "300", description: "Allowed request timestamp skew for signed API requests." },
-    { keyName: "rate_limit_rps", defaultValue: "10", description: "Rate limiter token refill rate." },
-    { keyName: "rate_limit_burst", defaultValue: "20", description: "Rate limiter burst bucket size." },
-    { keyName: "max_archive_request_bytes", defaultValue: "1048576", description: "Max request body for archive endpoints." },
-    { keyName: "max_inline_write_bytes", defaultValue: "10485760", description: "Max request body for inline file writes." },
-    { keyName: "max_upload_bytes", defaultValue: "1073741824", description: "Max upload size (`/fs/upload`)." },
-    { keyName: "max_unzip_bytes", defaultValue: "10737418240", description: "Max extracted size for unzip operations." },
-    { keyName: "max_zip_entries", defaultValue: "100000", description: "Max zip entry count." },
-    { keyName: "require_tls", defaultValue: "true", description: "Reject non-TLS requests unless trusted proxy headers indicate HTTPS." },
-    { keyName: "trust_proxy_headers", defaultValue: "false", description: "Trust forwarded proxy headers for TLS/IP handling." },
-    { keyName: "health_requires_auth", defaultValue: "false", description: "Require auth for `/health` endpoint." },
+    {
+      keyName: "useTLS",
+      defaultValue: "true",
+      description: "Enable HTTPS/TLS listener.",
+    },
+    {
+      keyName: "TLSCert",
+      defaultValue: "/etc/vestri/certs/worker.crt",
+      description: "Worker TLS certificate path.",
+    },
+    {
+      keyName: "TLSKey",
+      defaultValue: "/etc/vestri/certs/worker.key",
+      description: "Worker TLS private key path.",
+    },
+    {
+      keyName: "tls_ca_cert",
+      defaultValue: "/etc/vestri/certs/ca.crt",
+      description: "Worker CA certificate path.",
+    },
+    {
+      keyName: "tls_ca_key",
+      defaultValue: "/etc/vestri/certs/ca.key",
+      description: "Worker CA private key path.",
+    },
+    {
+      keyName: "tls_auto_generate",
+      defaultValue: "true",
+      description: "Auto-generate missing TLS CA/server cert assets.",
+    },
+    {
+      keyName: "tls_sans",
+      defaultValue: '["localhost","127.0.0.1","::1"]',
+      description: "Extra SAN entries for generated server cert.",
+    },
+    {
+      keyName: "http_port",
+      defaultValue: ":8031",
+      description: "Worker listen address/port.",
+    },
+    {
+      keyName: "worker_name",
+      defaultValue: "",
+      description: "Optional worker name included in cert SAN generation.",
+    },
+    {
+      keyName: "fs_base_path",
+      defaultValue: "/etc/vestri/servers",
+      description: "Safe base path for all worker filesystem operations.",
+    },
+    {
+      keyName: "replay_window_seconds",
+      defaultValue: "300",
+      description: "Allowed request timestamp skew for signed API requests.",
+    },
+    {
+      keyName: "rate_limit_rps",
+      defaultValue: "10",
+      description: "Rate limiter token refill rate.",
+    },
+    {
+      keyName: "rate_limit_burst",
+      defaultValue: "20",
+      description: "Rate limiter burst bucket size.",
+    },
+    {
+      keyName: "max_archive_request_bytes",
+      defaultValue: "1048576",
+      description: "Max request body for archive endpoints.",
+    },
+    {
+      keyName: "max_inline_write_bytes",
+      defaultValue: "10485760",
+      description: "Max request body for inline file writes.",
+    },
+    {
+      keyName: "max_upload_bytes",
+      defaultValue: "1073741824",
+      description: "Max upload size (`/fs/upload`).",
+    },
+    {
+      keyName: "max_unzip_bytes",
+      defaultValue: "10737418240",
+      description: "Max extracted size for unzip operations.",
+    },
+    {
+      keyName: "max_zip_entries",
+      defaultValue: "100000",
+      description: "Max zip entry count.",
+    },
+    {
+      keyName: "require_tls",
+      defaultValue: "true",
+      description:
+        "Reject non-TLS requests unless trusted proxy headers indicate HTTPS.",
+    },
+    {
+      keyName: "trust_proxy_headers",
+      defaultValue: "false",
+      description: "Trust forwarded proxy headers for TLS/IP handling.",
+    },
+    {
+      keyName: "health_requires_auth",
+      defaultValue: "false",
+      description: "Require auth for `/health` endpoint.",
+    },
   ];
 
   const requiredLabels: Record<EnvVarGuideEntry["required"], string> = {
@@ -348,7 +421,6 @@ WantedBy=multi-user.target`;
         t("sections.connectNode.steps.3"),
         t("sections.connectNode.steps.4"),
       ],
-      screenshotLabel: t("sections.connectNode.screenshotLabel"),
     },
     createServer: {
       id: "createServer",
@@ -360,7 +432,6 @@ WantedBy=multi-user.target`;
         t("sections.createServer.steps.3"),
         t("sections.createServer.steps.4"),
       ],
-      screenshotLabel: t("sections.createServer.screenshotLabel"),
     },
     operateServer: {
       id: "operateServer",
@@ -372,7 +443,6 @@ WantedBy=multi-user.target`;
         t("sections.operateServer.steps.3"),
         t("sections.operateServer.steps.4"),
       ],
-      screenshotLabel: t("sections.operateServer.screenshotLabel"),
     },
     teamAndAccess: {
       id: "teamAndAccess",
@@ -384,7 +454,6 @@ WantedBy=multi-user.target`;
         t("sections.teamAndAccess.steps.3"),
         t("sections.teamAndAccess.steps.4"),
       ],
-      screenshotLabel: t("sections.teamAndAccess.screenshotLabel"),
     },
     updateRoutine: {
       id: "updateRoutine",
@@ -396,30 +465,31 @@ WantedBy=multi-user.target`;
         t("sections.updateRoutine.steps.3"),
         t("sections.updateRoutine.steps.4"),
       ],
-      screenshotLabel: t("sections.updateRoutine.screenshotLabel"),
     },
   };
 
   const renderSection = (sectionId: GuideSectionId, stepNumber: number) => {
     const section = sections[sectionId];
     return (
-      <article key={section.id} className="rounded-2xl border bg-card/82 p-6 backdrop-blur-sm md:p-8">
+      <article
+        key={section.id}
+        className="rounded-2xl border bg-card/82 p-6 backdrop-blur-sm md:p-8"
+      >
         <p className="text-xs font-semibold tracking-[0.2em] text-primary">
           {t("stepPrefix")} {stepNumber}
         </p>
-        <h3 className="mt-1 text-xl font-semibold md:text-2xl">{section.title}</h3>
-        <p className="mt-2 text-sm text-muted-foreground md:text-base">{section.description}</p>
+        <h3 className="mt-1 text-xl font-semibold md:text-2xl">
+          {section.title}
+        </h3>
+        <p className="mt-2 text-sm text-muted-foreground md:text-base">
+          {section.description}
+        </p>
 
         <ol className="mt-4 list-decimal space-y-2 pl-6 text-sm text-muted-foreground">
           {section.steps.map((step, stepIndex) => (
             <li key={`${section.id}-step-${stepIndex + 1}`}>{step}</li>
           ))}
         </ol>
-
-        <div className="mt-5 rounded-xl border border-dashed border-border/80 bg-background/40 px-4 py-6 text-center">
-          <p className="text-sm font-semibold">{section.screenshotLabel}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{t("screenshotPlaceholder")}</p>
-        </div>
       </article>
     );
   };
@@ -445,15 +515,25 @@ WantedBy=multi-user.target`;
               />
             </div>
             <div>
-              <p className="text-xs font-semibold tracking-[0.22em] text-primary">{t("hero.kicker")}</p>
-              <p className="text-sm text-muted-foreground">{t("hero.tagline")}</p>
+              <p className="text-xs font-semibold tracking-[0.22em] text-primary">
+                {t("hero.kicker")}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {t("hero.tagline")}
+              </p>
             </div>
           </div>
 
-          <h1 className="text-3xl font-semibold leading-tight md:text-5xl">{t("hero.title")}</h1>
-          <p className="mt-4 max-w-3xl text-base text-muted-foreground md:text-lg">{t("hero.subtitle")}</p>
+          <h1 className="text-3xl font-semibold leading-tight md:text-5xl">
+            {t("hero.title")}
+          </h1>
+          <p className="mt-4 max-w-3xl text-base text-muted-foreground md:text-lg">
+            {t("hero.subtitle")}
+          </p>
 
-          <p className="mt-7 text-xs font-semibold tracking-[0.2em] text-primary">{t("chapters.title")}</p>
+          <p className="mt-7 text-xs font-semibold tracking-[0.2em] text-primary">
+            {t("chapters.title")}
+          </p>
           <div className="mt-2 grid gap-2 sm:grid-cols-3">
             <a
               href="#node-onboarding"
@@ -473,6 +553,13 @@ WantedBy=multi-user.target`;
             >
               {t("chapters.accessSecurity")}
             </a>
+
+            <a
+              href="#config-reference"
+              className="rounded-lg border bg-background/55 px-3 py-2 text-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            >
+              {t("chapters.configReference")}
+            </a>
           </div>
 
           <div className="mt-6 flex flex-wrap gap-2">
@@ -489,186 +576,70 @@ WantedBy=multi-user.target`;
         </section>
 
         <section className="rounded-2xl border bg-card/82 p-6 backdrop-blur-sm md:p-8">
-          <h2 className="text-xl font-semibold md:text-2xl">{t("prerequisites.title")}</h2>
-          <p className="mt-2 text-sm text-muted-foreground md:text-base">{t("prerequisites.description")}</p>
+          <h2 className="text-xl font-semibold md:text-2xl">
+            {t("sslCaTrust.title")}
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground md:text-base">
+            {t("sslCaTrust.description")}
+          </p>
           <ul className="mt-4 list-disc space-y-2 pl-6 text-sm text-muted-foreground">
-            <li>{t("prerequisites.items.1")}</li>
-            <li>{t("prerequisites.items.2")}</li>
-            <li>{t("prerequisites.items.3")}</li>
+            <li>{t("sslCaTrust.items.volumeName")}</li>
+            <li>{t("sslCaTrust.items.backendDir")}</li>
+            <li>{t("sslCaTrust.items.hostPath")}</li>
           </ul>
-        </section>
-
-        <section className="rounded-2xl border bg-card/82 p-6 backdrop-blur-sm md:p-8">
-          <h2 className="text-xl font-semibold md:text-2xl">{t("configReference.title")}</h2>
-          <p className="mt-2 text-sm text-muted-foreground md:text-base">{t("configReference.description")}</p>
-
-          <article className="mt-6 rounded-xl border bg-background/40 p-4 md:p-5">
-            <h3 className="text-base font-semibold md:text-lg">{t("configReference.environment.title")}</h3>
-            <p className="mt-2 text-sm text-muted-foreground">{t("configReference.environment.description")}</p>
-
-            <div className="mt-4 overflow-x-auto rounded-lg border">
-              <table className="w-full min-w-[980px] border-collapse text-left text-xs md:text-sm">
-                <thead className="bg-background/70 text-foreground">
-                  <tr className="border-b">
-                    <th className="px-3 py-2 font-semibold">{t("configReference.columns.variable")}</th>
-                    <th className="px-3 py-2 font-semibold">{t("configReference.columns.required")}</th>
-                    <th className="px-3 py-2 font-semibold">{t("configReference.columns.default")}</th>
-                    <th className="px-3 py-2 font-semibold">{t("configReference.columns.scope")}</th>
-                    <th className="px-3 py-2 font-semibold">{t("configReference.columns.description")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {envVariables.map((entry) => (
-                    <tr key={entry.variable} className="border-b align-top last:border-b-0">
-                      <td className="px-3 py-2 font-mono text-[11px] md:text-xs">{entry.variable}</td>
-                      <td className="px-3 py-2">{requiredLabels[entry.required]}</td>
-                      <td className="px-3 py-2 font-mono text-[11px] md:text-xs">{entry.defaultValue}</td>
-                      <td className="px-3 py-2">{entry.scope}</td>
-                      <td className="px-3 py-2 text-muted-foreground">{entry.description}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </article>
-
-          <article className="mt-6 rounded-xl border bg-background/40 p-4 md:p-5">
-            <h3 className="text-base font-semibold md:text-lg">{t("configReference.workerSettings.title")}</h3>
-            <p className="mt-2 text-sm text-muted-foreground">{t("configReference.workerSettings.description")}</p>
-
-            <div className="mt-4 overflow-x-auto rounded-lg border">
-              <table className="w-full min-w-[860px] border-collapse text-left text-xs md:text-sm">
-                <thead className="bg-background/70 text-foreground">
-                  <tr className="border-b">
-                    <th className="px-3 py-2 font-semibold">{t("configReference.columns.key")}</th>
-                    <th className="px-3 py-2 font-semibold">{t("configReference.columns.default")}</th>
-                    <th className="px-3 py-2 font-semibold">{t("configReference.columns.description")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {workerSettingsOptions.map((entry) => (
-                    <tr key={entry.keyName} className="border-b align-top last:border-b-0">
-                      <td className="px-3 py-2 font-mono text-[11px] md:text-xs">{entry.keyName}</td>
-                      <td className="px-3 py-2 font-mono text-[11px] md:text-xs">{entry.defaultValue}</td>
-                      <td className="px-3 py-2 text-muted-foreground">{entry.description}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </article>
-
-          <p className="mt-4 text-xs text-muted-foreground">{t("configReference.parsingHint")}</p>
+          <pre className="mt-4 overflow-x-auto rounded-md border bg-background/70 p-3 text-xs">
+            <code>{sslCaTrustSnippet}</code>
+          </pre>
         </section>
 
         <section id="node-onboarding" className="space-y-5 scroll-mt-24">
           <header className="rounded-2xl border bg-card/82 p-6 backdrop-blur-sm md:p-8">
-            <h2 className="text-2xl font-semibold">{t("chapters.nodeOnboarding")}</h2>
-            <p className="mt-2 text-sm text-muted-foreground md:text-base">{t("chapters.nodeOnboardingDescription")}</p>
+            <h2 className="text-2xl font-semibold">
+              {t("chapters.nodeOnboarding")}
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground md:text-base">
+              {t("chapters.nodeOnboardingDescription")}
+            </p>
           </header>
 
-          <article className="rounded-2xl border bg-card/82 p-6 backdrop-blur-sm md:p-8">
-            <p className="text-xs font-semibold tracking-[0.2em] text-primary">
-              {t("stepPrefix")} 1
-            </p>
-            <h3 className="mt-1 text-xl font-semibold md:text-2xl">{t("bootstrap.title")}</h3>
-            <p className="mt-2 text-sm text-muted-foreground md:text-base">{t("bootstrap.description")}</p>
-
-            <ol className="mt-4 list-decimal space-y-2 pl-6 text-sm text-muted-foreground">
-              <li>{t("bootstrap.steps.1")}</li>
-              <li>{t("bootstrap.steps.2")}</li>
-              <li>{t("bootstrap.steps.3")}</li>
-              <li>{t("bootstrap.steps.4")}</li>
-            </ol>
-
-            <p className="mt-5 text-sm font-semibold">{t("bootstrap.pathsTitle")}</p>
-            <ul className="mt-2 list-disc space-y-2 pl-6 text-sm text-muted-foreground">
-              <li>{t("bootstrap.paths.settings")}</li>
-              <li>{t("bootstrap.paths.apiKey")}</li>
-              <li>{t("bootstrap.paths.workerCA")}</li>
-              <li>{t("bootstrap.paths.backendCADir")}</li>
-            </ul>
-
-            <p className="mt-5 text-sm font-semibold">{t("bootstrap.rulesTitle")}</p>
-            <ul className="mt-2 list-disc space-y-2 pl-6 text-sm text-muted-foreground">
-              <li>{t("bootstrap.rules.1")}</li>
-              <li>{t("bootstrap.rules.2")}</li>
-              <li>{t("bootstrap.rules.3")}</li>
-              <li>{t("bootstrap.rules.4")}</li>
-            </ul>
-
-            <div className="mt-5 rounded-xl border border-dashed border-border/80 bg-background/40 px-4 py-6 text-center">
-              <p className="text-sm font-semibold">{t("bootstrap.screenshotLabel")}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{t("screenshotPlaceholder")}</p>
-            </div>
-          </article>
-
-          {renderSection("connectNode", 2)}
-
-          <article className="rounded-2xl border bg-card/82 p-6 backdrop-blur-sm md:p-8">
-            <p className="text-xs font-semibold tracking-[0.2em] text-primary">
-              {t("stepPrefix")} 3
-            </p>
-            <h3 className="mt-1 text-xl font-semibold md:text-2xl">{t("systemd.title")}</h3>
-            <p className="mt-2 text-sm text-muted-foreground md:text-base">{t("systemd.description")}</p>
-
-            <ol className="mt-4 list-decimal space-y-2 pl-6 text-sm text-muted-foreground">
-              <li>{t("systemd.steps.1")}</li>
-              <li>{t("systemd.steps.2")}</li>
-              <li>{t("systemd.steps.3")}</li>
-              <li>{t("systemd.steps.4")}</li>
-            </ol>
-
-            <div className="mt-5">
-              <div className="rounded-xl border bg-background/40 p-4">
-                <p className="text-sm font-semibold">{t("systemd.workerServiceTitle")}</p>
-                <pre className="mt-2 overflow-x-auto rounded-md border bg-background/70 p-3 text-xs text-muted-foreground">
-                  <code>{workerServiceSnippet}</code>
-                </pre>
-              </div>
-            </div>
-
-            <div className="mt-4 rounded-xl border bg-background/40 p-4 text-sm text-muted-foreground">
-              <p>{t("systemd.enableHint")}</p>
-              <pre className="mt-2 overflow-x-auto rounded-md border bg-background/70 p-3 text-xs">
-                <code>
-                  sudo systemctl daemon-reload{"\n"}
-                  sudo systemctl enable --now vestri-stack{"\n"}
-                  sudo systemctl enable --now vestri-worker
-                </code>
-              </pre>
-            </div>
-
-            <div className="mt-5 rounded-xl border border-dashed border-border/80 bg-background/40 px-4 py-6 text-center">
-              <p className="text-sm font-semibold">{t("systemd.screenshotLabel")}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{t("screenshotPlaceholder")}</p>
-            </div>
-          </article>
+          {renderSection("connectNode", 1)}
         </section>
 
         <section id="server-lifecycle" className="space-y-5 scroll-mt-24">
           <header className="rounded-2xl border bg-card/82 p-6 backdrop-blur-sm md:p-8">
-            <h2 className="text-2xl font-semibold">{t("chapters.serverLifecycle")}</h2>
-            <p className="mt-2 text-sm text-muted-foreground md:text-base">{t("chapters.serverLifecycleDescription")}</p>
+            <h2 className="text-2xl font-semibold">
+              {t("chapters.serverLifecycle")}
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground md:text-base">
+              {t("chapters.serverLifecycleDescription")}
+            </p>
           </header>
 
-          {renderSection("createServer", 4)}
-          {renderSection("operateServer", 5)}
-          {renderSection("updateRoutine", 6)}
+          {renderSection("createServer", 2)}
+          {renderSection("operateServer", 3)}
+          {renderSection("updateRoutine", 4)}
         </section>
 
         <section id="access-security" className="space-y-5 scroll-mt-24">
           <header className="rounded-2xl border bg-card/82 p-6 backdrop-blur-sm md:p-8">
-            <h2 className="text-2xl font-semibold">{t("chapters.accessSecurity")}</h2>
-            <p className="mt-2 text-sm text-muted-foreground md:text-base">{t("chapters.accessSecurityDescription")}</p>
+            <h2 className="text-2xl font-semibold">
+              {t("chapters.accessSecurity")}
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground md:text-base">
+              {t("chapters.accessSecurityDescription")}
+            </p>
           </header>
 
-          {renderSection("teamAndAccess", 7)}
+          {renderSection("teamAndAccess", 5)}
         </section>
 
         <section className="rounded-2xl border bg-card/82 p-6 backdrop-blur-sm md:p-8">
-          <h2 className="text-xl font-semibold md:text-2xl">{t("nextSteps.title")}</h2>
-          <p className="mt-2 text-sm text-muted-foreground md:text-base">{t("nextSteps.description")}</p>
+          <h2 className="text-xl font-semibold md:text-2xl">
+            {t("nextSteps.title")}
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground md:text-base">
+            {t("nextSteps.description")}
+          </p>
           <div className="mt-6 flex flex-wrap gap-2">
             <Button asChild>
               <Link href="/login">{t("nextSteps.actions.login")}</Link>
@@ -678,9 +649,134 @@ WantedBy=multi-user.target`;
             </Button>
           </div>
         </section>
+
+        <section
+          id="config-reference"
+          className="rounded-2xl border bg-card/82 p-6 backdrop-blur-sm md:p-8"
+        >
+          <h2 className="text-xl font-semibold md:text-2xl">
+            {t("configReference.title")}
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground md:text-base">
+            {t("configReference.description")}
+          </p>
+
+          <article className="mt-6 rounded-xl border bg-background/40 p-4 md:p-5">
+            <h3 className="text-base font-semibold md:text-lg">
+              {t("configReference.environment.title")}
+            </h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {t("configReference.environment.description")}
+            </p>
+
+            <div className="mt-4 overflow-x-auto rounded-lg border">
+              <table className="w-full min-w-[980px] border-collapse text-left text-xs md:text-sm">
+                <thead className="bg-background/70 text-foreground">
+                  <tr className="border-b">
+                    <th className="px-3 py-2 font-semibold">
+                      {t("configReference.columns.variable")}
+                    </th>
+                    <th className="px-3 py-2 font-semibold">
+                      {t("configReference.columns.required")}
+                    </th>
+                    <th className="px-3 py-2 font-semibold">
+                      {t("configReference.columns.default")}
+                    </th>
+                    <th className="px-3 py-2 font-semibold">
+                      {t("configReference.columns.scope")}
+                    </th>
+                    <th className="px-3 py-2 font-semibold">
+                      {t("configReference.columns.description")}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {envVariables.map((entry) => (
+                    <tr
+                      key={entry.variable}
+                      className="border-b align-top last:border-b-0"
+                    >
+                      <td className="px-3 py-2 font-mono text-[11px] md:text-xs">
+                        {entry.variable}
+                      </td>
+                      <td className="px-3 py-2">
+                        {requiredLabels[entry.required]}
+                      </td>
+                      <td className="px-3 py-2 font-mono text-[11px] md:text-xs">
+                        {entry.defaultValue}
+                      </td>
+                      <td className="px-3 py-2">{entry.scope}</td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {t(
+                          `configReference.environment.entries.${entry.variable}.description`
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article className="mt-6 rounded-xl border bg-background/40 p-4 md:p-5">
+            <h3 className="text-base font-semibold md:text-lg">
+              {t("configReference.workerSettings.title")}
+            </h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {t("configReference.workerSettings.description")}
+            </p>
+
+            <div className="mt-4 overflow-x-auto rounded-lg border">
+              <table className="w-full min-w-[860px] border-collapse text-left text-xs md:text-sm">
+                <thead className="bg-background/70 text-foreground">
+                  <tr className="border-b">
+                    <th className="px-3 py-2 font-semibold">
+                      {t("configReference.columns.key")}
+                    </th>
+                    <th className="px-3 py-2 font-semibold">
+                      {t("configReference.columns.default")}
+                    </th>
+                    <th className="px-3 py-2 font-semibold">
+                      {t("configReference.columns.description")}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {workerSettingsOptions.map((entry) => (
+                    <tr
+                      key={entry.keyName}
+                      className="border-b align-top last:border-b-0"
+                    >
+                      <td className="px-3 py-2 font-mono text-[11px] md:text-xs">
+                        {entry.keyName}
+                      </td>
+                      <td className="px-3 py-2 font-mono text-[11px] md:text-xs">
+                        {entry.defaultValue}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {t(
+                          `configReference.workerSettings.entries.${entry.keyName}.description`
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <p className="mt-4 text-xs text-muted-foreground">
+            {t("configReference.parsingHint")}
+          </p>
+        </section>
       </main>
 
-      <Button asChild variant="outline" size="sm" className="fixed bottom-4 right-4 z-30 shadow-md">
+      <Button
+        asChild
+        variant="outline"
+        size="sm"
+        className="fixed bottom-4 right-4 z-30 shadow-md"
+      >
         <a href="#top" aria-label={t("backToTop")}>
           <span aria-hidden="true">↑</span>
           {t("backToTop")}

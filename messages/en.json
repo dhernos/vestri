@@ -190,12 +190,12 @@
       "cooldownError": "Please wait {cooldown} {seconds} before resending.",
       "success": "Email verified."
     },
-      "resend": {
-        "noCodeReceived": "Didn't receive a code?",
-        "resendButton": "Resend code",
-        "resendingButton": "Resending...",
-        "cooldownButton": "Wait {cooldown} {seconds}"
-      },
+    "resend": {
+      "noCodeReceived": "Didn't receive a code?",
+      "resendButton": "Resend code",
+      "resendingButton": "Resending...",
+      "cooldownButton": "Wait {cooldown} {seconds}"
+    },
     "backToRegister": "Back to register"
   },
   "Register": {
@@ -528,7 +528,7 @@
       "kicker": "HOW-TO",
       "tagline": "Vestri Server Operations Guide",
       "title": "Set up and run your game server platform with confidence.",
-      "subtitle": "This guide walks you through worker onboarding, server lifecycle operations, and security controls with practical defaults.",
+      "subtitle": "This guide is intentionally beginner-friendly and uses concrete copy-paste commands for setup, operations, and security.",
       "actions": {
         "register": "Create account",
         "login": "Sign in",
@@ -538,31 +538,219 @@
     "chapters": {
       "title": "Chapters",
       "nodeOnboarding": "Node onboarding",
-      "nodeOnboardingDescription": "Prepare worker defaults, trust chain, and node credentials before provisioning servers.",
+      "nodeOnboardingDescription": "Set up worker defaults, trust chain, and node credentials first.",
       "serverLifecycle": "Server lifecycle",
-      "serverLifecycleDescription": "Create, operate, and update servers in a repeatable flow.",
+      "serverLifecycleDescription": "Create, run, and update servers using a repeatable step-by-step flow.",
       "accessSecurity": "Access and security",
-      "accessSecurityDescription": "Control permissions and protect critical operations with step-up checks."
+      "accessSecurityDescription": "Grant clear permissions and protect critical actions with step-up checks.",
+      "configReference": "Config reference",
+      "configReferenceDescription": "Understand all environment variables and settings for the worker and stack."
+    },
+    "sslCaTrust": {
+      "title": "SSL/TLS CA Trust (Worker -> Backend)",
+      "description": "If worker TLS is enabled, add each worker CA certificate into the backend trust volume before creating the node in Vestri.",
+      "items": {
+        "volumeName": "Compose named volume: `vestri-backend-worker-cas`",
+        "backendDir": "Backend trust dir in container: `./certs/worker-cas` (`WORKER_TLS_CA_CERT_DIR`)",
+        "hostPath": "Typical Docker host path (rootful Linux): `/var/lib/docker/volumes/vestri-backend-worker-cas/_data`"
+      }
     },
     "prerequisites": {
       "title": "Before You Start",
-      "description": "Prepare these basics once so the complete setup flow is smooth.",
+      "description": "Set this baseline once, then follow the rest of the guide in order for a smoother rollout.",
       "items": {
         "1": "A Vestri account with access to your workspace",
-        "2": "A reachable worker endpoint and API key for node registration",
-        "3": "A template strategy for your game servers (versions and defaults)"
-      }
+        "2": "A reachable worker endpoint (host/port) plus the worker API key",
+        "3": "At least one server template with clear version defaults"
+      },
+      "quickChecksTitle": "Quick baseline checks (copy-paste)",
+      "quickChecksDescription": "If one of these commands fails, fix that first and continue with the guide afterwards."
     },
     "configReference": {
       "title": "Configuration Reference",
       "description": "Complete reference of environment variables and worker settings options currently used by the stack.",
       "environment": {
         "title": "Environment variables",
-        "description": "Frontend, backend, migration, and bundled compose infrastructure variables."
+        "description": "Frontend, backend, migration, and bundled compose infrastructure variables.",
+        "entries": {
+          "GO_API_URL": {
+            "description": "Backend base URL used by rewrites, proxy middleware, and API proxy routes."
+          },
+          "NODE_ENV": {
+            "description": "Runtime mode (`production` in container images)."
+          },
+          "NEXT_TELEMETRY_DISABLED": {
+            "description": "Set `1` to disable Next.js telemetry."
+          },
+          "PORT": {
+            "description": "Backend listen port."
+          },
+          "APP_BASE_URL": {
+            "description": "Base URL for callbacks and generated links."
+          },
+          "NEXTAUTH_URL": {
+            "description": "Fallback source for APP_BASE_URL."
+          },
+          "DATABASE_URL": {
+            "description": "PostgreSQL connection string."
+          },
+          "REDIS_URL": {
+            "description": "Redis connection for sessions and rate limits."
+          },
+          "UPLOAD_DIR": {
+            "description": "Profile image upload directory."
+          },
+          "LOG_FILE": {
+            "description": "Backend log output file."
+          },
+          "LOG_MAX_SIZE_MB": {
+            "description": "Max log file size before rotation."
+          },
+          "LOG_MAX_BACKUPS": {
+            "description": "Number of rotated log backups."
+          },
+          "NO_EMAIL_VERIFY": {
+            "description": "Disable email verification checks."
+          },
+          "TOTP_ISSUER": {
+            "description": "Issuer name for authenticator apps."
+          },
+          "WORKER_TLS_CA_CERT_FILE": {
+            "description": "Additional trusted worker CA certificate file."
+          },
+          "WORKER_TLS_CA_CERT_DIR": {
+            "description": "Directory with trusted worker CA certs."
+          },
+          "NODE_API_KEY_ENCRYPTION_KEY": {
+            "description": "Encryption key for stored worker node API keys."
+          },
+          "TRUSTED_PROXIES": {
+            "description": "Comma-separated list of trusted proxy IPs/CIDRs."
+          },
+          "EMAIL_SERVER_HOST": {
+            "description": "SMTP host."
+          },
+          "EMAIL_SERVER_PORT": {
+            "description": "SMTP port."
+          },
+          "EMAIL_SERVER_USER": {
+            "description": "SMTP username."
+          },
+          "EMAIL_SERVER_PASSWORD": {
+            "description": "SMTP password."
+          },
+          "EMAIL_FROM": {
+            "description": "SMTP sender address."
+          },
+          "EMAIL_SERVER_SECURE": {
+            "description": "Enable secure SMTP mode."
+          },
+          "WEB_AUTHN_ORIGIN": {
+            "description": "Primary WebAuthn origin."
+          },
+          "WEB_AUTHN_RP_ID": {
+            "description": "WebAuthn relying-party ID."
+          },
+          "WEB_AUTHN_RP_NAME": {
+            "description": "WebAuthn relying-party display name."
+          },
+          "WEB_AUTHN_ORIGINS": {
+            "description": "Comma-separated allowed WebAuthn origins."
+          },
+          "GITHUB_CLIENT_ID": {
+            "description": "GitHub OAuth client ID."
+          },
+          "GITHUB_CLIENT_SECRET": {
+            "description": "GitHub OAuth client secret."
+          },
+          "GITHUB_REDIRECT_URL": {
+            "description": "GitHub OAuth callback URL."
+          },
+          "AUTO_MIGRATE": {
+            "description": "Auto-apply SQL migrations during backend startup."
+          },
+          "MIGRATIONS_DIR": {
+            "description": "Directory containing `*.up.sql` migration files."
+          },
+          "POSTGRES_USER": {
+            "description": "PostgreSQL user for the bundled stack."
+          },
+          "POSTGRES_PASSWORD": {
+            "description": "PostgreSQL password for the bundled stack."
+          },
+          "POSTGRES_DB": {
+            "description": "PostgreSQL database name for the bundled stack."
+          }
+        }
       },
       "workerSettings": {
         "title": "Worker settings.json options",
-        "description": "All available keys from /etc/vestri/settings.json with current defaults and runtime behavior."
+        "description": "All available keys from /etc/vestri/settings.json with current defaults and runtime behavior.",
+        "entries": {
+          "useTLS": {
+            "description": "Enable HTTPS/TLS listener."
+          },
+          "TLSCert": {
+            "description": "Worker TLS certificate path."
+          },
+          "TLSKey": {
+            "description": "Worker TLS private key path."
+          },
+          "tls_ca_cert": {
+            "description": "Worker CA certificate path."
+          },
+          "tls_ca_key": {
+            "description": "Worker CA private key path."
+          },
+          "tls_auto_generate": {
+            "description": "Auto-generate missing TLS CA/server cert assets."
+          },
+          "tls_sans": {
+            "description": "Extra SAN entries for generated server cert."
+          },
+          "http_port": {
+            "description": "Worker listen address/port."
+          },
+          "worker_name": {
+            "description": "Optional worker name included in cert SAN generation."
+          },
+          "fs_base_path": {
+            "description": "Safe base path for all worker filesystem operations."
+          },
+          "replay_window_seconds": {
+            "description": "Allowed request timestamp skew for signed API requests."
+          },
+          "rate_limit_rps": {
+            "description": "Rate limiter token refill rate."
+          },
+          "rate_limit_burst": {
+            "description": "Rate limiter burst bucket size."
+          },
+          "max_archive_request_bytes": {
+            "description": "Max request body for archive endpoints."
+          },
+          "max_inline_write_bytes": {
+            "description": "Max request body for inline file writes."
+          },
+          "max_upload_bytes": {
+            "description": "Max upload size (`/fs/upload`)."
+          },
+          "max_unzip_bytes": {
+            "description": "Max extracted size for unzip operations."
+          },
+          "max_zip_entries": {
+            "description": "Max zip entry count."
+          },
+          "require_tls": {
+            "description": "Reject non-TLS requests unless trusted proxy headers indicate HTTPS."
+          },
+          "trust_proxy_headers": {
+            "description": "Trust forwarded proxy headers for TLS/IP handling."
+          },
+          "health_requires_auth": {
+            "description": "Require auth for `/health` endpoint."
+          }
+        }
       },
       "columns": {
         "variable": "Variable",
@@ -581,12 +769,12 @@
     },
     "bootstrap": {
       "title": "Config and trust bootstrap",
-      "description": "Before creating your first node, do these lightweight checks. Keep it simple and use defaults first.",
+      "description": "Before creating your first node in the UI, prepare worker files and trust chain with these explicit steps.",
       "steps": {
-        "1": "Start the worker once so default files are created automatically.",
-        "2": "If TLS is enabled in worker settings, copy the worker CA certificate to backend trust.",
-        "3": "Use the worker API key when creating the node in Vestri.",
-        "4": "Match the node URL scheme: https with TLS, explicit http only for intentional HTTP mode."
+        "1": "Start the worker once so `settings.json`, certificates, and API key are generated.",
+        "2": "Verify that `/etc/vestri/settings.json` and `/etc/vestri/api.key` exist.",
+        "3": "If TLS is enabled, copy `/etc/vestri/certs/ca.crt` into backend trust.",
+        "4": "For node creation in UI, keep host/base URL and API key from `/etc/vestri/api.key` ready."
       },
       "pathsTitle": "Default file locations",
       "paths": {
@@ -602,80 +790,85 @@
         "3": "Only use http:// if TLS is intentionally disabled on the worker.",
         "4": "When adding the node in UI, use API key from the worker key file (default: /etc/vestri/api.key)."
       },
+      "commandsTitle": "Commands for this step",
+      "commandsHint": "Only adjust the backend target path if your Compose/Portainer setup uses a different location.",
       "screenshotLabel": "Settings, API key, and CA trust placement"
     },
     "systemd": {
       "title": "Start services with systemd",
-      "description": "For stable production startup, run the Docker stack and worker as systemd services.",
+      "description": "A beginner-safe production pattern: frontend/backend/db via Compose or Portainer, worker as a dedicated systemd service.",
       "steps": {
-        "1": "Create one service for the Docker Compose stack (frontend/backend/postgres/redis).",
-        "2": "Create one service for the standalone worker process.",
-        "3": "Reload systemd and enable both services.",
-        "4": "Verify status after reboot with systemctl status."
+        "1": "Deploy frontend/backend/postgres/redis via Docker Compose or Portainer.",
+        "2": "Create a dedicated Linux user `vestri` for the worker process.",
+        "3": "Create `/etc/systemd/system/vestri-worker.service` using the example below.",
+        "4": "Reload systemd, enable the service, and verify status."
       },
+      "composeTitle": "Compose deployment (example commands)",
+      "composeHint": "Only adjust the project path (`/opt/vestri`) if your compose project lives elsewhere.",
+      "userSetupTitle": "Create the worker system user",
+      "userSetupHint": "You can run these commands as-is. If the user already exists, it will not be created again.",
       "workerServiceTitle": "Example: vestri-worker.service",
-      "enableHint": "Enable both services once:",
+      "enableHint": "Enable service and verify immediately:",
       "screenshotLabel": "systemd service status overview"
     },
     "stepPrefix": "Step",
     "sections": {
       "connectNode": {
         "title": "Connect Your First Node",
-        "description": "Nodes are the execution layer. Register at least one worker node before creating servers.",
+        "description": "Nodes are the execution layer. You need at least one healthy worker node before creating servers.",
         "steps": {
-          "1": "Open Nodes and create a new worker entry.",
-          "2": "Enter host/base URL and API key for the worker.",
-          "3": "Save and run a health check to verify connectivity.",
-          "4": "Confirm your role and permissions on that node."
+          "1": "In Vestri, open `Nodes` -> `Create node`.",
+          "2": "Enter host/base URL (for example `https://worker-host:8031`) and API key from `/etc/vestri/api.key`.",
+          "3": "Click `Save` and immediately run the health check.",
+          "4": "If status is not healthy, verify host, port, TLS scheme (`http/https`), and API key."
         },
         "screenshotLabel": "Node registration and health check"
       },
       "createServer": {
         "title": "Create and Provision a Server",
-        "description": "Provision servers from templates to keep deployments consistent and predictable.",
+        "description": "Always create servers from templates so versions, paths, and startup values stay predictable.",
         "steps": {
-          "1": "Open Dashboard and select the target node.",
-          "2": "Choose a template and set identifier and version fields.",
-          "3": "Confirm required agreements and create the server.",
-          "4": "Open the workspace and verify status + startup."
+          "1": "Open `Dashboard` and select the target node at the top.",
+          "2": "Click `Create server`, choose a template, and fill identifier + version fields.",
+          "3": "Confirm required agreements and start provisioning.",
+          "4": "Open the new server workspace and verify status, startup, and first logs."
         },
         "screenshotLabel": "Server creation from template"
       },
       "operateServer": {
         "title": "Operate During Runtime",
-        "description": "Use one workspace for lifecycle actions, logs, console sessions, files, and configs.",
+        "description": "Use the server workspace as your single place for start/stop, logs, console, and config changes.",
         "steps": {
-          "1": "Use Start/Stop and status refresh to control the stack.",
-          "2": "Watch logs with auto-update and manual refresh fallback.",
-          "3": "Use the file browser/editor for config and content updates.",
-          "4": "Validate changes in console before and after restart."
+          "1": "Control the server with `Start`, `Stop`, and `Refresh status` first.",
+          "2": "Open logs and verify startup without errors before making changes.",
+          "3": "Edit files in small steps through file browser/editor (avoid big one-shot changes).",
+          "4": "After each change, restart and re-check logs + console output."
         },
         "screenshotLabel": "Runtime controls and console"
       },
       "teamAndAccess": {
         "title": "Manage Team Access Safely",
-        "description": "Invite users with explicit roles and keep sensitive actions protected by step-up verification.",
+        "description": "Use least-privilege roles and keep sensitive actions behind step-up verification.",
         "steps": {
-          "1": "Grant least-privilege access per server (viewer/operator/admin).",
-          "2": "Use invite flows and remove stale guests regularly.",
-          "3": "Require step-up checks for critical actions (delete, passkey changes).",
-          "4": "Review active sessions and rotate credentials when needed."
+          "1": "Assign only the required role per server (`viewer`, `operator`, `admin`).",
+          "2": "Send invites only when needed and remove stale access regularly.",
+          "3": "Use step-up checks for critical actions (delete, access changes, passkeys).",
+          "4": "Review active sessions frequently and rotate credentials on suspicion."
         },
         "screenshotLabel": "Access roles and critical-action protection"
       },
       "updateRoutine": {
         "title": "Build a Clean Update Routine",
-        "description": "Treat image updates as an explicit maintenance action to reduce operational surprises.",
+        "description": "Run updates as a planned, repeatable process so changes stay controlled in production.",
         "steps": {
-          "1": "Check indicators for outdated server images.",
-          "2": "Repull images intentionally during maintenance windows.",
-          "3": "Restart and validate service health and logs.",
-          "4": "Document update cadence per environment."
+          "1": "Check which server images are outdated and prioritize critical workloads.",
+          "2": "Repull images only during planned maintenance windows.",
+          "3": "Restart affected servers and validate health, logs, and reachability.",
+          "4": "Document version, date, and result for every update per environment."
         },
         "screenshotLabel": "Image repull and post-update verification"
       }
     },
-    "screenshotPlaceholder": "Screenshot placeholder - add your capture here.",
     "backToTop": "Back to top",
     "nextSteps": {
       "title": "Next Steps",
@@ -700,7 +893,7 @@
         "name": "Name (optional)",
         "namePlaceholder": "EU-West Minecraft Node",
         "host": "IP / Host / URL",
-        "hostPlaceholder": "192.168.1.23:8031",
+        "hostPlaceholder": "https://192.168.0.10:8031",
         "apiKey": "API key",
         "apiKeyPlaceholder": "Worker API key"
       },
@@ -970,7 +1163,7 @@
   },
   "GameServerPanel": {
     "title": "Game Servers",
-    "titleAlpha": "Game Servers (Alpha)",
+    "titleAlpha": "Game Servers",
     "description": "Server controls are now on a dedicated detail page per server.",
     "selectNodeFirst": "Select a node first to manage game servers.",
     "fields": {

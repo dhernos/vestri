@@ -14,11 +14,11 @@ const variants: Record<
   { container: string; dot: string }
 > = {
   info: {
-    container: "border-info/30 bg-info/12 text-info-foreground",
+    container: "border-info/30 bg-info/12 text-info-foreground dark:text-foreground",
     dot: "bg-info",
   },
   success: {
-    container: "border-success/30 bg-success/12 text-success-foreground",
+    container: "border-success/30 bg-success/12 text-success-foreground dark:text-foreground",
     dot: "bg-success",
   },
   error: {
