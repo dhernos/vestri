@@ -45,6 +45,7 @@ export type GameServerTemplate = {
   id: string;
   name: string;
   game?: string;
+  kind?: GameServerKind;
   agreement?: GameServerTemplateAgreement;
   versionConfig?: GameServerTemplateVersionConfig;
 };
@@ -61,6 +62,7 @@ export type GameServerListItem = {
   templateId: string;
   templateVersion?: string;
   templateName: string;
+  game?: string;
   softwareVersion?: string;
   gameVersion?: string;
   stackName?: string;

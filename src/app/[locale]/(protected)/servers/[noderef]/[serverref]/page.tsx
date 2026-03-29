@@ -284,6 +284,7 @@ export default function ServerControlsPage() {
     fileLoading,
     fileSaving,
     fileError,
+    configFilesForEditor,
     selectedConfigFileId,
     setSelectedConfigFileId,
     configContent,
@@ -315,6 +316,7 @@ export default function ServerControlsPage() {
     basePath,
     canManageFiles: canManageFiles && (isFilesystemSection || isConfigSection),
     configFiles: server?.configFiles || [],
+    composePath: server?.composePath || "",
     t,
   });
 
@@ -665,7 +667,7 @@ export default function ServerControlsPage() {
         <>
           {server.permissions.canManageFiles ? (
             <ConfigEditorCard
-              configFiles={server.configFiles}
+              configFiles={configFilesForEditor}
               selectedConfigFileId={selectedConfigFileId}
               useKeyValueEditor={useKeyValueEditor}
               configRows={configRows}

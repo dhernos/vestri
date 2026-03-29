@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  applyComposeEnvironmentRows,
+  parseComposeEnvironmentRows,
+} from "@/features/servers/compose-env";
+import {
   decodeEscapedLineBreaks,
   downloadNameFromResponse,
   formatBytes,
@@ -20,10 +24,12 @@ type UseServerFilesParams = {
   basePath: string;
   canManageFiles: boolean;
   configFiles: GameServerConfigFile[];
+  composePath: string;
   t: TranslateFn;
 };
 
 const folderNavigationDelayMs = 180;
+const composeEnvironmentConfigFileID = "__compose-environment__";
 
 const responseMessage = async (res: Response, fallback: string): Promise<string> => {
   const raw = (await res.text().catch(() => "")).trim();
@@ -48,6 +54,7 @@ export const useServerFiles = ({
   basePath,
   canManageFiles,
   configFiles,
+  composePath,
   t,
 }: UseServerFilesParams) => {
   const [browserPath, setBrowserPath] = useState("");
@@ -79,20 +86,38 @@ export const useServerFiles = ({
   const folderNavigationLockedRef = useRef(false);
   const folderNavigationUnlockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const configFilesForEditor = useMemo(() => {
+    const out = [...configFiles];
+    const trimmedComposePath = composePath.trim();
+    if (!trimmedComposePath) {
+      return out;
+    }
+    out.push({
+      id: composeEnvironmentConfigFileID,
+      title: t("configEditor.fields.composeEnvironment"),
+      path: trimmedComposePath,
+      format: "compose-env",
+    });
+    return out;
+  }, [composePath, configFiles, t]);
+
   const selectedConfigFile = useMemo(
-    () => configFiles.find((cfg) => cfg.id === selectedConfigFileId),
-    [configFiles, selectedConfigFileId]
+    () => configFilesForEditor.find((cfg) => cfg.id === selectedConfigFileId),
+    [configFilesForEditor, selectedConfigFileId]
   );
 
   useEffect(() => {
-    if (configFiles.length > 0 && !configFiles.some((cfg) => cfg.id === selectedConfigFileId)) {
-      setSelectedConfigFileId(configFiles[0].id);
+    if (
+      configFilesForEditor.length > 0 &&
+      !configFilesForEditor.some((cfg) => cfg.id === selectedConfigFileId)
+    ) {
+      setSelectedConfigFileId(configFilesForEditor[0].id);
       return;
     }
-    if (configFiles.length === 0) {
+    if (configFilesForEditor.length === 0) {
       setSelectedConfigFileId("");
     }
-  }, [configFiles, selectedConfigFileId]);
+  }, [configFilesForEditor, selectedConfigFileId]);
 
   const loadBrowserEntries = useCallback(async () => {
     if (!canManageFiles || !basePath) {
@@ -416,6 +441,12 @@ export const useServerFiles = ({
         const normalized = decodeEscapedLineBreaks(raw);
         setConfigContent(normalized);
 
+        if (selectedConfigFile.id === composeEnvironmentConfigFileID) {
+          setUseKeyValueEditor(true);
+          setConfigRows(parseComposeEnvironmentRows(normalized));
+          return;
+        }
+
         const keyValue = shouldUseKeyValueEditor(selectedConfigFile.format, normalized);
         setUseKeyValueEditor(keyValue);
         setConfigRows(keyValue ? parseConfigRows(normalized) : []);
@@ -439,9 +470,12 @@ export const useServerFiles = ({
     setConfigSaving(true);
     setConfigError("");
     try {
-      const finalContent = useKeyValueEditor
-        ? serializeConfigRows(configRows)
-        : configContent;
+      let finalContent = configContent;
+      if (selectedConfigFile.id === composeEnvironmentConfigFileID) {
+        finalContent = applyComposeEnvironmentRows(configContent, configRows);
+      } else if (useKeyValueEditor) {
+        finalContent = serializeConfigRows(configRows);
+      }
       const res = await fetch(`${basePath}/files/write`, {
         method: "POST",
         credentials: "include",
@@ -456,8 +490,13 @@ export const useServerFiles = ({
         setConfigError(message);
         return;
       }
+      setConfigContent(finalContent);
       await loadBrowserEntries();
-    } catch {
+    } catch (err) {
+      if (err instanceof Error && err.message.trim() !== "") {
+        setConfigError(err.message);
+        return;
+      }
       setConfigError(t("configEditor.errors.saveConfig"));
     } finally {
       setConfigSaving(false);
@@ -512,6 +551,7 @@ export const useServerFiles = ({
     fileLoading,
     fileSaving,
     fileError,
+    configFilesForEditor,
     selectedConfigFileId,
     setSelectedConfigFileId,
     configContent,

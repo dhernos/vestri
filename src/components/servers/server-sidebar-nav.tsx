@@ -56,6 +56,9 @@ export function ServerSidebarNav({
   const tGameServer = useTranslations("GameServerPanel");
   const tDashboard = useTranslations("DashboardPage");
   const tServer = useTranslations("ServerPage");
+  const createServerHref = nodeRef
+    ? `/dashboard?node=${encodeURIComponent(nodeRef)}`
+    : "/dashboard";
 
   const sectionItems: {
     section: ServerWorkspaceSection;
@@ -247,6 +250,20 @@ export function ServerSidebarNav({
               );
             })
           : null}
+
+        {!serversLoading && !serversError ? (
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              tooltip={tGameServer("buttons.createServer")}
+              className="justify-center font-semibold"
+            >
+              <Link href={createServerHref} aria-label={tGameServer("buttons.createServer")}>
+                <span className="w-full text-center">+</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        ) : null}
       </SidebarMenu>
     </SidebarGroup>
   );

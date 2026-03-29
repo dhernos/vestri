@@ -15,12 +15,20 @@ type UseVelocityBackendsParams = {
   t: TranslateFn;
 };
 
-const filterVelocityTemplates = (templates: GameServerTemplate[]) =>
-  templates.filter(
+const normalizeTemplateGame = (value?: string) => value?.trim().toLowerCase() || "";
+const velocityBackendSupportedSoftware = new Set(["PAPER", "PURPUR", "SPIGOT", "BUKKIT"]);
+
+const filterVelocityTemplates = (
+  templates: GameServerTemplate[],
+  server: GameServerDetails | null
+) => {
+  const backendGame = normalizeTemplateGame(server?.game) || "minecraft";
+  return templates.filter(
     (template) =>
-      template.game?.toLowerCase() === "minecraft" &&
-      template.id.toLowerCase() === "minecraft-vanilla"
+      normalizeTemplateGame(template.game) === backendGame &&
+      template.kind !== "velocity"
   );
+};
 
 export const useVelocityBackends = ({ nodeRef, server, t }: UseVelocityBackendsParams) => {
   const [velocityTemplates, setVelocityTemplates] = useState<GameServerTemplate[]>([]);
@@ -43,7 +51,10 @@ export const useVelocityBackends = ({ nodeRef, server, t }: UseVelocityBackendsP
   const velocitySoftwareField = selectedVelocityTemplate?.versionConfig?.software;
   const velocityGameField = selectedVelocityTemplate?.versionConfig?.game;
   const velocitySoftwareOptions = useMemo(
-    () => normalizeFieldOptions(velocitySoftwareField),
+    () =>
+      normalizeFieldOptions(velocitySoftwareField).filter((option) =>
+        velocityBackendSupportedSoftware.has(option.trim().toUpperCase())
+      ),
     [velocitySoftwareField]
   );
   const velocityGameOptions = useMemo(
@@ -91,7 +102,7 @@ export const useVelocityBackends = ({ nodeRef, server, t }: UseVelocityBackendsP
         };
         if (templatesRes.ok) {
           const allTemplates = Array.isArray(templatesData.templates) ? templatesData.templates : [];
-          nextTemplates = filterVelocityTemplates(allTemplates);
+          nextTemplates = filterVelocityTemplates(allTemplates, server);
         } else {
           nextErrors.push(templatesData.message || t("velocity.errors.loadTemplates"));
         }
@@ -149,10 +160,22 @@ export const useVelocityBackends = ({ nodeRef, server, t }: UseVelocityBackendsP
   }, [loadVelocityData, server]);
 
   useEffect(() => {
-    setVelocityBackendSoftwareVersion((current) =>
-      resolveFieldValue(current, velocitySoftwareField)
-    );
-  }, [velocitySoftwareField]);
+    setVelocityBackendSoftwareVersion((current) => {
+      const normalizedCurrent = current.trim().toLowerCase();
+      if (normalizedCurrent) {
+        const matchingOption = velocitySoftwareOptions.find(
+          (option) => option.trim().toLowerCase() === normalizedCurrent
+        );
+        if (matchingOption) {
+          return matchingOption;
+        }
+      }
+      if (velocitySoftwareOptions.length > 0) {
+        return velocitySoftwareOptions[0];
+      }
+      return resolveFieldValue(current, velocitySoftwareField);
+    });
+  }, [velocitySoftwareField, velocitySoftwareOptions]);
 
   useEffect(() => {
     setVelocityBackendGameVersion((current) =>
@@ -184,7 +207,8 @@ export const useVelocityBackends = ({ nodeRef, server, t }: UseVelocityBackendsP
         });
 
         if (!res.ok) {
-          setVelocityCreateError(t("velocity.errors.createBackend"));
+          const payload = (await res.json().catch(() => ({}))) as { message?: string };
+          setVelocityCreateError(payload.message || t("velocity.errors.createBackend"));
           return;
         }
 

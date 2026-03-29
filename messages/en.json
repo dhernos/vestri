@@ -1396,7 +1396,8 @@
       "title": "Config Editor",
       "description": "Existing keys are read-only; values are editable.",
       "fields": {
-        "configFile": "Config file"
+        "configFile": "Config file",
+        "composeEnvironment": "Compose environment (.yml)"
       },
       "empty": {
         "noConfiguredFiles": "No configured files"

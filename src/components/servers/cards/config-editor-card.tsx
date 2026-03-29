@@ -91,7 +91,7 @@ export default function ConfigEditorCard({
                   onChange={(event) => onUpdateConfigRow(row.id, { value: event.target.value })}
                   disabled={row.valueLocked}
                 />
-                <Button variant="ghost" onClick={() => onRemoveConfigRow(row.id)} disabled={!row.custom}>
+                <Button variant="ghost" onClick={() => onRemoveConfigRow(row.id)}>
                   {t("configEditor.buttons.remove")}
                 </Button>
               </div>

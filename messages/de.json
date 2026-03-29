@@ -1396,7 +1396,8 @@
       "title": "Config-Editor",
       "description": "Vorhandene Schlüssel sind schreibgeschützt; Werte sind editierbar.",
       "fields": {
-        "configFile": "Config-Datei"
+        "configFile": "Config-Datei",
+        "composeEnvironment": "Compose-Umgebung (.yml)"
       },
       "empty": {
         "noConfiguredFiles": "Keine konfigurierten Dateien"
