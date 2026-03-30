@@ -1,0 +1,203 @@
+.terminalScope {
+  position: relative;
+}
+
+.terminalScope :global(.xterm) {
+  cursor: text;
+  position: relative;
+  user-select: none;
+  -ms-user-select: none;
+  -webkit-user-select: none;
+}
+
+.terminalScope :global(.xterm.focus),
+.terminalScope :global(.xterm:focus) {
+  outline: none;
+}
+
+.terminalScope :global(.xterm .xterm-helpers) {
+  position: absolute;
+  top: 0;
+  z-index: 5;
+}
+
+.terminalScope :global(.xterm .xterm-helper-textarea) {
+  padding: 0;
+  border: 0;
+  margin: 0;
+  position: absolute;
+  opacity: 0;
+  left: -9999em;
+  top: 0;
+  width: 0;
+  height: 0;
+  z-index: -5;
+  white-space: nowrap;
+  overflow: hidden;
+  resize: none;
+}
+
+.terminalScope :global(.xterm .composition-view) {
+  background: var(--terminal-bg);
+  color: var(--terminal-fg);
+  display: none;
+  position: absolute;
+  white-space: nowrap;
+  z-index: 1;
+}
+
+.terminalScope :global(.xterm .composition-view.active) {
+  display: block;
+}
+
+.terminalScope :global(.xterm .xterm-viewport) {
+  background-color: var(--terminal-bg);
+  overflow-y: scroll;
+  cursor: default;
+  position: absolute;
+  right: 0;
+  left: 0;
+  top: 0;
+  bottom: 0;
+}
+
+.terminalScope :global(.xterm .xterm-screen) {
+  position: relative;
+}
+
+.terminalScope :global(.xterm .xterm-screen canvas) {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.terminalScope :global(.xterm .xterm-scroll-area) {
+  visibility: hidden;
+}
+
+.terminalScope :global(.xterm-char-measure-element) {
+  display: inline-block;
+  visibility: hidden;
+  position: absolute;
+  top: 0;
+  left: -9999em;
+  line-height: normal;
+}
+
+.terminalScope :global(.xterm.enable-mouse-events) {
+  cursor: default;
+}
+
+.terminalScope :global(.xterm.xterm-cursor-pointer),
+.terminalScope :global(.xterm .xterm-cursor-pointer) {
+  cursor: pointer;
+}
+
+.terminalScope :global(.xterm.column-select.focus) {
+  cursor: crosshair;
+}
+
+.terminalScope :global(.xterm .xterm-accessibility:not(.debug)),
+.terminalScope :global(.xterm .xterm-message) {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  z-index: 10;
+  color: transparent;
+  pointer-events: none;
+}
+
+.terminalScope :global(.xterm .xterm-accessibility-tree:not(.debug) *::selection) {
+  color: transparent;
+}
+
+.terminalScope :global(.xterm .xterm-accessibility-tree) {
+  user-select: text;
+  white-space: pre;
+}
+
+.terminalScope :global(.xterm .live-region) {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.terminalScope :global(.xterm-dim) {
+  opacity: 1 !important;
+}
+
+.terminalScope :global(.xterm-underline-1) {
+  text-decoration: underline;
+}
+
+.terminalScope :global(.xterm-underline-2) {
+  text-decoration: double underline;
+}
+
+.terminalScope :global(.xterm-underline-3) {
+  text-decoration: wavy underline;
+}
+
+.terminalScope :global(.xterm-underline-4) {
+  text-decoration: dotted underline;
+}
+
+.terminalScope :global(.xterm-underline-5) {
+  text-decoration: dashed underline;
+}
+
+.terminalScope :global(.xterm-overline) {
+  text-decoration: overline;
+}
+
+.terminalScope :global(.xterm-overline.xterm-underline-1) {
+  text-decoration: overline underline;
+}
+
+.terminalScope :global(.xterm-overline.xterm-underline-2) {
+  text-decoration: overline double underline;
+}
+
+.terminalScope :global(.xterm-overline.xterm-underline-3) {
+  text-decoration: overline wavy underline;
+}
+
+.terminalScope :global(.xterm-overline.xterm-underline-4) {
+  text-decoration: overline dotted underline;
+}
+
+.terminalScope :global(.xterm-overline.xterm-underline-5) {
+  text-decoration: overline dashed underline;
+}
+
+.terminalScope :global(.xterm-strikethrough) {
+  text-decoration: line-through;
+}
+
+.terminalScope :global(.xterm-screen .xterm-decoration-container .xterm-decoration) {
+  z-index: 6;
+  position: absolute;
+}
+
+.terminalScope :global(
+  .xterm-screen .xterm-decoration-container .xterm-decoration.xterm-decoration-top-layer
+) {
+  z-index: 7;
+}
+
+.terminalScope :global(.xterm-decoration-overview-ruler) {
+  z-index: 8;
+  position: absolute;
+  top: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+.terminalScope :global(.xterm-decoration-top) {
+  z-index: 2;
+  position: relative;
+}

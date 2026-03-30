@@ -1,0 +1,1471 @@
+{
+  "Common": {
+    "loading": "Lädt...",
+    "seconds": "Sekunden",
+    "time": {
+      "daysUnit": "T",
+      "hoursUnit": "Std",
+      "minutesUnit": "Min",
+      "secondsUnit": "Sek"
+    },
+    "theme": {
+      "lightMode": "Hell",
+      "darkMode": "Dunkel",
+      "toggleAria": "Thema umschalten"
+    },
+    "buttons": {
+      "cancel": "Abbrechen",
+      "loadingButton": "Wird geladen...",
+      "verifyButton": "Prüfen",
+      "deleteAccount": "Konto löschen",
+      "changePassword": "Passwort ändern",
+      "activateButton": "Aktivieren",
+      "disableButton": "Deaktivieren",
+      "enableAppButton": "Aktivieren (App)",
+      "enableEmailButton": "Aktivieren (E-Mail)",
+      "resendButton": "Code erneut senden",
+      "updateEmail": "E-Mail aktualisieren",
+      "updateProfile": "Profil aktualisieren"
+    },
+    "a11y": {
+      "closeDialog": "Schließen",
+      "dismissNotification": "Benachrichtigung schließen"
+    },
+    "accessDenied": "Zugriff verweigert",
+    "errorPrefix": "Fehler"
+  },
+  "Errors": {
+    "UNEXPECTED_ERROR": "Ein unerwarteter Fehler ist aufgetreten.",
+    "INVALID_REQUEST": "Ungültige Anfragedaten.",
+    "INTERNAL_SERVER_ERROR": "Interner Serverfehler.",
+    "USER_NOT_FOUND": "Benutzer nicht gefunden.",
+    "EMAIL_REQUIRED": "E-Mail erforderlich.",
+    "UNAUTHORIZED": "Nicht autorisiert.",
+    "IP_BANNED": "Zu viele fehlgeschlagene Versuche. Versuchen Sie es später.",
+    "SEND_CODE_ERROR": "Code konnte nicht gesendet werden.",
+    "INVALID_CREDENTIALS": "Ungültige Anmeldedaten.",
+    "HTTPS_REQUIRED": "Passwort-Login erfordert HTTPS.",
+    "RESEND_FAILED": "Erneutes Senden fehlgeschlagen.",
+    "RESET_FAILED": "Zurücksetzen fehlgeschlagen.",
+    "ALL_FIELDS_REQUIRED": "Alle Felder sind erforderlich.",
+    "PASSWORD_TOO_WEAK": "Passwort ist zu schwach.",
+    "REGISTRATION_FAILED": "Registrierung fehlgeschlagen.",
+    "FORGOT_PASSWORD_FAILED": "Zurücksetz-E-Mail konnte nicht gesendet werden.",
+    "INVALID_CODE_LENGTH": "Der Verifizierungscode muss 6 Stellen haben.",
+    "VERIFICATION_FAILED": "Verifizierung fehlgeschlagen.",
+    "UNEXPECTED_ERROR_RESEND": "Unerwarteter Fehler beim erneuten Senden des Codes.",
+    "MISSING_TOKEN": "Fehlender oder ungültiger Reset-Token.",
+    "PASSWORDS_DO_NOT_MATCH": "Passwörter stimmen nicht überein."
+  },
+  "Emails": {
+    "verification": {
+      "subject": "E-Mail verifizieren",
+      "welcome": "E-Mail verifizieren",
+      "body1": "Verwenden Sie den untenstehenden Code, um Ihre E-Mail zu verifizieren.",
+      "textPlain": "Ihr Verifizierungscode ist {code}. Er ist {minutes} Minuten gültig.",
+      "html": "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f4f4f5;padding:24px 0;'><tr><td align='center'><table role='presentation' width='560' cellpadding='0' cellspacing='0' style='max-width:560px;width:100%;background:#ffffff;border:1px solid #e4e4e7;border-radius:14px;padding:28px;font-family:Segoe UI,Roboto,Arial,sans-serif;color:#18181b;'><tr><td align='center'><div style='display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:12px;border:1px solid #e4e4e7;background:#ffffff;'><svg width='28' height='28' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 6L11 8L16 16L21 8L29 6L16 28L3 6Z' fill='#111111'/></svg></div><h2 style='margin:16px 0 8px;font-size:22px;line-height:1.2;'>E-Mail verifizieren</h2><p style='margin:0 0 18px;font-size:14px;color:#52525b;'>Verwenden Sie den untenstehenden Code, um Ihre E-Mail zu verifizieren.</p><div style='display:inline-block;padding:12px 18px;border:1px solid #d4d4d8;border-radius:10px;font-size:28px;letter-spacing:6px;font-weight:700;background:#fafafa;'>{code}</div><p style='margin:16px 0 0;font-size:13px;color:#71717a;'>Gültig für {minutes} Minuten.</p></td></tr></table></td></tr></table>",
+      "button": "E-Mail verifizieren",
+      "expiry": "Der Code ist in {minutes} Minuten abgelaufen.",
+      "ignore": "Wenn Sie dies nicht angefordert haben, können Sie diese E-Mail ignorieren."
+    },
+    "passwordReset": {
+      "subject": "Passwort zurücksetzen",
+      "greeting": "Passwort zurücksetzen",
+      "body1": "Klicken Sie auf den Button, um Ihr Passwort zurückzusetzen.",
+      "body2": "Wenn Sie dies nicht angefordert haben, ignorieren Sie diese E-Mail.",
+      "textPlain": "Setzen Sie Ihr Passwort zurück: {link}",
+      "html": "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f4f4f5;padding:24px 0;'><tr><td align='center'><table role='presentation' width='560' cellpadding='0' cellspacing='0' style='max-width:560px;width:100%;background:#ffffff;border:1px solid #e4e4e7;border-radius:14px;padding:28px;font-family:Segoe UI,Roboto,Arial,sans-serif;color:#18181b;'><tr><td align='center'><div style='display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:12px;border:1px solid #e4e4e7;background:#ffffff;'><svg width='28' height='28' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 6L11 8L16 16L21 8L29 6L16 28L3 6Z' fill='#111111'/></svg></div><h2 style='margin:16px 0 8px;font-size:22px;line-height:1.2;'>Passwort zurücksetzen</h2><p style='margin:0 0 18px;font-size:14px;color:#52525b;'>Klicken Sie auf den Button unten, um Ihr Passwort zurückzusetzen.</p><a href='{link}' style='display:inline-block;padding:12px 18px;background:#111111;color:#ffffff;text-decoration:none;border-radius:10px;font-size:14px;font-weight:600;'>Passwort zurücksetzen</a><p style='margin:16px 0 0;font-size:13px;color:#71717a;'>Der Link ist {hours} Stunde(n) gültig.</p></td></tr></table></td></tr></table>",
+      "button": "Passwort zurücksetzen",
+      "expiry": "Der Link ist {hours} Stunde(n) gültig.",
+      "ignore": "Wenn Sie dies nicht angefordert haben, ignorieren Sie diese E-Mail."
+    },
+    "oauthNotice": {
+      "subject": "Konto nutzt externe Anmeldung",
+      "textPlain": "Dieses Konto wurde über eine externe Anmeldung erstellt. Bitte melden Sie sich mit dem Anbieter an, um auf Ihr Konto zuzugreifen.",
+      "html": "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f4f4f5;padding:24px 0;'><tr><td align='center'><table role='presentation' width='560' cellpadding='0' cellspacing='0' style='max-width:560px;width:100%;background:#ffffff;border:1px solid #e4e4e7;border-radius:14px;padding:28px;font-family:Segoe UI,Roboto,Arial,sans-serif;color:#18181b;'><tr><td align='center'><div style='display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:12px;border:1px solid #e4e4e7;background:#ffffff;'><svg width='28' height='28' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 6L11 8L16 16L21 8L29 6L16 28L3 6Z' fill='#111111'/></svg></div><h2 style='margin:16px 0 8px;font-size:22px;line-height:1.2;'>Externe Anmeldung</h2><p style='margin:0;font-size:14px;color:#52525b;'>Dieses Konto wurde über eine externe Anmeldung erstellt. Bitte melden Sie sich mit dem Anbieter an, um auf Ihr Konto zuzugreifen.</p></td></tr></table></td></tr></table>"
+    }
+  },
+  "TwoFactorModal": {
+    "invalidCode": "Ungültiger 2FA-Code.",
+    "codeLengthError": "Der Code muss 6 Ziffern haben.",
+    "codePlaceholder": "000000",
+    "successMessage": "Erfolg.",
+    "header": "Zwei-Faktor-Authentifizierung",
+    "headerFinalize": "2FA Einrichtung abschließen",
+    "description": "Bitte geben Sie den Code ein, um {action}.",
+    "descriptionFinalize": "Geben Sie den Code ein, um die Einrichtung abzuschließen.",
+    "stepUpTitle": "Step-up Verifikation für {purpose}",
+    "api": {
+      "INVALID_2FA_CODE": "Ungültiger 2FA-Code.",
+      "INVALID_OR_EXPIRED_CODE": "Ungültiger oder abgelaufener Code.",
+      "INVALID_OR_EXPIRED_2FA_CODE": "Ungültiger oder abgelaufener 2FA-Code."
+    },
+    "errors": {
+      "missingOAuthData": "Interner Fehler: OAuth-Verifizierungsdaten fehlen.",
+      "missingCredentials": "Interner Fehler: E-Mail oder Passwort fehlt.",
+      "loginFailed": "Anmeldung fehlgeschlagen.",
+      "stepUpPurposeMissing": "Interner Fehler: Step-up-Zweck fehlt.",
+      "setupMethodMissing": "Interner Fehler: 2FA-Einrichtungsmethode fehlt.",
+      "setupVerificationFailed": "Setup-Verifizierung fehlgeschlagen.",
+      "verificationFailed": "Verifizierung fehlgeschlagen.",
+      "unhandledMode": "Unbehandelter Verifizierungsmodus.",
+      "network": "Netzwerkfehler bei der Code-Verifizierung."
+    },
+    "buttons": {
+      "cancel": "Abbrechen",
+      "loadingButton": "Überprüfe...",
+      "verifyButton": "Prüfen"
+    }
+  },
+  "2FA": {
+    "header": "Zwei-Faktor-Authentifizierung",
+    "status": "Status",
+    "enabled": "Aktiviert",
+    "disabled": "Deaktiviert",
+    "methodApp": "Authenticator-App",
+    "methodEmail": "E-Mail-Code",
+    "setupTitle": {
+      "app": "Mit Authenticator-App einrichten",
+      "email": "Mit E-Mail-Code einrichten"
+    },
+    "setupAppDescription": "Scannen Sie den QR-Code mit Ihrer Authenticator-App und verifizieren.",
+    "setupEmailDescription": "Ein Code wird an Ihre E-Mail gesendet.",
+    "scanInstruction": "Scannen Sie den QR-Code mit Ihrer Authenticator-App.",
+    "qrCodeAlt": "2FA QR-Code",
+    "secretLabel": "Geheimnis: {secret}",
+    "codePlaceholder": "000000",
+    "missingCodeOrSecret": "Code oder Secret fehlt.",
+    "missingCode": "Bitte geben Sie den Code ein.",
+    "activationSuccess": "2FA aktiviert.",
+    "activationFailed": "Aktivierung fehlgeschlagen.",
+    "setupError": "Einrichtungsfehler.",
+    "emailCodeSent": "Verifizierungscode an Ihre E-Mail gesendet.",
+    "disableSuccess": "2FA deaktiviert.",
+    "disableFailed": "2FA konnte nicht deaktiviert werden.",
+    "errors": {
+      "notConfigured": "2FA nicht eingerichtet.",
+      "invalidMethod": "Ungültige 2FA-Methode.",
+      "invalidOrExpiredCode": "Ungültiger oder abgelaufener 2FA-Code.",
+      "codeInvalidOrExpired": "Code ungültig oder abgelaufen.",
+      "notEmailMethod": "Dieser Benutzer nutzt keine E-Mail-2FA.",
+      "setupInvalid": "Setup ungültig oder nicht gestartet."
+    },
+    "emails": {
+      "subject": "Ihr 2FA-Code",
+      "textPlain": "Ihr 2FA-Code ist {code} (gültig für {minutes} Minuten).",
+      "html": "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f4f4f5;padding:24px 0;'><tr><td align='center'><table role='presentation' width='560' cellpadding='0' cellspacing='0' style='max-width:560px;width:100%;background:#ffffff;border:1px solid #e4e4e7;border-radius:14px;padding:28px;font-family:Segoe UI,Roboto,Arial,sans-serif;color:#18181b;'><tr><td align='center'><div style='display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:12px;border:1px solid #e4e4e7;background:#ffffff;'><svg width='28' height='28' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 6L11 8L16 16L21 8L29 6L16 28L3 6Z' fill='#111111'/></svg></div><h2 style='margin:16px 0 8px;font-size:22px;line-height:1.2;'>Zwei-Faktor-Verifizierung</h2><p style='margin:0 0 18px;font-size:14px;color:#52525b;'>Verwenden Sie den folgenden Code, um fortzufahren.</p><div style='display:inline-block;padding:12px 18px;border:1px solid #d4d4d8;border-radius:10px;font-size:28px;letter-spacing:6px;font-weight:700;background:#fafafa;'>{code}</div><p style='margin:16px 0 0;font-size:13px;color:#71717a;'>Gültig für {minutes} Minuten.</p></td></tr></table></td></tr></table>"
+    },
+    "messages": {
+      "qrGenerated": "QR-Code erstellt. Bitte scannen.",
+      "emailCodeSent": "Ein Code wurde an {email} gesendet."
+    },
+    "notEnabledError": "Zwei-Faktor-Authentifizierung ist nicht aktiviert.",
+    "buttons": {
+      "disableButton": "2FA deaktivieren"
+    }
+  },
+  "ForgotPassword": {
+    "title": "Passwort zurücksetzen",
+    "description": "Geben Sie Ihre E-Mail ein, um Anweisungen zum Zurücksetzen zu erhalten.",
+    "form": {
+      "emailLabel": "E-Mail",
+      "loadingButton": "Sende...",
+      "cooldownButton": "Erneut versuchen in {cooldown} {seconds}",
+      "sendButton": "Reset-E-Mail senden"
+    },
+    "messages": {
+      "success": "Falls die E-Mail existiert, wurde eine Reset-E-Mail gesendet.",
+      "cooldown": "Bitte warten Sie {cooldown} {seconds}."
+    }
+  },
+  "VerifyEmail": {
+    "title": "E-Mail verifizieren",
+    "description": "Wir haben einen Code an {email} gesendet. Geben Sie ihn ein, um zu verifizieren.",
+    "form": {
+      "codeInputLabel": "Verifizierungscode",
+      "loadingButton": "Überprüfe...",
+      "verifyButton": "Verifizieren"
+    },
+    "messages": {
+      "resendSuccess": "Verifizierungscode gesendet.",
+      "cooldownError": "Bitte warten Sie {cooldown} {seconds} bevor Sie erneut senden.",
+      "success": "E-Mail verifiziert."
+    },
+    "resend": {
+      "noCodeReceived": "Keinen Code erhalten?",
+      "resendButton": "Code erneut senden",
+      "resendingButton": "Sende...",
+      "cooldownButton": "Warten {cooldown} {seconds}"
+    },
+    "backToRegister": "Zurück zur Registrierung"
+  },
+  "Register": {
+    "title": "Konto erstellen",
+    "description": "Geben Sie Ihre Daten ein, um ein Konto zu erstellen.",
+    "marketing": {
+      "kicker": "VESTRI",
+      "subtitle": "Startpunkt für Provisioning",
+      "headline": "Erstellen Sie Ihren Workspace und verbinden Sie die erste Node.",
+      "body": "Richten Sie Teamzugriffe ein und rollen Sie konsistente Server-Deployments über Ihre Infrastruktur aus."
+    },
+    "form": {
+      "nameLabel": "Name",
+      "emailLabel": "E-Mail",
+      "passwordLabel": "Passwort",
+      "togglePassword": "Passwort anzeigen/ausblenden",
+      "passwordStrength": "Passwortstärke",
+      "strengthStrong": "Stark",
+      "strengthModerate": "Mittel",
+      "strengthWeak": "Schwach",
+      "loadingButton": "Registrieren...",
+      "registerButton": "Registrieren"
+    },
+    "errors": {
+      "userExists": "Ein Benutzer mit dieser E-Mail existiert bereits.",
+      "userExistsUnverified": "Benutzer existiert, aber E-Mail nicht verifiziert. Bitte E-Mails prüfen."
+    },
+    "messages": {
+      "success": "Konto erstellt. Bitte verifizieren Sie Ihre E-Mail.",
+      "successNoVerify": "Konto erstellt. Weiterleitung zur Anmeldung..."
+    },
+    "footer": {
+      "haveAccount": "Bereits ein Konto? <loginLink>Jetzt anmelden</loginLink>"
+    }
+  },
+  "Login": {
+    "title": "Anmelden",
+    "description": "Melden Sie sich an.",
+    "marketing": {
+      "kicker": "VESTRI",
+      "subtitle": "Server-Management-Plattform",
+      "headline": "Steuern Sie Ihre Game-Server-Infrastruktur in einem sicheren Workspace.",
+      "body": "Überwachen Sie Nodes, öffnen Sie Server-Konsolen, bearbeiten Sie Konfigurationen und verwalten Sie Teamzugriffe mit klaren Berechtigungen."
+    },
+    "form": {
+      "emailLabel": "E-Mail",
+      "passwordLabel": "Passwort",
+      "togglePassword": "Passwortsichtbarkeit umschalten",
+      "rememberMe": "Angemeldet bleiben",
+      "forgotPassword": "Passwort vergessen?",
+      "loadingButton": "Anmeldung...",
+      "loginButton": "Anmelden",
+      "orContinueWith": "oder fortfahren mit",
+      "githubButton": "Mit GitHub anmelden",
+      "githubIconAlt": "GitHub-Logo"
+    },
+    "passkeys": {
+      "button": "Mit Passkey anmelden",
+      "loading": "Passkey wird verwendet..."
+    },
+    "messages": {
+      "signupSuccess": "Konto erstellt — bitte E-Mail verifizieren.",
+      "verificationSuccess": "E-Mail verifiziert — Sie können sich jetzt anmelden.",
+      "versionOutdated": "Ihre Anwendung ist veraltet! Bitte aktualisieren (<link>GitHub</link>)."
+    },
+    "footer": {
+      "noAccount": "Noch kein Konto? <registerLink>Jetzt registrieren</registerLink>"
+    }
+  },
+  "ProfilePage": {
+    "profilePageHeader": "Profil",
+    "updateProfileSettingsHeader": "Profileinstellungen",
+    "userName": "Name",
+    "theme": "Theme",
+    "themes": {
+      "system": "System",
+      "light": "Hell",
+      "dark": "Dunkel"
+    },
+    "profileUpdateError": "Profil konnte nicht aktualisiert werden.",
+    "buttons": {
+      "updateProfile": "Profil aktualisieren"
+    },
+    "emailChangeHeader": "E-Mail ändern",
+    "emailChangeWarning": "Beim Ändern der E-Mail ist ggf. eine erneute Verifizierung erforderlich.",
+    "emailAddress": "E-Mail-Adresse",
+    "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+    "sameEmailError": "Die neue E-Mail muss sich unterscheiden.",
+    "emailUpdateFailed": "E-Mail konnte nicht aktualisiert werden.",
+    "messageWillLogout": " Sie werden in Kürze ausgeloggt.",
+    "oauthAccount": {
+      "cannotChangeEmail": "E-Mail-Änderungen sind für OAuth-Konten deaktiviert.",
+      "emailReadOnly": "E-Mail ist für OAuth-Konten schreibgeschützt."
+    },
+    "upload": {
+      "title": "Profilbild aktualisieren",
+      "onlyTypes": "Nur PNG, JPG, JPEG und WEBP erlaubt.",
+      "maxSize": "Maximale Dateigröße: {max}MB.",
+      "dragActive": "Bild hier ablegen...",
+      "dragIdle": "Bild ziehen & ablegen oder klicken zum Hochladen.",
+      "hint": "Unterstützt: {types} (max {max}MB)",
+      "uploading": "Lade hoch...",
+      "saveButton": "Speichern",
+      "zoom": "Zoom",
+      "avatarAlt": "Profilbild",
+      "fallbackInitials": "CN",
+      "success": "Profilbild gespeichert.",
+      "error": "Profilbild konnte nicht gespeichert werden."
+    },
+    "messages": {
+      "emailUpdated": "E-Mail erfolgreich aktualisiert.",
+      "profileUpdated": "Profil aktualisiert."
+    }
+  },
+  "ChangePassword": {
+    "changePassword": "Passwort ändern",
+    "changePasswordDescription": "Aktualisieren Sie Ihr Passwort für mehr Sicherheit.",
+    "currentPassword": "Aktuelles Passwort",
+    "newPassword": "Neues Passwort",
+    "form": {
+      "passwordStrength": "Passwortstärke",
+      "strengthStrong": "Stark",
+      "strengthModerate": "Mittel",
+      "strengthWeak": "Schwach",
+      "togglePassword": "Passwort anzeigen/ausblenden"
+    },
+    "oauthAccount": {
+      "cannotChangePassword": "Dieses Konto verwendet externe Anmeldung. Passwort kann hier nicht geändert werden.",
+      "cannotChangeEmail": "E-Mail-Änderungen sind für OAuth-Konten deaktiviert.",
+      "emailReadOnly": "E-Mail ist für OAuth-Konten schreibgeschützt."
+    },
+    "errors": {
+      "passwordNotSet": "Für dieses Konto ist kein Passwort gesetzt.",
+      "incorrectPassword": "Aktuelles Passwort ist falsch."
+    },
+    "messages": {
+      "passwordChangeError": "Passwort konnte nicht geändert werden."
+    },
+    "buttons": {
+      "changePassword": "Passwort ändern"
+    }
+  },
+  "DeleteProfile": {
+    "confirmDeleteAccount": "Sind Sie sicher, dass Sie Ihr Konto löschen möchten? Diese Aktion ist unwiderruflich.",
+    "dangerZone": "Gefahrenzone",
+    "dangerZoneDescription": "Das Löschen Ihres Kontos entfernt alle Ihre Daten.",
+    "messages": {
+      "accountDeleted": "Konto gelöscht."
+    },
+    "errors": {
+      "accountDeleteError": "Konto konnte nicht gelöscht werden.",
+      "accountDeleteStepUpRequired": "Zusätzliche Verifizierung zum Löschen des Kontos erforderlich."
+    }
+  },
+  "ResetPassword": {
+    "title": "Passwort zurücksetzen",
+    "description": "Wählen Sie ein neues Passwort.",
+    "form": {
+      "newPasswordLabel": "Neues Passwort",
+      "confirmPasswordLabel": "Passwort bestätigen",
+      "togglePassword": "Passwort anzeigen/ausblenden",
+      "passwordStrength": "Passwortstärke",
+      "strengthStrong": "Stark",
+      "strengthModerate": "Mittel",
+      "strengthWeak": "Schwach",
+      "loadingButton": "Setze zurück...",
+      "resetButton": "Passwort zurücksetzen"
+    },
+    "messages": {
+      "success": "Passwort erfolgreich zurückgesetzt. Sie können sich jetzt anmelden."
+    }
+  },
+  "Messages": {
+    "PASSWORD_RESET_SUCCESS": "Passwort erfolgreich zurückgesetzt.",
+    "PASSWORD_CHANGED": "Passwort erfolgreich geändert.",
+    "EMAIL_VERIFIED": "E-Mail erfolgreich verifiziert.",
+    "VERIFICATION_SENT": "Verifizierungs-E-Mail gesendet."
+  },
+  "Api": {
+    "INVALID_OR_EXPIRED_TOKEN": "Ungültiges oder abgelaufenes Token.",
+    "INVALID_OR_EXPIRED_CODE": "Ungültiger oder abgelaufener Code."
+  },
+  "ActiveSessions": {
+    "activeSessions": "Ihre aktiven Sitzungen",
+    "activeSessionsDescription": "Verwalten Sie Geräte und aktuell angemeldete Sitzungen.",
+    "unknownLocation": "Unbekannt",
+    "buttons": {
+      "logoutThisDevice": "Dieses Gerät abmelden"
+    },
+    "errors": {
+      "fetchError": "Sitzungen konnten nicht geladen werden.",
+      "deleteError": "Sitzung konnte nicht gelöscht werden."
+    },
+    "table": {
+      "currentSession": "Aktuell",
+      "role": "Rolle",
+      "loginTime": "Login-Zeit",
+      "expiresAt": "Läuft ab",
+      "timeLeft": "Verbleibende Zeit",
+      "ipAddress": "IP-Adresse",
+      "location": "Standort",
+      "userAgent": "User Agent",
+      "actions": "Aktionen",
+      "logoutButton": "Abmelden"
+    }
+  },
+  "Passkeys": {
+    "title": "Passkeys",
+    "buttons": {
+      "add": "Passkey hinzufügen",
+      "loading": "Wird ausgeführt...",
+      "remove": "Entfernen"
+    },
+    "prompts": {
+      "nameOptional": "Passkey benennen (optional):"
+    },
+    "emptyState": "Noch keine Passkeys registriert.",
+    "itemLabelFallback": "Passkey",
+    "createdAt": "Erstellt am {date}",
+    "errors": {
+      "generic": "Anfrage konnte nicht ausgeführt werden.",
+      "stepUpRequired": "Zusätzliche Verifizierung erforderlich.",
+      "unsupported": "Passkeys werden in diesem Browser nicht unterstützt.",
+      "startFailed": "Passkey-Vorgang konnte nicht gestartet werden.",
+      "finishFailed": "Passkey-Vorgang konnte nicht abgeschlossen werden.",
+      "cancelled": "Passkey-Vorgang wurde abgebrochen.",
+      "secureContextRequired": "Passkeys benötigen einen sicheren Kontext (HTTPS oder localhost).",
+      "creationRpIdMismatch": "Passkeys müssen auf {rpId} oder dessen Subdomains erstellt werden.",
+      "creationBlocked": "Passkey-Erstellung ist blockiert. Verwenden Sie HTTPS oder localhost.",
+      "loginSecureContextRequired": "Passkey-Login benötigt einen sicheren Kontext (HTTPS oder localhost).",
+      "loginRpIdMismatch": "Passkey-Login benötigt {rpId} oder dessen Subdomains.",
+      "loginBlocked": "Passkey-Login ist blockiert. Verwenden Sie HTTPS oder localhost."
+    },
+    "stepUpActionLabel": "Passkey-Verwaltung",
+    "oauthAccount": {
+      "disabled": "Passkeys sind für OAuth-Konten deaktiviert."
+    }
+  },
+  "QueryToasts": {
+    "oauth": {
+      "title": "Anmeldefehler",
+      "defaultDescription": "OAuth-Anmeldung fehlgeschlagen. Bitte erneut versuchen."
+    },
+    "oauthReasons": {
+      "provider_unavailable": "Dieser Anmeldeanbieter ist nicht konfiguriert.",
+      "state_persist_failed": "Anmeldung konnte nicht gestartet werden. Bitte gleich erneut versuchen.",
+      "unsupported_provider": "Der angeforderte Anmeldeanbieter ist nicht verfügbar.",
+      "missing_state": "Die Anmeldesitzung fehlt oder ist abgelaufen. Bitte erneut versuchen.",
+      "state_invalid": "Ihre Anmeldesitzung ist abgelaufen. Starten Sie den OAuth-Flow erneut.",
+      "state_mismatch": "Der Anmeldestatus konnte nicht verifiziert werden. Bitte erneut versuchen.",
+      "token_exchange_failed": "Ihr Konto konnte beim Anbieter nicht bestätigt werden.",
+      "profile_fetch_failed": "Ihr Profil konnte vom Anbieter nicht geladen werden.",
+      "email_required": "Vom Anbieter konnte keine E-Mail-Adresse gelesen werden.",
+      "lookup_failed": "Ihr Konto für diesen Anbieter konnte nicht gefunden oder erstellt werden.",
+      "create_failed": "Ihr Konto konnte aus den Anbieter-Daten nicht erstellt werden.",
+      "link_failed": "Dieser Anbieter konnte nicht mit Ihrem Konto verknüpft werden.",
+      "two_factor_required": "Für dieses Konto ist Zwei-Faktor-Authentifizierung erforderlich.",
+      "two_factor_failed": "Die Zwei-Faktor-Verifizierung konnte nicht gestartet werden. Bitte erneut versuchen.",
+      "session_failed": "Nach der Anmeldung konnte keine Sitzung gestartet werden."
+    },
+    "notice": {
+      "title": "Hinweis",
+      "defaultDescription": "Ein Fehler ist aufgetreten."
+    },
+    "noticeReasons": {
+      "UNAUTHORIZED": "Nicht autorisiert.",
+      "ACCESS_DENIED": "Zugriff verweigert."
+    }
+  },
+  "LanguageToggle": {
+    "flagAlt": {
+      "en": "Englisch",
+      "de": "Deutsch"
+    },
+    "localeName": {
+      "en": "Englisch",
+      "de": "Deutsch"
+    },
+    "switchTo": "Sprache auf {locale} wechseln"
+  },
+  "AppMetadata": {
+    "title": "Vestri",
+    "description": "Plattform zur Verwaltung von Gameservern"
+  },
+  "AccessDenied": {
+    "title": "Zugriff verweigert",
+    "description": "Sie haben keine Berechtigung, diese Seite zu sehen.",
+    "home": "Zur Startseite",
+    "login": "Anmelden"
+  },
+  "LogoutPage": {
+    "loggingOutMessage": "Sie werden abgemeldet...",
+    "deleteError": "Sitzung konnte nicht beendet werden."
+  },
+  "Home": {
+    "kicker": "VESTRI PLATTFORM",
+    "tagline": "Infrastructure Control für Game-Server",
+    "title": "Verwalte Nodes, Server und Zugriffe in einer Oberfläche.",
+    "subtitle": "Vestri hält deine Infrastruktur übersichtlich mit klaren Berechtigungen, sichtbaren Deployments und sicheren Nutzer-Flows.",
+    "highlights": {
+      "nodeOps": "Node-Orchestrierung",
+      "deployments": "Server-Deployments",
+      "access": "Team-Zugriffssteuerung"
+    },
+    "session": {
+      "loggedInAs": "Angemeldet als",
+      "roleLabel": "Rolle: {role}",
+      "detailsTitle": "Sitzungsdetails",
+      "detailsCta": "Sitzungsdetails anzeigen",
+      "detailsLoading": "Lädt...",
+      "loginTime": "Login-Zeit:",
+      "expiresAt": "Läuft ab:",
+      "signOut": "Abmelden"
+    },
+    "cta": {
+      "notLoggedIn": "Sie sind nicht angemeldet.",
+      "preview": "Melde dich an, um dein Dashboard zu öffnen und Nodes, Templates sowie laufende Game-Server zu verwalten.",
+      "dashboard": "Dashboard",
+      "login": "Anmelden",
+      "register": "Registrieren",
+      "howTo": "How-to"
+    },
+    "errors": {
+      "invalidSession": "Ihre Sitzung ist abgelaufen oder ungültig. Bitte erneut anmelden.",
+      "sessionDetails": "Sitzungsdetails konnten nicht geladen werden."
+    }
+  },
+  "HowToPage": {
+    "hero": {
+      "kicker": "HOW-TO",
+      "tagline": "Vestri Leitfaden für Server-Betrieb",
+      "title": "Richte deine Game-Server-Plattform strukturiert und sicher ein.",
+      "subtitle": "Dieser Leitfaden ist bewusst anfängerfreundlich aufgebaut und führt dich mit konkreten Copy-Paste-Befehlen durch Setup, Betrieb und Sicherheit.",
+      "actions": {
+        "register": "Konto erstellen",
+        "login": "Anmelden",
+        "home": "Zur Startseite"
+      }
+    },
+    "chapters": {
+      "title": "Kapitel",
+      "nodeOnboarding": "Node onboarding",
+      "nodeOnboardingDescription": "Lege zuerst Worker, TLS-Trust und Node-Zugangsdaten sauber an.",
+      "serverLifecycle": "Server lifecycle",
+      "serverLifecycleDescription": "Erstelle, betreibe und aktualisiere Server Schritt für Schritt im gleichen Ablauf.",
+      "accessSecurity": "Access and security",
+      "accessSecurityDescription": "Vergib klare Rechte und sichere kritische Aktionen mit Step-up-Verifikation ab.",
+      "configReference": "Konfigurations-Referenz",
+      "configReferenceDescription": "Verstehe alle Environment-Variablen und Einstellungen für den Worker und den Stack."
+    },
+    "sslCaTrust": {
+      "title": "SSL/TLS CA-Trust (Worker -> Backend)",
+      "description": "Wenn TLS auf dem Worker aktiv ist, lege jedes Worker-CA-Zertifikat vor dem Anlegen der Node in Vestri im Backend-Trust-Volume ab.",
+      "items": {
+        "volumeName": "Compose-Named-Volume: `vestri-backend-worker-cas`",
+        "backendDir": "Backend-Trust-Verzeichnis im Container: `./certs/worker-cas` (`WORKER_TLS_CA_CERT_DIR`)",
+        "hostPath": "Typischer Docker-Host-Pfad (rootful Linux): `/var/lib/docker/volumes/vestri-backend-worker-cas/_data`"
+      }
+    },
+    "prerequisites": {
+      "title": "Vorbereitung",
+      "description": "Wenn diese Basis einmal steht, läuft der Rest deutlich ruhiger. Führe die Checks am besten exakt in dieser Reihenfolge aus.",
+      "items": {
+        "1": "Ein Vestri-Konto mit Zugriff auf deinen Workspace",
+        "2": "Ein laufender Worker-Endpunkt (Host/Port erreichbar) inkl. API-Key",
+        "3": "Mindestens ein Server-Template mit klaren Versions-Defaults"
+      },
+      "quickChecksTitle": "Schnelle Basis-Checks (Copy-Paste)",
+      "quickChecksDescription": "Wenn einer dieser Befehle fehlschlägt, zuerst dieses Problem beheben und dann mit der Anleitung weitermachen."
+    },
+    "configReference": {
+      "title": "Konfigurations-Referenz",
+      "description": "Vollständige Übersicht aller aktuell genutzten Environment-Variablen und Worker-Settings.",
+      "environment": {
+        "title": "Environment-Variablen",
+        "entries": {
+          "GO_API_URL": {
+            "description": "Backend-Basis-URL, genutzt von Rewrites, Proxy-Middleware und API-Proxy-Routen."
+          },
+          "NODE_ENV": {
+            "description": "Laufzeitmodus (`production` in Container-Images)."
+          },
+          "NEXT_TELEMETRY_DISABLED": {
+            "description": "Setze `1`, um Next.js-Telemetrie zu deaktivieren."
+          },
+          "PORT": {
+            "description": "Backend-Listen-Port."
+          },
+          "APP_BASE_URL": {
+            "description": "Basis-URL für Callbacks und generierte Links."
+          },
+          "NEXTAUTH_URL": {
+            "description": "Fallback-Quelle für APP_BASE_URL."
+          },
+          "DATABASE_URL": {
+            "description": "PostgreSQL-Verbindungsstring."
+          },
+          "REDIS_URL": {
+            "description": "Redis-Verbindung für Sessions und Rate-Limits."
+          },
+          "UPLOAD_DIR": {
+            "description": "Upload-Verzeichnis für Profilbilder."
+          },
+          "LOG_FILE": {
+            "description": "Backend-Logdatei."
+          },
+          "LOG_MAX_SIZE_MB": {
+            "description": "Maximale Logdateigröße vor Rotation."
+          },
+          "LOG_MAX_BACKUPS": {
+            "description": "Anzahl rotierter Log-Backups."
+          },
+          "NO_EMAIL_VERIFY": {
+            "description": "E-Mail-Verifikationsprüfung deaktivieren."
+          },
+          "TOTP_ISSUER": {
+            "description": "Issuer-Name für Authenticator-Apps."
+          },
+          "WORKER_TLS_CA_CERT_FILE": {
+            "description": "Zusätzliche vertraute Worker-CA-Zertifikatsdatei."
+          },
+          "WORKER_TLS_CA_CERT_DIR": {
+            "description": "Verzeichnis mit vertrauten Worker-CA-Zertifikaten."
+          },
+          "NODE_API_KEY_ENCRYPTION_KEY": {
+            "description": "Schlüssel zur Verschlüsselung gespeicherter Worker-Node-API-Keys."
+          },
+          "TRUSTED_PROXIES": {
+            "description": "Komma-separierte Liste vertrauenswürdiger Proxy-IPs/CIDRs."
+          },
+          "EMAIL_SERVER_HOST": {
+            "description": "SMTP-Host."
+          },
+          "EMAIL_SERVER_PORT": {
+            "description": "SMTP-Port."
+          },
+          "EMAIL_SERVER_USER": {
+            "description": "SMTP-Benutzername."
+          },
+          "EMAIL_SERVER_PASSWORD": {
+            "description": "SMTP-Passwort."
+          },
+          "EMAIL_FROM": {
+            "description": "SMTP-Absenderadresse."
+          },
+          "EMAIL_SERVER_SECURE": {
+            "description": "Sicheren SMTP-Modus aktivieren."
+          },
+          "WEB_AUTHN_ORIGIN": {
+            "description": "Primäre WebAuthn-Origin."
+          },
+          "WEB_AUTHN_RP_ID": {
+            "description": "WebAuthn Relying-Party-ID."
+          },
+          "WEB_AUTHN_RP_NAME": {
+            "description": "WebAuthn Relying-Party-Anzeigename."
+          },
+          "WEB_AUTHN_ORIGINS": {
+            "description": "Komma-separierte erlaubte WebAuthn-Origins."
+          },
+          "GITHUB_CLIENT_ID": {
+            "description": "GitHub OAuth Client-ID."
+          },
+          "GITHUB_CLIENT_SECRET": {
+            "description": "GitHub OAuth Client-Secret."
+          },
+          "GITHUB_REDIRECT_URL": {
+            "description": "GitHub OAuth Callback-URL."
+          },
+          "AUTO_MIGRATE": {
+            "description": "SQL-Migrationen beim Backend-Start automatisch anwenden."
+          },
+          "MIGRATIONS_DIR": {
+            "description": "Verzeichnis mit `*.up.sql`-Migrationsdateien."
+          },
+          "POSTGRES_USER": {
+            "description": "PostgreSQL-Benutzer für den mitgelieferten Stack."
+          },
+          "POSTGRES_PASSWORD": {
+            "description": "PostgreSQL-Passwort für den mitgelieferten Stack."
+          },
+          "POSTGRES_DB": {
+            "description": "PostgreSQL-Datenbankname für den mitgelieferten Stack."
+          }
+        },
+        "description": "Variablen für Frontend, Backend, Migration und die mitgelieferte Compose-Infrastruktur."
+      },
+      "workerSettings": {
+        "title": "Worker settings.json Optionen",
+        "entries": {
+          "useTLS": {
+            "description": "HTTPS/TLS-Listener aktivieren."
+          },
+          "TLSCert": {
+            "description": "Pfad zum Worker-TLS-Zertifikat."
+          },
+          "TLSKey": {
+            "description": "Pfad zum privaten Worker-TLS-Schlüssel."
+          },
+          "tls_ca_cert": {
+            "description": "Pfad zum Worker-CA-Zertifikat."
+          },
+          "tls_ca_key": {
+            "description": "Pfad zum privaten Worker-CA-Schlüssel."
+          },
+          "tls_auto_generate": {
+            "description": "Fehlende TLS-CA/Server-Zertifikatsdateien automatisch erzeugen."
+          },
+          "tls_sans": {
+            "description": "Zusätzliche SAN-Einträge für generiertes Server-Zertifikat."
+          },
+          "http_port": {
+            "description": "Worker-Listen-Adresse/-Port."
+          },
+          "worker_name": {
+            "description": "Optionaler Worker-Name für SAN-Generierung im Zertifikat."
+          },
+          "fs_base_path": {
+            "description": "Sicherer Basis-Pfad für alle Worker-Dateisystemoperationen."
+          },
+          "replay_window_seconds": {
+            "description": "Erlaubte Zeitabweichung für signierte API-Requests."
+          },
+          "rate_limit_rps": {
+            "description": "Token-Refill-Rate des Rate-Limiters."
+          },
+          "rate_limit_burst": {
+            "description": "Burst-Bucket-Größe des Rate-Limiters."
+          },
+          "max_archive_request_bytes": {
+            "description": "Maximale Request-Body-Größe für Archive-Endpunkte."
+          },
+          "max_inline_write_bytes": {
+            "description": "Maximale Request-Body-Größe für Inline-Dateischreibvorgänge."
+          },
+          "max_upload_bytes": {
+            "description": "Maximale Upload-Größe (`/fs/upload`)."
+          },
+          "max_unzip_bytes": {
+            "description": "Maximale entpackte Größe für Unzip-Operationen."
+          },
+          "max_zip_entries": {
+            "description": "Maximale Anzahl an ZIP-Einträgen."
+          },
+          "require_tls": {
+            "description": "Nicht-TLS-Requests ablehnen, außer vertrauenswürdige Proxy-Header zeigen HTTPS an."
+          },
+          "trust_proxy_headers": {
+            "description": "Weitergeleiteten Proxy-Headern für TLS/IP-Behandlung vertrauen."
+          },
+          "health_requires_auth": {
+            "description": "Auth für den `/health`-Endpoint erzwingen."
+          }
+        },
+        "description": "Alle verfügbaren Keys aus /etc/vestri/settings.json mit aktuellen Defaults und Laufzeitverhalten."
+      },
+      "columns": {
+        "variable": "Variable",
+        "required": "Pflicht",
+        "default": "Default",
+        "scope": "Bereich",
+        "description": "Beschreibung",
+        "key": "Key"
+      },
+      "required": {
+        "required": "Pflicht",
+        "recommended": "Empfohlen",
+        "optional": "Optional"
+      },
+      "parsingHint": "Backend-Bool-Parsing akzeptiert: 1, true, yes. Listenwerte sind komma-separiert."
+    },
+    "bootstrap": {
+      "title": "Config- und Trust-Bootstrap",
+      "description": "Bevor du die erste Node in der UI anlegst, bereite Worker-Dateien und Trust-Chain mit diesen klaren Schritten vor.",
+      "steps": {
+        "1": "Starte den Worker einmal, damit `settings.json`, Zertifikate und API-Key erzeugt werden.",
+        "2": "Prüfe, dass `/etc/vestri/settings.json` und `/etc/vestri/api.key` vorhanden sind.",
+        "3": "Wenn TLS aktiv ist, kopiere `/etc/vestri/certs/ca.crt` in das Backend-Trust-Verzeichnis.",
+        "4": "Merke dir für die Node in der UI: Host/Base-URL und den API-Key aus `/etc/vestri/api.key`."
+      },
+      "pathsTitle": "Standard-Dateipfade",
+      "paths": {
+        "settings": "Worker-Settings-Datei: /etc/vestri/settings.json",
+        "apiKey": "Worker-API-Key-Datei: /etc/vestri/api.key",
+        "workerCA": "Worker-CA-Zertifikat (Default): /etc/vestri/certs/ca.crt",
+        "backendCADir": "Backend-CA-Trust-Verzeichnis (Default): ./certs/worker-cas"
+      },
+      "rulesTitle": "Einfache Regeln (mit Defaults)",
+      "rules": {
+        "1": "Wenn TLS auf dem Worker aktiv ist, kopiere das CA-Zertifikat vom Worker ins Backend-Trust (Default: /etc/vestri/certs/ca.crt -> ./certs/worker-cas/node-name.crt).",
+        "2": "Wenn TLS aktiv ist, verwende https in der Node Host/Base-URL (Default-URL-Stil des Workers: https://worker-host:8031).",
+        "3": "Verwende http:// nur, wenn TLS auf dem Worker bewusst deaktiviert wurde.",
+        "4": "Beim Node-Anlegen in der UI den API-Key aus der Worker-Key-Datei verwenden (Default: /etc/vestri/api.key)."
+      },
+      "commandsTitle": "Befehle für diesen Schritt",
+      "commandsHint": "Passe nur den Backend-Zielpfad an, falls dein Compose/Portainer-Setup an einem anderen Ort liegt.",
+      "screenshotLabel": "Settings, API-Key und CA-Trust-Ablage"
+    },
+    "systemd": {
+      "title": "Services mit systemd starten",
+      "description": "Für Einsteiger ist dieser Ablauf robust: Compose/Portainer für Frontend/Backend/DB, Worker separat als eigener systemd-Service.",
+      "steps": {
+        "1": "Deploye Frontend/Backend/Postgres/Redis per Docker Compose oder Portainer.",
+        "2": "Lege einen dedizierten Linux-User `vestri` für den Worker-Prozess an.",
+        "3": "Erstelle `/etc/systemd/system/vestri-worker.service` mit dem Beispiel unten.",
+        "4": "Lade systemd neu, aktiviere den Service und prüfe den Status."
+      },
+      "composeTitle": "Compose-Deployment (Beispielbefehle)",
+      "composeHint": "Passe nur den Projektpfad (`/opt/vestri`) an, wenn dein Compose-Projekt woanders liegt.",
+      "userSetupTitle": "System-User für den Worker anlegen",
+      "userSetupHint": "Diese Befehle kannst du unverändert ausführen. Falls der User schon existiert, wird er nicht erneut angelegt.",
+      "workerServiceTitle": "Beispiel: vestri-worker.service",
+      "enableHint": "Service aktivieren und direkt prüfen:",
+      "screenshotLabel": "systemd-Service-Statusübersicht"
+    },
+    "stepPrefix": "Schritt",
+    "sections": {
+      "connectNode": {
+        "title": "Erste Node verbinden",
+        "description": "Nodes sind die Ausführungsebene. Ohne mindestens eine erfolgreiche Worker-Node kannst du keine Server erstellen.",
+        "steps": {
+          "1": "Öffne in Vestri: `Nodes` -> `Node erstellen`.",
+          "2": "Trage Host/Base-URL (z. B. `https://worker-host:8031`) und den API-Key aus `/etc/vestri/api.key` ein.",
+          "3": "Klicke auf `Speichern` und starte direkt danach den Health-Check.",
+          "4": "Wenn der Status nicht healthy ist: Host, Port, TLS-Schema (`http/https`) und API-Key prüfen."
+        },
+        "screenshotLabel": "Node-Registrierung und Health-Check"
+      },
+      "createServer": {
+        "title": "Server erstellen und provisionieren",
+        "description": "Erstelle Server immer über Templates, damit Versionen, Pfade und Startparameter reproduzierbar bleiben.",
+        "steps": {
+          "1": "Öffne `Dashboard` und wähle oben die Ziel-Node aus.",
+          "2": "Klicke `Server erstellen`, wähle ein Template und fülle Identifier + Versionsfelder aus.",
+          "3": "Bestätige erforderliche Agreements und starte die Erstellung.",
+          "4": "Öffne den neuen Server-Workspace und prüfe Status, Start und erste Logs."
+        },
+        "screenshotLabel": "Server-Erstellung aus Template"
+      },
+      "operateServer": {
+        "title": "Server im Betrieb steuern",
+        "description": "Nutze den Server-Workspace als zentrale Stelle für Start/Stop, Logs, Konsole und Konfigurationsänderungen.",
+        "steps": {
+          "1": "Steuere den Server zuerst nur mit `Start`, `Stop` und `Status aktualisieren`.",
+          "2": "Öffne danach die Logs und prüfe, ob der Start ohne Fehler durchläuft.",
+          "3": "Ändere Konfigurationsdateien im File-Browser/Editor schrittweise, nicht alles auf einmal.",
+          "4": "Nach jeder Änderung Neustart ausführen und Logs + Konsole erneut prüfen."
+        },
+        "screenshotLabel": "Runtime-Steuerung und Konsole"
+      },
+      "teamAndAccess": {
+        "title": "Team-Zugriff sicher verwalten",
+        "description": "Vergib Rollen bewusst nach Minimalprinzip und schütze sensible Aktionen per Step-up.",
+        "steps": {
+          "1": "Vergib pro Server nur die nötige Rolle (`viewer`, `operator`, `admin`).",
+          "2": "Einladungen nur zweckgebunden vergeben und abgelaufene/alte Zugriffe regelmäßig entfernen.",
+          "3": "Step-up für kritische Aktionen aktiv nutzen (z. B. Löschen, Access-Änderungen, Passkeys).",
+          "4": "Aktive Sessions regelmäßig prüfen und Zugangsdaten bei Verdacht sofort rotieren."
+        },
+        "screenshotLabel": "Rollenmodell und Schutz kritischer Aktionen"
+      },
+      "updateRoutine": {
+        "title": "Saubere Update-Routine etablieren",
+        "description": "Führe Updates geplant und wiederholbar aus, damit Änderungen kontrolliert im Betrieb ankommen.",
+        "steps": {
+          "1": "Prüfe vorab, welche Server-Images veraltet sind und priorisiere kritische Systeme.",
+          "2": "Ziehe neue Images nur in geplanten Wartungsfenstern (nicht ungeplant im Live-Betrieb).",
+          "3": "Starte betroffene Server neu und validiere Health, Logs und Erreichbarkeit.",
+          "4": "Dokumentiere Version, Datum und Ergebnis jedes Updates pro Umgebung."
+        },
+        "screenshotLabel": "Image-Repull und Post-Update-Check"
+      }
+    },
+    "backToTop": "Nach oben",
+    "nextSteps": {
+      "title": "Nächste Schritte",
+      "description": "Starte mit einer Node und einem Template und baue daraus einen wiederholbaren Deployment-Flow.",
+      "actions": {
+        "login": "Anmelden",
+        "register": "Konto erstellen"
+      }
+    }
+  },
+  "NodesPage": {
+    "title": "Nodes",
+    "description": "Erstelle Nodes und akzeptiere Server-Einladungen.",
+    "loading": "Lädt...",
+    "errors": {
+      "loadNodes": "Nodes konnten nicht geladen werden.",
+      "createNode": "Node konnte nicht erstellt werden."
+    },
+    "createNode": {
+      "title": "Worker-Node hinzufügen",
+      "fields": {
+        "name": "Name (optional)",
+        "namePlaceholder": "EU-West Minecraft Node",
+        "host": "IP / Host / URL",
+        "hostPlaceholder": "https://192.168.0.10:8031",
+        "apiKey": "API-Key",
+        "apiKeyPlaceholder": "Worker API key"
+      },
+      "buttons": {
+        "creating": "Erstelle...",
+        "create": "Node erstellen"
+      }
+    },
+    "incomingInvites": {
+      "title": "Eingehende Einladungen",
+      "empty": "Keine ausstehenden Einladungen.",
+      "meta": {
+        "nodeServer": "Node: {nodeSlug} | Server: {serverSlug}",
+        "roleInviter": "Rolle: {role} | Eingeladen von: {inviterMail}",
+        "expires": "Läuft ab: {expiresAt}"
+      },
+      "buttons": {
+        "accepting": "Akzeptiere...",
+        "accept": "Akzeptieren"
+      }
+    },
+    "nodesList": {
+      "title": "Zugängliche Nodes",
+      "empty": "Keine Nodes verfügbar.",
+      "meta": {
+        "baseUrlKey": "{baseUrl} | Key: {apiKey}"
+      },
+      "buttons": {
+        "openDashboard": "Dashboard öffnen",
+        "details": "Details"
+      }
+    }
+  },
+  "NodeDetailsPage": {
+    "loading": "Lädt...",
+    "description": "Detaillierte Node-Ansicht",
+    "errors": {
+      "missingNodeId": "Node-ID fehlt.",
+      "loadNode": "Node konnte nicht geladen werden.",
+      "notFound": "Node nicht gefunden."
+    },
+    "buttons": {
+      "backToNodes": "Zurück zu Nodes",
+      "openDashboardWithNode": "Dashboard mit Node öffnen"
+    },
+    "info": {
+      "title": "Node-Informationen",
+      "labels": {
+        "id": "ID:",
+        "slug": "Slug:",
+        "role": "Rolle:",
+        "baseUrl": "Base URL:",
+        "ownerUserId": "Owner User ID:",
+        "apiKey": "API-Key:",
+        "createdAt": "Erstellt:",
+        "updatedAt": "Aktualisiert:"
+      }
+    },
+    "delete": {
+      "button": "Node löschen",
+      "deleting": "Lösche Node...",
+      "confirm": "Node \"{name}\" und alle Game-Server darauf löschen?",
+      "error": "Node konnte nicht gelöscht werden."
+    },
+    "access": {
+      "title": "Zugriffsverwaltung",
+      "description": "Einladungen und Gast-Berechtigungen werden pro Game-Server verwaltet. Öffne einen Game-Server und nutze dessen Steuerungsseite, um den Zugriff zu verwalten."
+    }
+  },
+  "DashboardPage": {
+    "title": "Dashboard",
+    "loading": "Lädt...",
+    "unauthenticatedMessage": "Du musst angemeldet sein, um die API-Testtools zu nutzen.",
+    "benchTitle": "Server Dashboard",
+    "benchDescription": "Erstelle und verwalte hier deine Spieleserver.",
+    "authenticatedUserId": "Angemeldete Benutzer-ID: {userId}",
+    "errors": {
+      "loadNodes": "Nodes konnten nicht geladen werden."
+    },
+    "buttons": {
+      "refresh": "Aktualisieren",
+      "manageNodes": "Nodes verwalten"
+    },
+    "request": {
+      "running": "Läuft...",
+      "authAndNodeRequired": "Du musst angemeldet sein und eine Node auswählen, um diesen Endpunkt aufzurufen.",
+      "missingNodeSelection": "Node-Auswahl fehlt.",
+      "downloaded": "{fileName} wurde heruntergeladen ({size} Bytes).",
+      "failed": "Anfrage fehlgeschlagen."
+    },
+    "connection": {
+      "title": "Verbindung",
+      "description": "Node-Auswahl wird für alle Aufrufe gemeinsam genutzt.",
+      "nodeLabel": "Node",
+      "noNodes": "Keine Nodes verfügbar",
+      "proxyInfo": "Anfragen werden über /api/nodes/[nodeId]/worker weitergeleitet.",
+      "activeRole": "Aktive Rolle auf dieser Node: {role}"
+    },
+    "noNodeAvailable": {
+      "prefix": "Keine Node verfügbar. Erstelle zuerst eine in",
+      "suffix": "."
+    }
+  },
+  "TestPage": {
+    "title": "Dashboard",
+    "loading": "Lädt...",
+    "unauthenticatedMessage": "Du musst angemeldet sein, um die API-Testtools zu nutzen.",
+    "benchTitle": "Worker API Test Bench",
+    "benchDescription": "Signierte Request-Hilfe für die Go-Worker-Endpunkte.",
+    "authenticatedUserId": "Angemeldete Benutzer-ID: {userId}",
+    "fallback": {
+      "unknownUser": "unbekannt"
+    },
+    "errors": {
+      "loadNodes": "Nodes konnten nicht geladen werden."
+    },
+    "buttons": {
+      "refresh": "Aktualisieren",
+      "manageNodes": "Nodes verwalten"
+    },
+    "request": {
+      "running": "Läuft...",
+      "authAndNodeRequired": "Du musst angemeldet sein und eine Node auswählen, um diesen Endpunkt aufzurufen.",
+      "missingNodeSelection": "Node-Auswahl fehlt.",
+      "downloaded": "{fileName} wurde heruntergeladen ({size} Bytes).",
+      "failed": "Anfrage fehlgeschlagen."
+    },
+    "connection": {
+      "title": "Verbindung",
+      "description": "Node-Auswahl wird für alle Aufrufe gemeinsam genutzt.",
+      "nodeLabel": "Node",
+      "noNodes": "Keine Nodes verfügbar",
+      "proxyInfo": "Anfragen werden über /api/nodes/[nodeId]/worker weitergeleitet.",
+      "activeRole": "Aktive Rolle auf dieser Node: {role}"
+    },
+    "noNodeAvailable": {
+      "prefix": "Keine Node verfügbar. Erstelle zuerst eine in",
+      "suffix": "."
+    },
+    "health": {
+      "title": "Health",
+      "description": "GET /health",
+      "buttons": {
+        "run": "Health-Check ausführen"
+      }
+    },
+    "settings": {
+      "title": "Einstellungen (deaktiviert)",
+      "description": "GET /settings (erwartet 404)",
+      "buttons": {
+        "call": "/settings aufrufen"
+      }
+    },
+    "fields": {
+      "path": "Pfad",
+      "content": "Inhalt",
+      "file": "Datei",
+      "source": "Quelle",
+      "destination": "Ziel"
+    },
+    "filesystem": {
+      "title": "Dateisystem",
+      "read": {
+        "title": "FS Lesen",
+        "description": "GET /fs/read?path=...",
+        "buttons": {
+          "run": "Datei lesen"
+        }
+      },
+      "list": {
+        "title": "FS Liste",
+        "description": "GET /fs/list?path=...",
+        "buttons": {
+          "run": "Pfad auflisten"
+        }
+      },
+      "listRoot": {
+        "title": "FS Liste (Safe Root)",
+        "description": "GET /fs/list?path=",
+        "pathLabel": "Pfad (leer für Root)",
+        "buttons": {
+          "run": "Safe Root auflisten"
+        }
+      },
+      "write": {
+        "title": "FS Schreiben",
+        "description": "POST /fs/write",
+        "buttons": {
+          "run": "Datei schreiben"
+        }
+      },
+      "download": {
+        "title": "FS Download",
+        "description": "GET /fs/download?path=...",
+        "buttons": {
+          "run": "Datei herunterladen"
+        }
+      },
+      "upload": {
+        "title": "FS Upload",
+        "description": "POST /fs/upload (multipart)",
+        "buttons": {
+          "run": "Datei hochladen"
+        },
+        "errors": {
+          "selectFile": "Wähle eine Datei zum Hochladen aus."
+        }
+      },
+      "delete": {
+        "title": "FS Löschen",
+        "description": "POST /fs/delete (Datei oder Ordner)",
+        "recursiveHint": "Rekursiv löschen (erforderlich für nicht-leere Ordner)",
+        "buttons": {
+          "run": "Löschen"
+        }
+      },
+      "zip": {
+        "title": "FS Zip",
+        "description": "POST /fs/zip",
+        "buttons": {
+          "run": "Zip erstellen"
+        }
+      },
+      "unzip": {
+        "title": "FS Unzip",
+        "description": "POST /fs/unzip",
+        "buttons": {
+          "run": "Archiv entpacken"
+        }
+      }
+    },
+    "stack": {
+      "title": "Stack",
+      "controls": {
+        "title": "Stack-Steuerung",
+        "description": "GET /stack/status, POST /stack/up|down|restart",
+        "stackNameLabel": "Stack-Name",
+        "buttons": {
+          "status": "Status",
+          "up": "Hoch",
+          "down": "Runter",
+          "restart": "Neustart"
+        }
+      }
+    },
+    "requestLog": {
+      "title": "Request-Log",
+      "description": "Benutzer-ID und Node-ID werden bei jedem Aufruf erfasst.",
+      "empty": "Noch keine Anfragen.",
+      "meta": "User: {userId} | Node: {nodeRef} | {durationMs}ms",
+      "status": {
+        "ok": "OK",
+        "err": "ERR"
+      },
+      "buttons": {
+        "clear": "Log leeren"
+      }
+    }
+  },
+  "HealthBlob": {
+    "loading": "Health-Check wird ausgeführt...",
+    "missingNode": "Worker nicht erreichbar oder fehlerhafte Node-Konfiguration.",
+    "ok": "Alles passt: Worker ist erreichbar und Internetverbindung funktioniert.",
+    "partial": "Worker ist erreichbar, kann aber keine Internetverbindung aufbauen.",
+    "httpError": "Worker nicht erreichbar oder anderer Fehler (HTTP {status}).",
+    "genericError": "Worker nicht erreichbar oder anderer Fehler."
+  },
+  "GameServerPanel": {
+    "title": "Game Server",
+    "titleAlpha": "Game Server",
+    "description": "Server-Steuerung ist jetzt auf einer eigenen Detailseite pro Server.",
+    "selectNodeFirst": "Wähle zuerst einen Node aus, um Game Server zu verwalten.",
+    "fields": {
+      "template": "Template",
+      "identifier": "Bezeichner",
+      "serverType": "Servertyp",
+      "gameVersion": "Spielversion"
+    },
+    "empty": {
+      "templates": "Keine Templates verfügbar",
+      "servers": "Noch keine Game Server vorhanden."
+    },
+    "buttons": {
+      "creating": "Erstelle...",
+      "createServer": "Server erstellen",
+      "refresh": "Aktualisieren",
+      "openControls": "Steuerung öffnen",
+      "cancel": "Abbrechen",
+      "agreeAndCreate": "Ich stimme zu und erstelle den Server"
+    },
+    "permissions": {
+      "createLimited": "Erstellen ist auf Owner/Admin beschränkt."
+    },
+    "agreement": {
+      "requiredInfo": "Dieses Template erfordert eine Bestätigung, bevor der Server erstellt werden kann.",
+      "title": "Template-Zustimmung erforderlich",
+      "description": "Du musst diese Vereinbarung akzeptieren, bevor der Server erstellt werden kann."
+    },
+    "serverList": {
+      "title": "Serverliste",
+      "templateLabel": "Template",
+      "imageUpdateAvailable": "Image-Update",
+      "imageUpToDate": "Image aktuell"
+    },
+    "status": {
+      "up": "Online",
+      "down": "Offline",
+      "unknown": "Unbekannt"
+    },
+    "errors": {
+      "loadTemplates": "Game-Server-Templates konnten nicht geladen werden.",
+      "loadServers": "Game Server konnten nicht geladen werden.",
+      "loadData": "Game-Server-Daten konnten nicht geladen werden.",
+      "createServer": "Game Server konnte nicht erstellt werden."
+    }
+  },
+  "ServerPage": {
+    "loading": "Lädt...",
+    "errors": {
+      "notFound": "Server nicht gefunden.",
+      "missingRouteParams": "Node- oder Server-Referenz fehlt.",
+      "loadServer": "Serverdetails konnten nicht geladen werden."
+    },
+    "header": {
+      "templateLabel": "Template",
+      "stackLabel": "Stack"
+    },
+    "buttons": {
+      "backToDashboard": "Zurück zum Dashboard",
+      "backToProxy": "Zurück zum Proxy",
+      "openControls": "Steuerung öffnen"
+    },
+    "controls": {
+      "title": "Steuerung",
+      "description": "Steuere den aktuellen Serverprozess.",
+      "start": "Starten",
+      "starting": "Starte...",
+      "stop": "Stoppen",
+      "stopping": "Stoppe...",
+      "repullImages": "Images repullen",
+      "repulling": "Repulle...",
+      "refreshStatus": "Status aktualisieren",
+      "imageStatusUpdateAvailable": "Image-Update verfügbar",
+      "imageStatusUpToDate": "Image aktuell",
+      "imageUpdateAvailable": "Ein neueres Container-Image ist verfügbar. Repulle und starte den Server neu, um es zu übernehmen.",
+      "deleteServer": "Server löschen",
+      "deleting": "Lösche...",
+      "confirmDelete": "Server \"{name}\" dauerhaft löschen?",
+      "errors": {
+        "start": "Server konnte nicht gestartet werden.",
+        "stop": "Server konnte nicht gestoppt werden.",
+        "imageStatus": "Image-Update-Status konnte nicht ermittelt werden.",
+        "repull": "Container-Images konnten nicht gepullt werden.",
+        "delete": "Server konnte nicht gelöscht werden."
+      }
+    },
+    "velocity": {
+      "title": "Velocity Backends",
+      "description": "Minecraft-Backend-Server sind im selben internen Docker-Netzwerk angebunden und werden nicht in der Hauptserverliste angezeigt.",
+      "fields": {
+        "template": "Template",
+        "identifier": "Bezeichner",
+        "identifierPlaceholder": "backend-1",
+        "serverType": "Servertyp",
+        "gameVersion": "Spielversion"
+      },
+      "buttons": {
+        "create": "Backend-Server erstellen",
+        "creating": "Erstelle...",
+        "refresh": "Backends aktualisieren",
+        "refreshing": "Aktualisiere..."
+      },
+      "agreementRequired": "Dieses Template erfordert eine Bestätigung, bevor der Backend-Server erstellt werden kann.",
+      "connectLabel": "Verbindung aus Velocity",
+      "empty": {
+        "templates": "Keine Backend-Templates verfügbar",
+        "backends": "Noch keine Backend-Server angebunden."
+      },
+      "errors": {
+        "loadTemplates": "Backend-Templates konnten nicht geladen werden.",
+        "loadBackends": "Liste der Backend-Server konnte nicht geladen werden.",
+        "loadData": "Velocity-Backend-Daten konnten nicht geladen werden.",
+        "createBackend": "Backend-Server konnte nicht erstellt werden."
+      },
+      "dialog": {
+        "title": "Template-Bedingung erforderlich",
+        "description": "Du musst dieser Bedingung zustimmen, bevor der Backend-Server erstellt werden kann.",
+        "cancel": "Abbrechen",
+        "agreeAndCreate": "Ich stimme zu und erstelle das Backend"
+      }
+    },
+    "logs": {
+      "title": "Konsolen-Logs (Read-Only)",
+      "description": "Zwischen manueller Aktualisierung und automatischen Live-Updates wechseln.",
+      "buttons": {
+        "autoUpdate": "Automatisch",
+        "manualRefresh": "Manuell",
+        "refreshNow": "Jetzt aktualisieren",
+        "refreshing": "Aktualisiere...",
+        "clearOutput": "Ausgabe leeren"
+      },
+      "refreshModeLabel": "Aktualisierungsmodus:",
+      "refreshModeAuto": "Automatische Updates",
+      "refreshModeManual": "Manuell",
+      "streamStatusLabel": "Stream-Status:",
+      "serverOfflineHint": "Server ist offline. Starte den Server, um den Live-Stream zu öffnen.",
+      "placeholder": {
+        "loading": "Logs werden geladen...",
+        "noPermission": "Du hast keine Berechtigung, Konsolen-Logs zu lesen.",
+        "noLogsManual": "Keine Logs geladen. Klicke auf \"Jetzt aktualisieren\".",
+        "connectedWaiting": "Verbunden. Warte auf neue Log-Zeilen...",
+        "waitingStream": "Warte auf Log-Stream..."
+      },
+      "errors": {
+        "loadSnapshot": "Konsolen-Snapshot konnte nicht geladen werden.",
+        "connectStream": "Verbindung zum Live-Log-Stream konnte nicht aufgebaut werden.",
+        "noReadableBody": "Der Live-Log-Stream hat keinen lesbaren Response-Body zurückgegeben.",
+        "interrupted": "Der Live-Log-Stream wurde unterbrochen."
+      }
+    },
+    "interactive": {
+      "title": "Interaktive Konsole",
+      "description": "Nur Owner/Admin. Die Sitzung wird über Backend und Worker weitergeleitet.",
+      "sessionStatusLabel": "Sitzungsstatus:",
+      "offlineHint": "Die interaktive Konsole ist nur verfügbar, solange der Server läuft.",
+      "idleHint": "Interaktive Sitzung ist inaktiv. Klicke auf Interaktive Sitzung starten.",
+      "buttons": {
+        "startSession": "Interaktive Sitzung starten",
+        "sessionRunning": "Sitzung läuft...",
+        "stopSession": "Sitzung stoppen"
+      },
+      "errors": {
+        "generic": "Die interaktive Konsole hat einen Fehler zurückgegeben.",
+        "connectionFailed": "Verbindung zur interaktiven Konsole fehlgeschlagen.",
+        "closedImmediately": "Verbindung zur interaktiven Konsole wurde sofort geschlossen.",
+        "loadRuntime": "Terminal-Runtime konnte nicht geladen werden."
+      },
+      "terminal": {
+        "connecting": "Verbinde mit interaktiver Konsole...",
+        "connected": "interaktive Sitzung verbunden",
+        "disconnected": "interaktive Sitzung getrennt",
+        "errorPrefix": "fehler",
+        "sessionEnded": "Sitzung beendet: Exit {code}"
+      }
+    },
+    "fileBrowser": {
+      "title": "Dateibrowser",
+      "currentFolder": "Aktueller Ordner: {path}",
+      "empty": "Keine Einträge in diesem Ordner.",
+      "restricted": "Dateiverwaltung ist auf Server-Owner/Admin begrenzt.",
+      "labels": {
+        "folder": "Ordner",
+        "file": "Datei"
+      },
+      "entryTypes": {
+        "dir": "ORDNER",
+        "file": "DATEI",
+        "symlink": "SYMLINK",
+        "other": "SONSTIGES"
+      },
+      "confirmDeletePath": "{label} \"{path}\" löschen?",
+      "buttons": {
+        "loading": "Lädt...",
+        "refresh": "Aktualisieren",
+        "upOneLevel": "Eine Ebene hoch",
+        "goToRoot": "Zum Root",
+        "uploading": "Lade hoch...",
+        "uploadToCurrentFolder": "In aktuellen Ordner hochladen",
+        "downloading": "Lade herunter...",
+        "download": "Download",
+        "unzipping": "Entpacke...",
+        "unzip": "Entpacken",
+        "deleting": "Lösche...",
+        "delete": "Löschen"
+      },
+      "errors": {
+        "loadDirectory": "Verzeichniseinträge konnten nicht geladen werden.",
+        "downloadPath": "Pfad konnte nicht heruntergeladen werden.",
+        "invalidUploadPath": "Ungültiger Upload-Pfad.",
+        "uploadFile": "Datei konnte nicht hochgeladen werden.",
+        "deletePath": "Pfad konnte nicht gelöscht werden.",
+        "unzipArchive": "Archiv konnte nicht entpackt werden."
+      }
+    },
+    "fileEditor": {
+      "title": "Dateieditor",
+      "selectFromBrowser": "Wähle eine Datei aus dem Browser",
+      "buttons": {
+        "saving": "Speichere...",
+        "saveFile": "Datei speichern",
+        "reload": "Neu laden"
+      },
+      "errors": {
+        "loadFile": "Datei konnte nicht geladen werden.",
+        "saveFile": "Datei konnte nicht gespeichert werden.",
+        "onlyRegularTextFiles": "Nur reguläre Textdateien können geöffnet werden."
+      }
+    },
+    "configEditor": {
+      "title": "Config-Editor",
+      "description": "Vorhandene Schlüssel sind schreibgeschützt; Werte sind editierbar.",
+      "fields": {
+        "configFile": "Config-Datei",
+        "composeEnvironment": "Compose-Umgebung (.yml)"
+      },
+      "empty": {
+        "noConfiguredFiles": "Keine konfigurierten Dateien"
+      },
+      "columns": {
+        "key": "Schlüssel",
+        "value": "Wert"
+      },
+      "buttons": {
+        "remove": "Entfernen",
+        "addSetting": "Eintrag hinzufügen",
+        "saving": "Speichere...",
+        "saveConfig": "Config speichern"
+      },
+      "errors": {
+        "loadConfig": "Config-Datei konnte nicht geladen werden.",
+        "saveConfig": "Config-Datei konnte nicht gespeichert werden."
+      }
+    },
+    "access": {
+      "title": "Zugriffsverwaltung",
+      "description": "Nutzer einladen und serverspezifische Berechtigungen verwalten.",
+      "loading": "Lädt...",
+      "fields": {
+        "email": "E-Mail",
+        "emailPlaceholder": "freund@example.com",
+        "role": "Rolle"
+      },
+      "roles": {
+        "admin": "admin (voller Serverzugriff)",
+        "operator": "operator (start/stop + status)",
+        "viewer": "viewer (nur status)"
+      },
+      "buttons": {
+        "sendingInvite": "Einladung wird gesendet...",
+        "createInvite": "Einladung erstellen",
+        "revoking": "Widerrufe...",
+        "revoke": "Widerrufen",
+        "removing": "Entferne...",
+        "remove": "Entfernen"
+      },
+      "pendingInvites": {
+        "title": "Ausstehende Einladungen",
+        "empty": "Keine ausstehenden Einladungen.",
+        "meta": "Einladender: {inviter} | Läuft ab: {expiresAt}"
+      },
+      "guests": {
+        "title": "Gäste",
+        "empty": "Keine Gäste zugewiesen.",
+        "meta": "{email} | Hinzugefügt: {createdAt}"
+      },
+      "errors": {
+        "createInvite": "Einladung konnte nicht erstellt werden."
+      }
+    },
+    "status": {
+      "up": "Online",
+      "down": "Offline",
+      "unknown": "Unbekannt"
+    },
+    "connectionStatus": {
+      "idle": "inaktiv",
+      "connecting": "verbinde",
+      "connected": "verbunden",
+      "reconnecting": "verbinde erneut",
+      "disconnected": "getrennt",
+      "error": "fehler"
+    }
+  }
+}

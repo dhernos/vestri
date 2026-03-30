@@ -1,0 +1,109 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: vestri-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-vestri}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vestri}
+      POSTGRES_DB: ${POSTGRES_DB:-vestri}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-vestri} -d ${POSTGRES_DB:-vestri}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: vestri-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: dhernos/vestri-backend:latest
+    container_name: vestri-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      PORT: ${BACKEND_PORT:-8080}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-vestri}:${POSTGRES_PASSWORD:-vestri}@postgres:5432/${POSTGRES_DB:-vestri}?sslmode=disable
+      REDIS_URL: redis://redis:6379
+      UPLOAD_DIR: /app/uploads
+      LOG_FILE: /app/logs/server.log
+      LOG_MAX_SIZE_MB: ${LOG_MAX_SIZE_MB:-5}
+      LOG_MAX_BACKUPS: ${LOG_MAX_BACKUPS:-1}
+      NO_EMAIL_VERIFY: ${NO_EMAIL_VERIFY:-true}
+      TOTP_ISSUER: ${TOTP_ISSUER:-Vestri}
+      WORKER_TLS_CA_CERT_FILE: ${WORKER_TLS_CA_CERT_FILE:-}
+      WORKER_TLS_CA_CERT_DIR: ./certs/worker-cas
+      NODE_API_KEY_ENCRYPTION_KEY: ${NODE_API_KEY_ENCRYPTION_KEY:-change-me}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+      WEB_AUTHN_ORIGIN: ${WEB_AUTHN_ORIGIN:-http://localhost:3000}
+      WEB_AUTHN_RP_ID: ${WEB_AUTHN_RP_ID:-localhost}
+      WEB_AUTHN_RP_NAME: ${WEB_AUTHN_RP_NAME:-Auth Service}
+      WEB_AUTHN_ORIGINS: ${WEB_AUTHN_ORIGINS:-http://localhost:3000}
+      EMAIL_SERVER_HOST: ${EMAIL_SERVER_HOST:-}
+      EMAIL_SERVER_PORT: ${EMAIL_SERVER_PORT:-587}
+      EMAIL_SERVER_USER: ${EMAIL_SERVER_USER:-}
+      EMAIL_SERVER_PASSWORD: ${EMAIL_SERVER_PASSWORD:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      EMAIL_SERVER_SECURE: ${EMAIL_SERVER_SECURE:-false}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GITHUB_REDIRECT_URL: ${GITHUB_REDIRECT_URL:-}
+      AUTO_MIGRATE: ${AUTO_MIGRATE:-true}
+      MIGRATIONS_DIR: /app/migrations
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    volumes:
+      - backend-uploads:/app/uploads
+      - backend-logs:/app/logs
+      - backend-worker-cas:/app/certs/worker-cas
+
+  frontend:
+    image: dhernos/vestri:latest
+    container_name: vestri-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    environment:
+      GO_API_URL: http://backend:${BACKEND_PORT:-8080}
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: ${NEXT_TELEMETRY_DISABLED:-1}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    volumes:
+      - frontend-uploads:/app/public/uploads
+
+volumes:
+  postgres-data:
+    name: vestri-postgres-data
+  redis-data:
+    name: vestri-redis-data
+  backend-uploads:
+    name: vestri-backend-uploads
+  backend-logs:
+    name: vestri-backend-logs
+  backend-worker-cas:
+    name: vestri-backend-worker-cas
+  frontend-uploads:
+    name: frontend-uploads
