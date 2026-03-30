@@ -112,7 +112,7 @@ export default function ChangeEmailSection() {
           {t("emailChangeWarning")}
         </p>
         {oauthLinked && (
-          <div className="p-3 mb-4 bg-warning/15 text-warning-foreground border border-warning/35 rounded-md">
+          <div className="p-3 mb-4 bg-warning/15 text-warning-foreground-muted border border-warning/35 rounded-md">
             {t("oauthAccount.emailReadOnly")}
           </div>
         )}

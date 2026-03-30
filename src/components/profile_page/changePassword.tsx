@@ -55,7 +55,7 @@ export default function ChangePasswordSection() {
       <section className="mb-8 p-6 border rounded-lg shadow-md">
         <h2 className="text-2xl font-semibold mb-4">{t("changePassword")}</h2>
         <p className="text-sm mb-4">{t("changePasswordDescription")}</p>
-        <div className="p-3 mb-4 bg-warning/15 text-warning-foreground border border-warning/35 rounded-md">
+        <div className="p-3 mb-4 bg-warning/15 text-warning-foreground-muted border border-warning/35 rounded-md">
           {t("oauthAccount.cannotChangePassword")}
         </div>
         <div className="space-y-4">
@@ -115,7 +115,10 @@ export default function ChangePasswordSection() {
         }
       } else {
         if (res.status === 403 && data.message === "STEP_UP_REQUIRED") {
-          const stepUp = await prepareStepUpCode(sessData?.user, "password_change");
+          const stepUp = await prepareStepUpCode(
+            sessData?.user,
+            "password_change",
+          );
           if (!stepUp.ok) {
             const description =
               stepUp.code && tErrors.has(stepUp.code as never)
@@ -259,14 +262,14 @@ export default function ChangePasswordSection() {
                       {passwordStrength >= 5
                         ? t("form.strengthStrong")
                         : passwordStrength >= 2
-                        ? t("form.strengthModerate")
-                        : t("form.strengthWeak")}
+                          ? t("form.strengthModerate")
+                          : t("form.strengthWeak")}
                     </span>
                   </div>
                   <div className="w-full h-2 rounded-full overflow-hidden">
                     <div
                       className={`h-full transition-all duration-300 rounded-full ${getStrengthColor(
-                        passwordStrength
+                        passwordStrength,
                       )}`}
                       style={{ width: getStrengthWidth(passwordStrength) }}
                     />

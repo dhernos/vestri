@@ -61,7 +61,7 @@ List variables use comma-separated values.
 | `NEXTAUTH_URL`                | Optional    | fallback source for `APP_BASE_URL`                         | Secondary base URL fallback.                                                       |
 | `DATABASE_URL`                | Yes         | none                                                       | PostgreSQL connection string.                                                      |
 | `REDIS_URL`                   | Optional    | `redis://localhost:6379`                                   | Redis connection string for sessions/rate limits.                                  |
-| `UPLOAD_DIR`                  | Optional    | `../auth_template/public/uploads`                          | Directory for uploaded profile images (resolved to absolute path).                 |
+| `UPLOAD_DIR`                  | Optional    | `../vestri/public/uploads`                                 | Directory for uploaded profile images (resolved to absolute path).                 |
 | `LOG_FILE`                    | Optional    | `logs/server.log`                                          | Backend log file path (rotation enabled when set).                                 |
 | `LOG_MAX_SIZE_MB`             | Optional    | `5`                                                        | Max size per log file before rotation.                                             |
 | `LOG_MAX_BACKUPS`             | Optional    | `1`                                                        | Number of rotated log backups to keep.                                             |

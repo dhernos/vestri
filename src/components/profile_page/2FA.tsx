@@ -24,7 +24,7 @@ export default function TwoFactorAuthSection() {
   const { push } = useToast();
 
   const t = useTranslations("2FA");
-  const tCommon = useTranslations("Common"); // <-- NEU: gemeinsame Buttons / Texte
+  const tCommon = useTranslations("Common");
   const tErrors = useTranslations("Errors");
 
   const [is2FAModalOpen, setIs2FAModalOpen] = useState(false); // Modal für kritische Aktionen (z.B. Löschen, 2FA Deaktivieren)
@@ -121,10 +121,9 @@ export default function TwoFactorAuthSection() {
     }
   };
 
-  // --- NEU: Callback für die geschützte Aktion (2FA Deaktivierung) ---
   // Wird vom TwoFactorModal.tsx aufgerufen
   const handleFinalDisable2FA = async (
-    code: string | null
+    code: string | null,
   ): Promise<string | null> => {
     if (!code) {
       return t("missingCode");
@@ -158,7 +157,7 @@ export default function TwoFactorAuthSection() {
     }
   };
 
-  // --- NEU: Handler für 2FA deaktivieren (Startet den Schutz-Flow) ---
+  // Handler für 2FA deaktivieren (Startet den Schutz-Flow)
   const handleDisable2FA = () => {
     if (!session?.user.isTwoFactorEnabled) {
       push({ variant: "error", description: t("notEnabledError") });

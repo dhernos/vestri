@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import Cropper, { type Area } from "react-easy-crop";
 import { useDropzone } from "react-dropzone";
@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/toast";
 
 export function ProfileImageUploader() {
-  const { data: session, refresh } = useAuth();
+  const { data: session, updateUser } = useAuth();
   const { push } = useToast();
   const t = useTranslations("ProfilePage"); // neu: Namespace für Profiltexte / Bild-Upload
 
@@ -30,9 +30,16 @@ export function ProfileImageUploader() {
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [avatarVersion, setAvatarVersion] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const avatarFallback =
     session?.user?.name?.trim().slice(0, 2).toUpperCase() || t("upload.fallbackInitials");
+  const avatarBaseSrc = session?.user?.image || "/default-profile.png";
+  const avatarSrc = useMemo(() => {
+    if (!avatarVersion) return avatarBaseSrc;
+    const separator = avatarBaseSrc.includes("?") ? "&" : "?";
+    return `${avatarBaseSrc}${separator}v=${avatarVersion}`;
+  }, [avatarBaseSrc, avatarVersion]);
 
   // --- HILFSFUNKTION: Zustände zurücksetzen ---
   const resetImageState = () => {
@@ -128,50 +135,65 @@ export function ProfileImageUploader() {
   const handleUpload = async () => {
     if (!imageSrc || !croppedAreaPixels) return;
 
-    setUploading(true);
-    const croppedBlob = await cropToBlob(imageSrc, croppedAreaPixels);
-    const filename = "profile.jpg";
+    try {
+      setUploading(true);
+      const croppedBlob = await cropToBlob(imageSrc, croppedAreaPixels);
+      const filename = "profile.jpg";
 
-    const formData = new FormData();
-    formData.append("image", croppedBlob, filename);
+      const formData = new FormData();
+      formData.append("image", croppedBlob, filename);
 
-    const res = await fetch("/api/profile/update-image", {
-      method: "POST",
-      credentials: "include",
-      body: formData,
-    });
+      const res = await fetch("/api/profile/update-image", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
 
-    setUploading(false);
+      if (!res.ok) {
+        push({
+          variant: "error",
+          description: t("upload.error"),
+        });
+        return;
+      }
 
-    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as
+        | { imageUrl?: string }
+        | null;
+      if (body?.imageUrl) {
+        updateUser({ image: body.imageUrl });
+      }
+
+      setAvatarVersion(Date.now());
+      push({ variant: "success", description: t("upload.success") });
+      resetImageState();
+      setIsOpen(false);
+    } catch {
       push({
         variant: "error",
         description: t("upload.error"),
       });
-      return;
+    } finally {
+      setUploading(false);
     }
-
-    await refresh();
-
-    push({ variant: "success", description: t("upload.success") });
-    resetImageState();
-    setIsOpen(false);
-    window.location.reload();
   };
 
   return (
     // State-Steuerung zur Dialog-Komponente hinzufügen
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Avatar className="w-[50px] h-[50px]">
+        <Avatar className="w-[50px] h-[50px] cursor-pointer select-none">
           <AvatarImage
-            src={session?.user?.image || "/default-profile.png"}
+            key={avatarSrc}
+            src={avatarSrc}
             alt={session?.user?.name || t("upload.avatarAlt")}
             width={50}
             height={50}
             className="rounded-full cursor-pointer border shadow"
           />
-          <AvatarFallback>{avatarFallback}</AvatarFallback>
+          <AvatarFallback className="cursor-pointer select-none">
+            {avatarFallback}
+          </AvatarFallback>
         </Avatar>
       </DialogTrigger>
 

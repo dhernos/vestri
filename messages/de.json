@@ -967,8 +967,8 @@
     "title": "Dashboard",
     "loading": "Lädt...",
     "unauthenticatedMessage": "Du musst angemeldet sein, um die API-Testtools zu nutzen.",
-    "benchTitle": "Worker API Test Bench",
-    "benchDescription": "Signierte Request-Hilfe für die Go-Worker-Endpunkte.",
+    "benchTitle": "Server Dashboard",
+    "benchDescription": "Erstelle und verwalte hier deine Spieleserver.",
     "authenticatedUserId": "Angemeldete Benutzer-ID: {userId}",
     "errors": {
       "loadNodes": "Nodes konnten nicht geladen werden."

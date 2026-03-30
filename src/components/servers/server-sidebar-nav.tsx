@@ -145,6 +145,7 @@ export function ServerSidebarNav({
                       <SidebarMenuButton
                         isActive={isActiveServer}
                         tooltip={server.name}
+                        className="group-data-[collapsible=icon]:justify-center"
                       >
                         <span
                           className={cn(
@@ -152,8 +153,10 @@ export function ServerSidebarNav({
                             statusDotClass(server.status),
                           )}
                         />
-                        <span>{server.name}</span>
-                        <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                        <span className="group-data-[collapsible=icon]:hidden">
+                          {server.name}
+                        </span>
+                        <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
