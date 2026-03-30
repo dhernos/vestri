@@ -5,6 +5,7 @@ const GO_API_URL = process.env.GO_API_URL || "http://localhost:8080";
 const goOrigin = safeOrigin(GO_API_URL);
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   experimental: {
     // Avoid 10MB truncation in Next rewrite proxy for large file uploads.
     proxyClientMaxBodySize: "1gb",

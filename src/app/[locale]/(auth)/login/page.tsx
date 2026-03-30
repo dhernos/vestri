@@ -157,7 +157,21 @@ export default function LoginPage() {
           setRequires2FA(true);
           break;
 
+        case "HTTPS_REQUIRED":
+          push({
+            variant: "error",
+            description: tErrors("HTTPS_REQUIRED"),
+          });
+          break;
+
         default:
+          if (tErrors.has(result.message as never)) {
+            push({
+              variant: "error",
+              description: tErrors(result.message as never),
+            });
+            break;
+          }
           push({
             variant: "error",
             description: tErrors("INVALID_CREDENTIALS"),

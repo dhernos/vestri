@@ -42,7 +42,7 @@ services:
       redis:
         condition: service_healthy
     environment:
-      PORT: 8080
+      PORT: ${BACKEND_PORT:-8080}
       APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
       DATABASE_URL: postgresql://${POSTGRES_USER:-vestri}:${POSTGRES_PASSWORD:-vestri}@postgres:5432/${POSTGRES_DB:-vestri}?sslmode=disable
       REDIS_URL: redis://redis:6379
@@ -86,13 +86,13 @@ services:
       backend:
         condition: service_started
     environment:
-      GO_API_URL: http://backend:8080
+      GO_API_URL: http://backend:${BACKEND_PORT:-8080}
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: ${NEXT_TELEMETRY_DISABLED:-1}
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     volumes:
-      - frontend-uploads
+      - frontend-uploads:/app/public/uploads
 
 volumes:
   postgres-data:

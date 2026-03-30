@@ -44,6 +44,7 @@
     "IP_BANNED": "Zu viele fehlgeschlagene Versuche. Versuchen Sie es später.",
     "SEND_CODE_ERROR": "Code konnte nicht gesendet werden.",
     "INVALID_CREDENTIALS": "Ungültige Anmeldedaten.",
+    "HTTPS_REQUIRED": "Passwort-Login erfordert HTTPS.",
     "RESEND_FAILED": "Erneutes Senden fehlgeschlagen.",
     "RESET_FAILED": "Zurücksetzen fehlgeschlagen.",
     "ALL_FIELDS_REQUIRED": "Alle Felder sind erforderlich.",

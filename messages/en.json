@@ -44,6 +44,7 @@
     "IP_BANNED": "Too many failed attempts. Try later.",
     "SEND_CODE_ERROR": "Failed to send verification code.",
     "INVALID_CREDENTIALS": "Invalid credentials.",
+    "HTTPS_REQUIRED": "Password login requires HTTPS.",
     "RESEND_FAILED": "Failed to resend code.",
     "RESET_FAILED": "Failed to reset password.",
     "ALL_FIELDS_REQUIRED": "All fields are required.",
