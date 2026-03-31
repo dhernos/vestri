@@ -45,13 +45,6 @@ const defaultFetchInit: RequestInit = {
 const isMessageCode = (value: unknown): value is string =>
   typeof value === "string" && /^[A-Z0-9_]+$/.test(value);
 
-const isSecureAuthContext = (): boolean => {
-  if (typeof window === "undefined") return true;
-  if (window.isSecureContext) return true;
-  const host = window.location.hostname;
-  return host === "localhost" || host === "127.0.0.1" || host === "::1";
-};
-
 export async function fetchSession(): Promise<GoSession | null> {
   try {
     const res = await fetch("/api/auth/me", { credentials: "include" });
@@ -84,10 +77,6 @@ export async function loginWithPassword(
   code?: string,
   rememberMe?: boolean
 ): Promise<LoginResult> {
-  if (!isSecureAuthContext()) {
-    return { ok: false, message: "HTTPS_REQUIRED" };
-  }
-
   const res = await fetch("/api/auth/login", {
     ...defaultFetchInit,
     method: "POST",
