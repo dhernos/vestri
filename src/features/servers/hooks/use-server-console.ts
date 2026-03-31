@@ -80,6 +80,25 @@ const loadXtermRuntime = async (): Promise<XTermRuntime> => {
   return xtermRuntimePromise;
 };
 
+const readErrorMessage = async (
+  res: Response,
+  fallback: string
+): Promise<string> => {
+  const text = await res.text().catch(() => "");
+  if (!text) {
+    return fallback;
+  }
+  try {
+    const parsed = JSON.parse(text) as { message?: string };
+    if (parsed && typeof parsed.message === "string" && parsed.message.trim()) {
+      return parsed.message;
+    }
+  } catch {
+    // ignore JSON parse errors
+  }
+  return text;
+};
+
 export const useServerConsole = ({
   basePath,
   serverId,
@@ -109,8 +128,8 @@ export const useServerConsole = ({
   const terminalHostRef = useRef<HTMLDivElement | null>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
-  const execSocketRef = useRef<WebSocket | null>(null);
   const execRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const execStreamAbortRef = useRef<AbortController | null>(null);
 
   const canConnectLogStream = canReadConsole && isServerUp;
   const canConnectInteractiveConsole = canUseInteractiveConsole && isServerUp;
@@ -324,7 +343,7 @@ export const useServerConsole = ({
     let cancelled = false;
     let reconnectAttempt = 0;
     let initialHistoryLoaded = false;
-    let preferStreamTransport = false;
+    let preferStreamTransport = true;
 
     const cleanup = () => {
       if (logsSocketRef.current && logsSocketRef.current.readyState <= WebSocket.OPEN) {
@@ -393,7 +412,54 @@ export const useServerConsole = ({
       logsStreamAbortRef.current = abortController;
 
       try {
-        const res = await fetch(buildConsoleLogsURL(true, tailMode), {
+        let streamTailMode = tailMode;
+
+        // Some upstream log stream implementations do not replay full history
+        // reliably on follow-mode requests, so fetch history once first.
+        if (!initialHistoryLoaded && tailMode === "all") {
+          const historyRes = await fetch(buildConsoleLogsURL(false, "all"), {
+            credentials: "include",
+            cache: "no-store",
+            signal: abortController.signal,
+          });
+          if (cancelled || abortController.signal.aborted) {
+            return;
+          }
+          if (historyRes.ok) {
+            if (historyRes.body) {
+              const historyReader = historyRes.body.getReader();
+              const historyDecoder = new TextDecoder();
+              while (true) {
+                const { done, value } = await historyReader.read();
+                if (cancelled || abortController.signal.aborted) {
+                  try {
+                    await historyReader.cancel();
+                  } catch {
+                    // ignore cancel errors
+                  }
+                  return;
+                }
+                if (done) {
+                  break;
+                }
+                appendConsoleOutput(historyDecoder.decode(value, { stream: true }));
+              }
+              const historyTail = historyDecoder.decode();
+              if (historyTail) {
+                appendConsoleOutput(historyTail);
+              }
+            } else {
+              const historyText = await historyRes.text().catch(() => "");
+              if (historyText) {
+                appendConsoleOutput(historyText);
+              }
+            }
+            initialHistoryLoaded = true;
+            streamTailMode = "0";
+          }
+        }
+
+        const res = await fetch(buildConsoleLogsURL(true, streamTailMode), {
           credentials: "include",
           cache: "no-store",
           signal: abortController.signal,
@@ -595,11 +661,13 @@ export const useServerConsole = ({
     if (!basePath || !shouldConnectInteractiveConsole) {
       setExecStatus("idle");
       setExecError("");
-      execSocketRef.current?.close();
-      execSocketRef.current = null;
       if (execRetryTimerRef.current) {
         clearTimeout(execRetryTimerRef.current);
         execRetryTimerRef.current = null;
+      }
+      if (execStreamAbortRef.current) {
+        execStreamAbortRef.current.abort();
+        execStreamAbortRef.current = null;
       }
       terminalRef.current?.dispose();
       terminalRef.current = null;
@@ -619,25 +687,29 @@ export const useServerConsole = ({
     let dataSubscription: { dispose: () => void } | null = null;
     let resizeSubscription: { dispose: () => void } | null = null;
     let resizeObserver: ResizeObserver | null = null;
+    let resizeDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+    let inputFlushTimer: ReturnType<typeof setTimeout> | null = null;
+    let pendingInput = "";
+    let inputFlushInFlight = false;
     let receivedSessionEndSignal = false;
+    let activeSessionId = "";
     let connectedAtMs = 0;
-    let execURLCandidates: string[] = [];
-    let execURLIndex = 0;
-
-    const cleanupSocket = () => {
-      if (execSocketRef.current && execSocketRef.current.readyState <= WebSocket.OPEN) {
-        execSocketRef.current.close();
-      }
-      execSocketRef.current = null;
-    };
 
     const disposeTerminal = () => {
       resizeObserver?.disconnect();
       resizeObserver = null;
+      if (resizeDebounceTimer) {
+        clearTimeout(resizeDebounceTimer);
+        resizeDebounceTimer = null;
+      }
       dataSubscription?.dispose();
       dataSubscription = null;
       resizeSubscription?.dispose();
       resizeSubscription = null;
+      if (inputFlushTimer) {
+        clearTimeout(inputFlushTimer);
+        inputFlushTimer = null;
+      }
       terminal?.dispose();
       terminal = null;
       fitAddon = null;
@@ -645,60 +717,139 @@ export const useServerConsole = ({
       fitAddonRef.current = null;
     };
 
-    const sendMessage = (message: ExecMessage) => {
-      const socket = execSocketRef.current;
-      if (!socket || socket.readyState !== WebSocket.OPEN) {
-        return;
+    const abortExecStream = () => {
+      if (execStreamAbortRef.current) {
+        execStreamAbortRef.current.abort();
+        execStreamAbortRef.current = null;
       }
-      socket.send(JSON.stringify(message));
     };
 
-    const sendResize = () => {
-      if (!terminal || !fitAddon) {
+    const deleteExecSession = async () => {
+      if (!activeSessionId) {
+        return;
+      }
+      const targetSession = activeSessionId;
+      activeSessionId = "";
+      abortExecStream();
+      try {
+        await fetch(
+          `${basePath}/console/exec/session?session=${encodeURIComponent(targetSession)}`,
+          {
+            method: "DELETE",
+            credentials: "include",
+            cache: "no-store",
+          }
+        );
+      } catch {
+        // ignore cleanup failures
+      }
+    };
+
+    const postExecAction = async (path: "input" | "resize", payload: object) => {
+      if (!activeSessionId || cancelled) {
+        return false;
+      }
+      try {
+        const res = await fetch(`${basePath}/console/exec/${path}`, {
+          method: "POST",
+          credentials: "include",
+          cache: "no-store",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          const msg = await readErrorMessage(
+            res,
+            t("interactive.errors.connectionFailed")
+          );
+          if (!cancelled) {
+            setExecStatus("error");
+            setExecError(msg);
+          }
+          return false;
+        }
+        return true;
+      } catch {
+        if (!cancelled) {
+          setExecStatus("error");
+          setExecError(t("interactive.errors.connectionFailed"));
+        }
+        return false;
+      }
+    };
+
+    const flushPendingInput = async () => {
+      if (cancelled || !activeSessionId || inputFlushInFlight) {
+        return;
+      }
+      if (pendingInput.length === 0) {
+        return;
+      }
+      inputFlushInFlight = true;
+      const chunk = pendingInput;
+      pendingInput = "";
+      const ok = await postExecAction("input", {
+        sessionId: activeSessionId,
+        data: chunk,
+      });
+      inputFlushInFlight = false;
+      if (!ok) {
+        pendingInput = `${chunk}${pendingInput}`;
+        if (!cancelled && !inputFlushTimer) {
+          inputFlushTimer = setTimeout(() => {
+            inputFlushTimer = null;
+            void flushPendingInput();
+          }, 250);
+        }
+        return;
+      }
+      if (!cancelled && pendingInput.length > 0 && !inputFlushTimer) {
+        inputFlushTimer = setTimeout(() => {
+          inputFlushTimer = null;
+          void flushPendingInput();
+        }, 0);
+      }
+    };
+
+    const queueInput = (data: string) => {
+      if (!data || !activeSessionId || cancelled) {
+        return;
+      }
+      pendingInput += data;
+      if (!inputFlushTimer) {
+        inputFlushTimer = setTimeout(() => {
+          inputFlushTimer = null;
+          void flushPendingInput();
+        }, 25);
+      }
+    };
+
+    const sendResizeNow = async () => {
+      if (!terminal || !fitAddon || !activeSessionId || cancelled) {
         return;
       }
       fitAddon.fit();
-      sendMessage({
-        type: "resize",
+      await postExecAction("resize", {
+        sessionId: activeSessionId,
         cols: terminal.cols,
         rows: terminal.rows,
       });
     };
 
-    const buildExecSocketURLCandidates = () => {
-      const candidates: string[] = [];
-      const addCandidate = (url: string) => {
-        if (url && !candidates.includes(url)) {
-          candidates.push(url);
-        }
-      };
-
-      const path = `${basePath}/console/exec/ws`;
-
-      if (consoleWSBaseURLOverride) {
-        const wsOrigin = toWebSocketOrigin(consoleWSBaseURLOverride);
-        if (wsOrigin) {
-          addCandidate(`${wsOrigin}${path}`);
-        }
+    const queueResize = () => {
+      if (resizeDebounceTimer) {
+        clearTimeout(resizeDebounceTimer);
       }
-
-      const host = window.location.host;
-      const hostname = window.location.hostname;
-      const preferSecureFromHTTP =
-        window.location.protocol === "http:" && !isLocalHostName(hostname);
-      if (window.location.protocol === "https:" || preferSecureFromHTTP) {
-        addCandidate(`wss://${host}${path}`);
-      }
-      const fallbackProto = window.location.protocol === "https:" ? "wss" : "ws";
-      addCandidate(`${fallbackProto}://${host}${path}`);
-
-      return candidates;
+      resizeDebounceTimer = setTimeout(() => {
+        resizeDebounceTimer = null;
+        void sendResizeNow();
+      }, 120);
     };
 
-    let connectExec = () => {};
-
     const scheduleReconnect = () => {
-      if (cancelled) {
+      if (cancelled || receivedSessionEndSignal || !activeSessionId) {
         return;
       }
       reconnectAttempt += 1;
@@ -706,7 +857,7 @@ export const useServerConsole = ({
       setExecStatus("reconnecting");
       execRetryTimerRef.current = setTimeout(() => {
         execRetryTimerRef.current = null;
-        connectExec();
+        void connectExecStream();
       }, delay);
     };
 
@@ -744,99 +895,160 @@ export const useServerConsole = ({
         const code = typeof message.code === "number" ? message.code : -1;
         terminal?.write(`\r\n[${t("interactive.terminal.sessionEnded", { code })}]\r\n`);
         setExecStatus("disconnected");
+        activeSessionId = "";
       }
     };
 
-    connectExec = () => {
-      if (cancelled) {
+    const connectExecStream = async () => {
+      if (cancelled || !activeSessionId) {
         return;
       }
 
-      if (execURLCandidates.length === 0) {
-        execURLCandidates = buildExecSocketURLCandidates();
-        execURLIndex = 0;
-      }
-      const socketURL = execURLCandidates[execURLIndex];
-      if (!socketURL) {
-        setExecStatus("error");
-        setExecError(t("interactive.errors.connectionFailed"));
-        return;
-      }
-
-      cleanupSocket();
+      abortExecStream();
       setExecStatus(reconnectAttempt === 0 ? "connecting" : "reconnecting");
+      setExecError("");
       connectedAtMs = 0;
-      receivedSessionEndSignal = false;
 
-      let socket: WebSocket;
+      const abortController = new AbortController();
+      execStreamAbortRef.current = abortController;
+      let streamBuffer = "";
+
       try {
-        socket = new WebSocket(socketURL);
-      } catch {
-        if (execURLIndex + 1 < execURLCandidates.length) {
-          execURLIndex += 1;
-          connectExec();
+        const res = await fetch(
+          `${basePath}/console/exec/stream?session=${encodeURIComponent(activeSessionId)}`,
+          {
+            credentials: "include",
+            cache: "no-store",
+            signal: abortController.signal,
+          }
+        );
+        if (cancelled || abortController.signal.aborted) {
           return;
         }
-        setExecStatus("error");
-        setExecError(t("interactive.errors.connectionFailed"));
-        scheduleReconnect();
-        return;
-      }
+        if (!res.ok) {
+          const msg = await readErrorMessage(
+            res,
+            t("interactive.errors.connectionFailed")
+          );
+          if (cancelled || abortController.signal.aborted) {
+            return;
+          }
+          setExecStatus("error");
+          setExecError(msg);
+          scheduleReconnect();
+          return;
+        }
+        if (!res.body) {
+          setExecStatus("error");
+          setExecError(t("interactive.errors.connectionFailed"));
+          scheduleReconnect();
+          return;
+        }
 
-      execSocketRef.current = socket;
-      let opened = false;
-
-      socket.onopen = () => {
-        opened = true;
         connectedAtMs = Date.now();
         reconnectAttempt = 0;
         setExecStatus("connected");
         setExecError("");
         terminal?.write(`\r\n[${t("interactive.terminal.connected")}]\r\n`);
-        sendResize();
-      };
+        void sendResizeNow();
 
-      socket.onmessage = (event) => {
-        if (typeof event.data === "string") {
-          handleIncoming(event.data);
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (cancelled || abortController.signal.aborted) {
+            try {
+              await reader.cancel();
+            } catch {
+              // ignore cancel errors
+            }
+            return;
+          }
+          if (done) {
+            break;
+          }
+
+          streamBuffer += decoder.decode(value, { stream: true });
+          let newlineIndex = streamBuffer.indexOf("\n");
+          while (newlineIndex >= 0) {
+            const line = streamBuffer.slice(0, newlineIndex).trim();
+            streamBuffer = streamBuffer.slice(newlineIndex + 1);
+            if (line) {
+              handleIncoming(line);
+            }
+            newlineIndex = streamBuffer.indexOf("\n");
+          }
         }
-      };
 
-      socket.onerror = () => {
+        const tailChunk = `${streamBuffer}${decoder.decode()}`.trim();
+        if (tailChunk) {
+          handleIncoming(tailChunk);
+        }
+
+        if (cancelled || abortController.signal.aborted) {
+          return;
+        }
+        terminal?.write(`\r\n[${t("interactive.terminal.disconnected")}]\r\n`);
+        setExecStatus("disconnected");
+        if (receivedSessionEndSignal) {
+          return;
+        }
+        const closedQuickly = connectedAtMs > 0 && Date.now() - connectedAtMs < 1500;
+        if (closedQuickly) {
+          setExecError(t("interactive.errors.closedImmediately"));
+          return;
+        }
+        scheduleReconnect();
+      } catch {
+        if (cancelled || abortController.signal.aborted) {
+          return;
+        }
+        setExecStatus("error");
+        setExecError(t("interactive.errors.connectionFailed"));
+        scheduleReconnect();
+      } finally {
+        if (execStreamAbortRef.current === abortController) {
+          execStreamAbortRef.current = null;
+        }
+      }
+    };
+
+    const createExecSession = async () => {
+      try {
+        const res = await fetch(`${basePath}/console/exec/session`, {
+          method: "POST",
+          credentials: "include",
+          cache: "no-store",
+        });
+        if (!res.ok) {
+          const msg = await readErrorMessage(
+            res,
+            t("interactive.errors.connectionFailed")
+          );
+          if (!cancelled) {
+            setExecStatus("error");
+            setExecError(msg);
+          }
+          return "";
+        }
+        const data = (await res.json().catch(() => ({}))) as {
+          sessionId?: string;
+        };
+        if (typeof data.sessionId !== "string" || !data.sessionId.trim()) {
+          if (!cancelled) {
+            setExecStatus("error");
+            setExecError(t("interactive.errors.connectionFailed"));
+          }
+          return "";
+        }
+        return data.sessionId.trim();
+      } catch {
         if (!cancelled) {
           setExecStatus("error");
           setExecError(t("interactive.errors.connectionFailed"));
         }
-      };
-
-      socket.onclose = () => {
-        if (cancelled) {
-          return;
-        }
-        if (execSocketRef.current === socket) {
-          execSocketRef.current = null;
-        }
-        if (opened) {
-          terminal?.write(`\r\n[${t("interactive.terminal.disconnected")}]\r\n`);
-          setExecStatus("disconnected");
-        }
-
-        if (!opened && execURLIndex + 1 < execURLCandidates.length) {
-          execURLIndex += 1;
-          connectExec();
-          return;
-        }
-
-        const closedQuickly = connectedAtMs > 0 && Date.now() - connectedAtMs < 1500;
-        if (receivedSessionEndSignal || closedQuickly) {
-          if (closedQuickly && !receivedSessionEndSignal) {
-            setExecError(t("interactive.errors.closedImmediately"));
-          }
-          return;
-        }
-
-        scheduleReconnect();
-      };
+        return "";
+      }
     };
 
     const setupTerminal = async () => {
@@ -850,16 +1062,16 @@ export const useServerConsole = ({
           return;
         }
 
-          terminal = new runtime.TerminalCtor({
-            cursorBlink: true,
-            convertEol: true,
-            fontSize: 13,
-            scrollback: 5000,
-            theme: {
-              background: "var(--terminal-bg)",
-              foreground: "var(--terminal-fg)",
-            },
-          });
+        terminal = new runtime.TerminalCtor({
+          cursorBlink: true,
+          convertEol: true,
+          fontSize: 13,
+          scrollback: 5000,
+          theme: {
+            background: "var(--terminal-bg)",
+            foreground: "var(--terminal-fg)",
+          },
+        });
         fitAddon = new runtime.FitAddonCtor();
         terminal.loadAddon(fitAddon);
         terminal.open(host);
@@ -870,18 +1082,25 @@ export const useServerConsole = ({
         fitAddonRef.current = fitAddon;
 
         dataSubscription = terminal.onData((data) => {
-          sendMessage({ type: "input", data });
+          queueInput(data);
         });
-        resizeSubscription = terminal.onResize(({ cols, rows }) => {
-          sendMessage({ type: "resize", cols, rows });
+        resizeSubscription = terminal.onResize(() => {
+          queueResize();
         });
 
         resizeObserver = new ResizeObserver(() => {
-          sendResize();
+          queueResize();
         });
         resizeObserver.observe(host);
 
-        connectExec();
+        const sessionId = await createExecSession();
+        if (!sessionId || cancelled) {
+          return;
+        }
+        activeSessionId = sessionId;
+        reconnectAttempt = 0;
+        receivedSessionEndSignal = false;
+        await connectExecStream();
       } catch {
         if (!cancelled) {
           setExecStatus("error");
@@ -898,7 +1117,8 @@ export const useServerConsole = ({
         clearTimeout(execRetryTimerRef.current);
         execRetryTimerRef.current = null;
       }
-      cleanupSocket();
+      abortExecStream();
+      void deleteExecSession();
       disposeTerminal();
     };
   }, [basePath, shouldConnectInteractiveConsole, serverId, t]);
