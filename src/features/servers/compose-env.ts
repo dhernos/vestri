@@ -51,6 +51,15 @@ const stripWrappedQuotes = (value: string) => {
   return trimmed;
 };
 
+const normalizeEscapedTemplateValue = (value: string) => {
+  const trimmed = value.trim();
+  const escapedQuotedWithNewline = /^\\(["'])(.*)\\\1\\n$/.exec(trimmed);
+  if (!escapedQuotedWithNewline) {
+    return trimmed;
+  }
+  return `${escapedQuotedWithNewline[1]}${escapedQuotedWithNewline[2]}${escapedQuotedWithNewline[1]}`;
+};
+
 const parseServiceBlocks = (content: string) => {
   const lines = normalizeContent(content).split("\n");
 
@@ -156,7 +165,7 @@ const parseMapStyleEnvEntry = (line: string) => {
   if (!key) {
     return null;
   }
-  const value = line.slice(idx + 1).trim();
+  const value = normalizeEscapedTemplateValue(line.slice(idx + 1));
   return { key, value };
 };
 
@@ -173,7 +182,7 @@ const parseListStyleEnvEntry = (line: string) => {
   if (!key) {
     return null;
   }
-  const value = line.slice(idx + 1).trim();
+  const value = normalizeEscapedTemplateValue(line.slice(idx + 1));
   return { key, value };
 };
 
