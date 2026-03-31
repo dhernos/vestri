@@ -40,6 +40,7 @@ Create `.env` (or `.env.local`) in this directory.
 | Variable                  | Required                           | Default                 | Description                                                                               |
 | ------------------------- | ---------------------------------- | ----------------------- | ----------------------------------------------------------------------------------------- |
 | `GO_API_URL`              | Yes (for non-local/default setups) | `http://localhost:8080` | Backend base URL used by Next rewrites, middleware auth checks, and proxy route handlers. |
+| `NEXT_PUBLIC_CONSOLE_WS_BASE_URL` | Optional                  | unset                   | Optional public API origin for browser WebSocket console endpoints (logs/interactive), e.g. `https://api.example.com`. |
 | `NODE_ENV`                | Optional                           | framework default       | Runtime mode (`production` in container images).                                          |
 | `NEXT_TELEMETRY_DISABLED` | Optional                           | unset                   | Set to `1` to disable Next.js telemetry.                                                  |
 

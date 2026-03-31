@@ -27,7 +27,39 @@ type UseServerConsoleParams = {
 };
 
 const maxConsoleOutputChars = 250_000;
+const consoleWSBaseURLOverride =
+  process.env.NEXT_PUBLIC_CONSOLE_WS_BASE_URL?.trim() || "";
 let xtermRuntimePromise: Promise<XTermRuntime> | null = null;
+
+const toWebSocketOrigin = (rawURL: string) => {
+  try {
+    const parsed = new URL(rawURL);
+    if (parsed.protocol === "https:") {
+      parsed.protocol = "wss:";
+    } else if (parsed.protocol === "http:") {
+      parsed.protocol = "ws:";
+    }
+    if (parsed.protocol !== "ws:" && parsed.protocol !== "wss:") {
+      return "";
+    }
+    parsed.pathname = "";
+    parsed.search = "";
+    parsed.hash = "";
+    return parsed.toString().replace(/\/$/, "");
+  } catch {
+    return "";
+  }
+};
+
+const isLocalHostName = (hostname: string) => {
+  const value = hostname.toLowerCase();
+  return (
+    value === "localhost" ||
+    value === "127.0.0.1" ||
+    value === "::1" ||
+    value === "[::1]"
+  );
+};
 
 const loadXtermRuntime = async (): Promise<XTermRuntime> => {
   if (!xtermRuntimePromise) {
@@ -69,6 +101,7 @@ export const useServerConsole = ({
 
   const consoleOutputRef = useRef<HTMLPreElement | null>(null);
   const logsSocketRef = useRef<WebSocket | null>(null);
+  const logsStreamAbortRef = useRef<AbortController | null>(null);
   const logsRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const consoleSnapshotRequestRef = useRef(0);
   const consoleHasOutputRef = useRef(false);
@@ -117,8 +150,32 @@ export const useServerConsole = ({
       const params = new URLSearchParams();
       params.set("follow", "1");
       params.set("tail", tail);
-      const proto = window.location.protocol === "https:" ? "wss" : "ws";
-      return `${proto}://${window.location.host}${basePath}/console/logs/ws?${params.toString()}`;
+      const path = `${basePath}/console/logs/ws?${params.toString()}`;
+      const candidates: string[] = [];
+      const addCandidate = (url: string) => {
+        if (url && !candidates.includes(url)) {
+          candidates.push(url);
+        }
+      };
+
+      if (consoleWSBaseURLOverride) {
+        const wsOrigin = toWebSocketOrigin(consoleWSBaseURLOverride);
+        if (wsOrigin) {
+          addCandidate(`${wsOrigin}${path}`);
+        }
+      }
+
+      const host = window.location.host;
+      const hostname = window.location.hostname;
+      const preferSecureFromHTTP =
+        window.location.protocol === "http:" && !isLocalHostName(hostname);
+      if (window.location.protocol === "https:" || preferSecureFromHTTP) {
+        addCandidate(`wss://${host}${path}`);
+      }
+      const fallbackProto = window.location.protocol === "https:" ? "wss" : "ws";
+      addCandidate(`${fallbackProto}://${host}${path}`);
+
+      return candidates[0] || "";
     },
     [basePath]
   );
@@ -253,6 +310,10 @@ export const useServerConsole = ({
         logsSocketRef.current.close();
       }
       logsSocketRef.current = null;
+      if (logsStreamAbortRef.current) {
+        logsStreamAbortRef.current.abort();
+        logsStreamAbortRef.current = null;
+      }
       if (logsRetryTimerRef.current) {
         clearTimeout(logsRetryTimerRef.current);
         logsRetryTimerRef.current = null;
@@ -263,12 +324,17 @@ export const useServerConsole = ({
     let cancelled = false;
     let reconnectAttempt = 0;
     let initialHistoryLoaded = false;
+    let preferStreamTransport = false;
 
     const cleanup = () => {
       if (logsSocketRef.current && logsSocketRef.current.readyState <= WebSocket.OPEN) {
         logsSocketRef.current.close();
       }
       logsSocketRef.current = null;
+      if (logsStreamAbortRef.current) {
+        logsStreamAbortRef.current.abort();
+        logsStreamAbortRef.current = null;
+      }
       if (logsRetryTimerRef.current) {
         clearTimeout(logsRetryTimerRef.current);
         logsRetryTimerRef.current = null;
@@ -312,6 +378,103 @@ export const useServerConsole = ({
       }, delay);
     };
 
+    const connectLogsViaStream = async (tailMode: string) => {
+      if (logsSocketRef.current && logsSocketRef.current.readyState <= WebSocket.OPEN) {
+        logsSocketRef.current.close();
+      }
+      logsSocketRef.current = null;
+
+      if (logsStreamAbortRef.current) {
+        logsStreamAbortRef.current.abort();
+        logsStreamAbortRef.current = null;
+      }
+
+      const abortController = new AbortController();
+      logsStreamAbortRef.current = abortController;
+
+      try {
+        const res = await fetch(buildConsoleLogsURL(true, tailMode), {
+          credentials: "include",
+          cache: "no-store",
+          signal: abortController.signal,
+        });
+
+        if (cancelled || abortController.signal.aborted) {
+          return;
+        }
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          if (cancelled || abortController.signal.aborted) {
+            return;
+          }
+          setConsoleError(text || t("logs.errors.connectStream"));
+          setConsoleStatus("error");
+          void scheduleReconnect();
+          return;
+        }
+
+        setConsoleError("");
+        setConsoleStatus("connected");
+        reconnectAttempt = 0;
+        if (!initialHistoryLoaded) {
+          initialHistoryLoaded = true;
+        }
+
+        if (!res.body) {
+          const text = await res.text().catch(() => "");
+          if (cancelled || abortController.signal.aborted) {
+            return;
+          }
+          if (text) {
+            appendConsoleOutput(text);
+          }
+          setConsoleStatus("disconnected");
+          void scheduleReconnect();
+          return;
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (cancelled || abortController.signal.aborted) {
+            try {
+              await reader.cancel();
+            } catch {
+              // ignore cancel errors
+            }
+            return;
+          }
+          if (done) {
+            break;
+          }
+          appendConsoleOutput(decoder.decode(value, { stream: true }));
+        }
+
+        const tail = decoder.decode();
+        if (tail) {
+          appendConsoleOutput(tail);
+        }
+
+        if (!cancelled && !abortController.signal.aborted) {
+          setConsoleStatus("disconnected");
+          void scheduleReconnect();
+        }
+      } catch {
+        if (!cancelled && !abortController.signal.aborted) {
+          setConsoleError(t("logs.errors.interrupted"));
+          setConsoleStatus("error");
+          void scheduleReconnect();
+        }
+      } finally {
+        if (logsStreamAbortRef.current === abortController) {
+          logsStreamAbortRef.current = null;
+        }
+      }
+    };
+
     const connectLogs = async () => {
       if (cancelled) {
         return;
@@ -332,15 +495,17 @@ export const useServerConsole = ({
       const tailMode =
         initialHistoryLoaded || consoleHasOutputRef.current ? "0" : "all";
 
+      if (preferStreamTransport) {
+        void connectLogsViaStream(tailMode);
+        return;
+      }
+
       let socket: WebSocket;
       try {
         socket = new WebSocket(buildConsoleLogsWSURL(tailMode));
       } catch {
-        if (!cancelled) {
-          setConsoleError(t("logs.errors.connectStream"));
-          setConsoleStatus("error");
-          void scheduleReconnect();
-        }
+        preferStreamTransport = true;
+        void connectLogsViaStream(tailMode);
         return;
       }
 
@@ -403,6 +568,8 @@ export const useServerConsole = ({
         }
         if (!hadSocketError) {
           setConsoleStatus("disconnected");
+        } else {
+          preferStreamTransport = true;
         }
         void scheduleReconnect();
       };
@@ -417,6 +584,7 @@ export const useServerConsole = ({
   }, [
     appendConsoleOutput,
     basePath,
+    buildConsoleLogsURL,
     buildConsoleLogsWSURL,
     refreshServerStatus,
     shouldConnectLogStream,
@@ -453,6 +621,8 @@ export const useServerConsole = ({
     let resizeObserver: ResizeObserver | null = null;
     let receivedSessionEndSignal = false;
     let connectedAtMs = 0;
+    let execURLCandidates: string[] = [];
+    let execURLIndex = 0;
 
     const cleanupSocket = () => {
       if (execSocketRef.current && execSocketRef.current.readyState <= WebSocket.OPEN) {
@@ -493,6 +663,36 @@ export const useServerConsole = ({
         cols: terminal.cols,
         rows: terminal.rows,
       });
+    };
+
+    const buildExecSocketURLCandidates = () => {
+      const candidates: string[] = [];
+      const addCandidate = (url: string) => {
+        if (url && !candidates.includes(url)) {
+          candidates.push(url);
+        }
+      };
+
+      const path = `${basePath}/console/exec/ws`;
+
+      if (consoleWSBaseURLOverride) {
+        const wsOrigin = toWebSocketOrigin(consoleWSBaseURLOverride);
+        if (wsOrigin) {
+          addCandidate(`${wsOrigin}${path}`);
+        }
+      }
+
+      const host = window.location.host;
+      const hostname = window.location.hostname;
+      const preferSecureFromHTTP =
+        window.location.protocol === "http:" && !isLocalHostName(hostname);
+      if (window.location.protocol === "https:" || preferSecureFromHTTP) {
+        addCandidate(`wss://${host}${path}`);
+      }
+      const fallbackProto = window.location.protocol === "https:" ? "wss" : "ws";
+      addCandidate(`${fallbackProto}://${host}${path}`);
+
+      return candidates;
     };
 
     let connectExec = () => {};
@@ -552,17 +752,42 @@ export const useServerConsole = ({
         return;
       }
 
+      if (execURLCandidates.length === 0) {
+        execURLCandidates = buildExecSocketURLCandidates();
+        execURLIndex = 0;
+      }
+      const socketURL = execURLCandidates[execURLIndex];
+      if (!socketURL) {
+        setExecStatus("error");
+        setExecError(t("interactive.errors.connectionFailed"));
+        return;
+      }
+
       cleanupSocket();
       setExecStatus(reconnectAttempt === 0 ? "connecting" : "reconnecting");
       connectedAtMs = 0;
       receivedSessionEndSignal = false;
 
-      const proto = window.location.protocol === "https:" ? "wss" : "ws";
-      const socketURL = `${proto}://${window.location.host}${basePath}/console/exec/ws`;
-      const socket = new WebSocket(socketURL);
+      let socket: WebSocket;
+      try {
+        socket = new WebSocket(socketURL);
+      } catch {
+        if (execURLIndex + 1 < execURLCandidates.length) {
+          execURLIndex += 1;
+          connectExec();
+          return;
+        }
+        setExecStatus("error");
+        setExecError(t("interactive.errors.connectionFailed"));
+        scheduleReconnect();
+        return;
+      }
+
       execSocketRef.current = socket;
+      let opened = false;
 
       socket.onopen = () => {
+        opened = true;
         connectedAtMs = Date.now();
         reconnectAttempt = 0;
         setExecStatus("connected");
@@ -591,8 +816,16 @@ export const useServerConsole = ({
         if (execSocketRef.current === socket) {
           execSocketRef.current = null;
         }
-        terminal?.write(`\r\n[${t("interactive.terminal.disconnected")}]\r\n`);
-        setExecStatus("disconnected");
+        if (opened) {
+          terminal?.write(`\r\n[${t("interactive.terminal.disconnected")}]\r\n`);
+          setExecStatus("disconnected");
+        }
+
+        if (!opened && execURLIndex + 1 < execURLCandidates.length) {
+          execURLIndex += 1;
+          connectExec();
+          return;
+        }
 
         const closedQuickly = connectedAtMs > 0 && Date.now() - connectedAtMs < 1500;
         if (receivedSessionEndSignal || closedQuickly) {
