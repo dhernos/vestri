@@ -410,6 +410,79 @@ export const useServerConsole = ({
 
       const abortController = new AbortController();
       logsStreamAbortRef.current = abortController;
+      const fallbackStallThresholdMs = 7000;
+      const fallbackPollIntervalMs = 2000;
+      let fallbackPollingActive = false;
+      let fallbackPollingTimer: ReturnType<typeof setInterval> | null = null;
+      let fallbackPollingInFlight = false;
+      let streamChunkReceivedAtMs = Date.now();
+
+      const stopFallbackPolling = () => {
+        if (fallbackPollingTimer) {
+          clearInterval(fallbackPollingTimer);
+          fallbackPollingTimer = null;
+        }
+        fallbackPollingActive = false;
+      };
+
+      const pollLatestLogsSnapshot = async () => {
+        if (
+          cancelled ||
+          abortController.signal.aborted ||
+          fallbackPollingInFlight
+        ) {
+          return;
+        }
+        fallbackPollingInFlight = true;
+        try {
+          const snapshotRes = await fetch(buildConsoleLogsURL(false, "200"), {
+            credentials: "include",
+            cache: "no-store",
+            signal: abortController.signal,
+          });
+          if (cancelled || abortController.signal.aborted || !snapshotRes.ok) {
+            return;
+          }
+
+          const snapshotText = await snapshotRes.text().catch(() => "");
+          if (cancelled || abortController.signal.aborted) {
+            return;
+          }
+          if (snapshotText.length > 0) {
+            streamChunkReceivedAtMs = Date.now();
+            if (snapshotText.length <= maxConsoleOutputChars) {
+              setConsoleOutput(snapshotText);
+            } else {
+              setConsoleOutput(
+                snapshotText.slice(snapshotText.length - maxConsoleOutputChars)
+              );
+            }
+          }
+        } catch {
+          // ignore polling fallback errors and let reconnect logic handle hard failures
+        } finally {
+          fallbackPollingInFlight = false;
+        }
+      };
+
+      const startFallbackPolling = () => {
+        if (fallbackPollingActive) {
+          return;
+        }
+        fallbackPollingActive = true;
+        fallbackPollingTimer = setInterval(() => {
+          void pollLatestLogsSnapshot();
+        }, fallbackPollIntervalMs);
+      };
+
+      const stallWatchTimer = setInterval(() => {
+        if (cancelled || abortController.signal.aborted || fallbackPollingActive) {
+          return;
+        }
+        if (Date.now() - streamChunkReceivedAtMs >= fallbackStallThresholdMs) {
+          startFallbackPolling();
+        }
+      }, 1500);
 
       try {
         let streamTailMode = tailMode;
@@ -516,6 +589,10 @@ export const useServerConsole = ({
           if (done) {
             break;
           }
+          streamChunkReceivedAtMs = Date.now();
+          if (fallbackPollingActive) {
+            stopFallbackPolling();
+          }
           appendConsoleOutput(decoder.decode(value, { stream: true }));
         }
 
@@ -535,6 +612,8 @@ export const useServerConsole = ({
           void scheduleReconnect();
         }
       } finally {
+        clearInterval(stallWatchTimer);
+        stopFallbackPolling();
         if (logsStreamAbortRef.current === abortController) {
           logsStreamAbortRef.current = null;
         }
