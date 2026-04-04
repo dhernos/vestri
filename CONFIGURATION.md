@@ -62,6 +62,7 @@ Requirements if you generate it another way:
 | Variable | Default | Required | What it controls |
 | --- | --- | --- | --- |
 | `GO_API_URL` | `http://localhost:8080` | Yes for non-default setups | Backend base URL used by rewrites, proxy routes, and auth checks. |
+| `NEXTAUTH_URL` | `http://localhost:3000` | Yes | Frontend base URL used by eg. Cookies |
 | `NEXT_PUBLIC_CONSOLE_WS_BASE_URL` | empty | Optional | Public API origin for browser log WebSocket endpoint (`/console/logs/ws`). |
 | `NODE_ENV` | framework default (`production` in containers) | Optional | Runtime mode. |
 | `NEXT_TELEMETRY_DISABLED` | empty | Optional | Set to `1` to disable Next.js telemetry. |
