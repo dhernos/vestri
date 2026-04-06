@@ -44,7 +44,6 @@
     "IP_BANNED": "Zu viele fehlgeschlagene Versuche. Versuchen Sie es später.",
     "SEND_CODE_ERROR": "Code konnte nicht gesendet werden.",
     "INVALID_CREDENTIALS": "Ungültige Anmeldedaten.",
-    "HTTPS_REQUIRED": "Passwort-Login erfordert HTTPS.",
     "RESEND_FAILED": "Erneutes Senden fehlgeschlagen.",
     "RESET_FAILED": "Zurücksetzen fehlgeschlagen.",
     "ALL_FIELDS_REQUIRED": "Alle Felder sind erforderlich.",
@@ -260,7 +259,9 @@
     "messages": {
       "signupSuccess": "Konto erstellt — bitte E-Mail verifizieren.",
       "verificationSuccess": "E-Mail verifiziert — Sie können sich jetzt anmelden.",
-      "versionOutdated": "Ihre Anwendung ist veraltet! Bitte aktualisieren (<link>GitHub</link>)."
+      "versionOutdated": "Ihre Anwendung ist veraltet. Aktuell: {currentVersion} | Neueste Version: {latestVersion}. Bitte aktualisieren (<link>GitHub</link>).",
+      "unknownVersion": "unbekannt",
+      "invalidCredentialsWithHashingHint": "Ungültige Anmeldedaten. Hinweis: Das Passwort-Hashing wurde mit Version 1.3 geändert. Falls Sie Vestri davor verwendet haben richten Sie einen E-Mail-Client ein und fordern Sie anschließend über „Passwort vergessen?“ einen Passwort-Reset an."
     },
     "footer": {
       "noAccount": "Noch kein Konto? <registerLink>Jetzt registrieren</registerLink>"

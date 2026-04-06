@@ -10,6 +10,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { TwoFactorModal } from "@/components/profile_page/TwoFactorModal";
 import { useToast } from "@/components/ui/toast";
 import { prepareStepUpCode } from "@/lib/step-up";
+import {
+  CLIENT_PASSWORD_FORMAT,
+  hashPasswordForTransport,
+} from "@/lib/password-client";
 
 export default function ChangePasswordSection() {
   const { status, data: sessData, logout } = useAuth();
@@ -91,11 +95,21 @@ export default function ChangePasswordSection() {
     }
 
     try {
+      const [currentPasswordHash, newPasswordHash] = await Promise.all([
+        hashPasswordForTransport(currentPassword),
+        hashPasswordForTransport(newPassword),
+      ]);
+
       const res = await fetch("/api/profile/change-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ currentPassword, newPassword }),
+        body: JSON.stringify({
+          currentPassword: currentPasswordHash,
+          currentPasswordFormat: CLIENT_PASSWORD_FORMAT,
+          newPassword: newPasswordHash,
+          newPasswordFormat: CLIENT_PASSWORD_FORMAT,
+        }),
       });
 
       const data = await res.json();

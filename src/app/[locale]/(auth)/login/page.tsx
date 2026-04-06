@@ -85,6 +85,8 @@ export default function LoginPage() {
 
   const LOCAL_FILE_PATH = "/version.txt";
   const [isOutdated, setIsOutdated] = useState(false);
+  const [localVersion, setLocalVersion] = useState<string | null>(null);
+  const [latestVersion, setLatestVersion] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialMessage) {
@@ -94,17 +96,23 @@ export default function LoginPage() {
 
   useEffect(() => {
     async function checkVersion() {
-      let localVersion = "";
-      const remoteVersion = await getRemoteVersion();
-
       try {
+        const remoteVersionRaw = await getRemoteVersion();
+        const remoteVersion =
+          typeof remoteVersionRaw === "string" && remoteVersionRaw.trim()
+            ? remoteVersionRaw.trim()
+            : null;
+
         const localResponse = await fetch(LOCAL_FILE_PATH);
         if (!localResponse.ok) {
           throw new Error("Failed to fetch local version file.");
         }
-        localVersion = (await localResponse.text()).trim();
+        const currentVersion = (await localResponse.text()).trim();
 
-        if (remoteVersion !== localVersion) {
+        setLocalVersion(currentVersion || null);
+        setLatestVersion(remoteVersion);
+
+        if (remoteVersion && currentVersion && remoteVersion !== currentVersion) {
           setIsOutdated(true);
         }
       } catch (error) {
@@ -118,6 +126,10 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    const invalidCredentialsDescription = t(
+      "messages.invalidCredentialsWithHashingHint"
+    );
 
     const result = await loginWithPassword(
       email,
@@ -157,14 +169,14 @@ export default function LoginPage() {
           setRequires2FA(true);
           break;
 
-        case "HTTPS_REQUIRED":
-          push({
-            variant: "error",
-            description: tErrors("HTTPS_REQUIRED"),
-          });
-          break;
-
         default:
+          if (result.message === "INVALID_CREDENTIALS") {
+            push({
+              variant: "error",
+              description: invalidCredentialsDescription,
+            });
+            break;
+          }
           if (tErrors.has(result.message as never)) {
             push({
               variant: "error",
@@ -174,7 +186,7 @@ export default function LoginPage() {
           }
           push({
             variant: "error",
-            description: tErrors("INVALID_CREDENTIALS"),
+            description: invalidCredentialsDescription,
           });
       }
     } else {
@@ -311,6 +323,8 @@ export default function LoginPage() {
                 <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                   ⚠️{" "}
                   {t.rich("messages.versionOutdated", {
+                    currentVersion: localVersion || t("messages.unknownVersion"),
+                    latestVersion: latestVersion || t("messages.unknownVersion"),
                     link: (chunks) => (
                       <Link
                         href="https://github.com/dhernos/auth_template"

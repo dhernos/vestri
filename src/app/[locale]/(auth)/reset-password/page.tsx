@@ -16,6 +16,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { EyeIcon, EyeOffIcon } from "@/components/ui/eye_icon";
 import { useToast } from "@/components/ui/toast";
+import {
+  CLIENT_PASSWORD_FORMAT,
+  hashPasswordForTransport,
+} from "@/lib/password-client";
 
 // This function evaluates the strength of a password
 const validatePassword = (password: string) => {
@@ -71,28 +75,38 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    const response = await fetch("/api/reset-password", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ token, password }),
-    });
+    try {
+      const passwordHash = await hashPasswordForTransport(password);
 
-    await response.json();
+      const response = await fetch("/api/reset-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          password: passwordHash,
+          passwordFormat: CLIENT_PASSWORD_FORMAT,
+        }),
+      });
 
-    if (response.ok) {
-      // Wir verwenden eine lokalisierte Nachricht, falls die API keine zurückgibt
-      push({ variant: "success", description: t("messages.success") });
-      setTimeout(() => {
-        router.push("/login");
-      }, 3000);
-    } else {
-      // Wir verwenden eine lokalisierte Nachricht, falls die API keine zurückgibt
-      push({ variant: "error", description: tErrors("RESET_FAILED") });
+      await response.json();
+
+      if (response.ok) {
+        // Wir verwenden eine lokalisierte Nachricht, falls die API keine zurückgibt
+        push({ variant: "success", description: t("messages.success") });
+        setTimeout(() => {
+          router.push("/login");
+        }, 3000);
+      } else {
+        // Wir verwenden eine lokalisierte Nachricht, falls die API keine zurückgibt
+        push({ variant: "error", description: tErrors("RESET_FAILED") });
+      }
+    } catch {
+      push({ variant: "error", description: tErrors("UNEXPECTED_ERROR") });
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const getStrengthColor = (strength: number) => {
