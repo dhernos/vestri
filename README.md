@@ -96,7 +96,7 @@ Type=simple
 User=vestri
 Group=vestri
 WorkingDirectory=/opt/vestri-worker
-ExecStart=/usr/local/bin/vestri-worker
+ExecStart=/usr/bin/go run ./cmd/worker/main.go
 Restart=always
 RestartSec=3
 
