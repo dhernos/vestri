@@ -1,4 +1,9 @@
 // Client-side helpers for talking to the Go auth backend.
+import {
+  CLIENT_PASSWORD_FORMAT,
+  hashPasswordForTransport,
+} from "@/lib/password-client";
+
 export type GoUser = {
   id: string;
   email: string;
@@ -77,41 +82,53 @@ export async function loginWithPassword(
   code?: string,
   rememberMe?: boolean
 ): Promise<LoginResult> {
-  const res = await fetch("/api/auth/login", {
-    ...defaultFetchInit,
-    method: "POST",
-    body: JSON.stringify({ email, password, code, rememberMe }),
-  });
+  try {
+    const passwordHash = await hashPasswordForTransport(password);
 
-  if (!res.ok) {
-    const body = await safeJson(res);
-    if (res.status === 403 && body?.message === "TWO_FACTOR_REQUIRED") {
-      return { ok: false, twoFactorRequired: true, message: body?.message };
+    const res = await fetch("/api/auth/login", {
+      ...defaultFetchInit,
+      method: "POST",
+      body: JSON.stringify({
+        email,
+        password: passwordHash,
+        passwordFormat: CLIENT_PASSWORD_FORMAT,
+        code,
+        rememberMe,
+      }),
+    });
+
+    if (!res.ok) {
+      const body = await safeJson(res);
+      if (res.status === 403 && body?.message === "TWO_FACTOR_REQUIRED") {
+        return { ok: false, twoFactorRequired: true, message: body?.message };
+      }
+      const message = isMessageCode(body?.message)
+        ? body.message
+        : "INVALID_CREDENTIALS";
+      return { ok: false, message };
     }
-    const message = isMessageCode(body?.message)
-      ? body.message
-      : "INVALID_CREDENTIALS";
-    return { ok: false, message };
-  }
 
-  const data = await safeJson(res);
-  const u = data?.user || {};
-  const user: GoUser = {
-    id: u.id,
-    email: u.email,
-    name: u.name,
-    role: u.role,
-    theme: u.theme,
-    image: u.image,
-    sessionId: data?.sessionId,
-    isTwoFactorEnabled: u.isTwoFactorEnabled ?? u.twoFactorEnabled,
-    twoFactorMethod: u.twoFactorMethod,
-    twoFactorVerified: true,
-    twoFactorVerifiedAt: new Date().toISOString(),
-    hasPassword: u.hasPassword ?? true,
-    oauthLinked: u.oauthLinked ?? false,
-  };
-  return { ok: true, user, sessionId: data?.sessionId };
+    const data = await safeJson(res);
+    const u = data?.user || {};
+    const user: GoUser = {
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      role: u.role,
+      theme: u.theme,
+      image: u.image,
+      sessionId: data?.sessionId,
+      isTwoFactorEnabled: u.isTwoFactorEnabled ?? u.twoFactorEnabled,
+      twoFactorMethod: u.twoFactorMethod,
+      twoFactorVerified: true,
+      twoFactorVerifiedAt: new Date().toISOString(),
+      hasPassword: u.hasPassword ?? true,
+      oauthLinked: u.oauthLinked ?? false,
+    };
+    return { ok: true, user, sessionId: data?.sessionId };
+  } catch {
+    return { ok: false, message: "UNEXPECTED_ERROR" };
+  }
 }
 
 export async function logout(): Promise<void> {

@@ -44,7 +44,6 @@
     "IP_BANNED": "Too many failed attempts. Try later.",
     "SEND_CODE_ERROR": "Failed to send verification code.",
     "INVALID_CREDENTIALS": "Invalid credentials.",
-    "HTTPS_REQUIRED": "Password login requires HTTPS.",
     "RESEND_FAILED": "Failed to resend code.",
     "RESET_FAILED": "Failed to reset password.",
     "ALL_FIELDS_REQUIRED": "All fields are required.",
@@ -260,7 +259,9 @@
     "messages": {
       "signupSuccess": "Account created — please verify your email.",
       "verificationSuccess": "Email verified — you can sign in now.",
-      "versionOutdated": "Your application version is outdated! Please update (<link>GitHub</link>)."
+      "versionOutdated": "Your application is outdated. Current: {currentVersion} | Latest: {latestVersion}. Please update (<link>GitHub</link>).",
+      "unknownVersion": "unknown",
+      "invalidCredentialsWithHashingHint": "Invalid credentials. Note: password hashing has changed with version 1.3. If you used Vestri before please set up an email client, then request a password reset via \"Forgot password?\"."
     },
     "footer": {
       "noAccount": "Don't have an account? <registerLink>Create one</registerLink>"

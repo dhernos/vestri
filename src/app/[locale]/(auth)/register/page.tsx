@@ -19,6 +19,10 @@ import { EyeIcon, EyeOffIcon } from "@/components/ui/eye_icon";
 import { useToast } from "@/components/ui/toast";
 import ToggleLanguage from "@/components/language-toggle";
 import ThemeToggle from "@/components/theme-toggle";
+import {
+  CLIENT_PASSWORD_FORMAT,
+  hashPasswordForTransport,
+} from "@/lib/password-client";
 
 // This function evaluates the strength of a password
 const validatePassword = (password: string) => {
@@ -71,13 +75,19 @@ export default function SignUpPage() {
     }
 
     try {
+      const passwordHash = await hashPasswordForTransport(password);
       const response = await fetch("/api/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Accept-Language": locale,
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({
+          name,
+          email,
+          password: passwordHash,
+          passwordFormat: CLIENT_PASSWORD_FORMAT,
+        }),
       });
 
       const data = await response.json();

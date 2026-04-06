@@ -20,7 +20,6 @@ These variables are consumed by `docker-compose.yml` for the default stack.
 | `FRONTEND_PORT` | `3000` | Yes | Host port mapped to frontend container port `3000`. |
 | `BACKEND_PORT` | `8080` | Yes | Host port mapped to backend container port `8080`. |
 | `APP_BASE_URL` | `http://localhost:3000` | Yes | Public base URL used for callbacks and generated links. |
-| `ENFORCE_HTTPS_AUTH` | auto (`true` if `APP_BASE_URL` is `https`) | Optional | Forces HTTPS requirement for password endpoints. |
 | `SESSION_COOKIE_SECURE` | auto (`true` if `APP_BASE_URL` is `https`) | Optional | Forces `Secure` cookie flag for auth/session cookies. |
 | `NODE_API_KEY_ENCRYPTION_KEY` | `change-me` | Strongly recommended | Encrypts stored worker API keys in backend storage. Accepted formats: `64-char hex`, base64 that decodes to `32 bytes`, or raw `32-char` string. Generate with `openssl rand -hex 32` (or use PowerShell command from README). |
 | `WEB_AUTHN_ORIGIN` | `http://localhost:3000` | For passkeys | Primary WebAuthn origin. |
@@ -88,7 +87,6 @@ List values are comma-separated.
 | `WORKER_TLS_CA_CERT_DIR` | `./certs/worker-cas` | Optional | Directory with trusted worker CA cert files. |
 | `NODE_API_KEY_ENCRYPTION_KEY` | empty | Strongly recommended | Encryption key for stored worker API keys. |
 | `TRUSTED_PROXIES` | empty | Optional | Trusted proxy CIDRs/IPs for forwarded headers. |
-| `ENFORCE_HTTPS_AUTH` | auto based on `APP_BASE_URL` scheme | Optional | Enforces HTTPS on password/auth endpoints. |
 | `SESSION_COOKIE_SECURE` | auto based on `APP_BASE_URL` scheme | Optional | Forces `Secure` cookie flag. |
 | `WEB_AUTHN_ORIGIN` | `APP_BASE_URL` | Optional | Primary WebAuthn origin. |
 | `WEB_AUTHN_RP_ID` | host from `WEB_AUTHN_ORIGIN` | Optional | WebAuthn relying party ID. |
