@@ -80,8 +80,8 @@ export default function LoginPage() {
   const initialMessage = signupSuccess
     ? t("messages.signupSuccess")
     : verificationSuccess
-    ? t("messages.verificationSuccess")
-    : null;
+      ? t("messages.verificationSuccess")
+      : null;
 
   const LOCAL_FILE_PATH = "/version.txt";
   const [isOutdated, setIsOutdated] = useState(false);
@@ -112,7 +112,11 @@ export default function LoginPage() {
         setLocalVersion(currentVersion || null);
         setLatestVersion(remoteVersion);
 
-        if (remoteVersion && currentVersion && remoteVersion !== currentVersion) {
+        if (
+          remoteVersion &&
+          currentVersion &&
+          remoteVersion !== currentVersion
+        ) {
           setIsOutdated(true);
         }
       } catch (error) {
@@ -128,14 +132,14 @@ export default function LoginPage() {
     setLoading(true);
 
     const invalidCredentialsDescription = t(
-      "messages.invalidCredentialsWithHashingHint"
+      "messages.invalidCredentialsWithHashingHint",
     );
 
     const result = await loginWithPassword(
       email,
       password,
       undefined,
-      rememberMe
+      rememberMe,
     );
 
     if (!result.ok) {
@@ -229,7 +233,7 @@ export default function LoginPage() {
       }
       if (fallback.startsWith(`${passkeyFallbackCodes.loginRpIdMismatch}:`)) {
         const rpId = fallback.slice(
-          `${passkeyFallbackCodes.loginRpIdMismatch}:`.length
+          `${passkeyFallbackCodes.loginRpIdMismatch}:`.length,
         );
         return tPasskeys("errors.loginRpIdMismatch", { rpId });
       }
@@ -323,11 +327,13 @@ export default function LoginPage() {
                 <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                   ⚠️{" "}
                   {t.rich("messages.versionOutdated", {
-                    currentVersion: localVersion || t("messages.unknownVersion"),
-                    latestVersion: latestVersion || t("messages.unknownVersion"),
+                    currentVersion:
+                      localVersion || t("messages.unknownVersion"),
+                    latestVersion:
+                      latestVersion || t("messages.unknownVersion"),
                     link: (chunks) => (
                       <Link
-                        href="https://github.com/dhernos/auth_template"
+                        href="https://github.com/dhernos/vestri"
                         target="_blank"
                         className="text-primary underline"
                       >
@@ -342,7 +348,10 @@ export default function LoginPage() {
             <CardContent className="space-y-4">
               <form onSubmit={handleSubmit}>
                 <div className="mb-4">
-                  <label htmlFor="email" className="mb-2 block text-sm font-bold">
+                  <label
+                    htmlFor="email"
+                    className="mb-2 block text-sm font-bold"
+                  >
                     {t("form.emailLabel")}
                   </label>
                   <Input
@@ -385,7 +394,9 @@ export default function LoginPage() {
                       ) : (
                         <EyeIcon className="h-4 w-4" />
                       )}
-                      <span className="sr-only">{t("form.togglePassword")}</span>
+                      <span className="sr-only">
+                        {t("form.togglePassword")}
+                      </span>
                     </Button>
                   </div>
                 </div>
@@ -428,7 +439,9 @@ export default function LoginPage() {
                   disabled={passkeyLoading || loading || !email}
                   onClick={handlePasskeyLogin}
                 >
-                  {passkeyLoading ? t("passkeys.loading") : t("passkeys.button")}
+                  {passkeyLoading
+                    ? t("passkeys.loading")
+                    : t("passkeys.button")}
                 </Button>
               </form>
 
