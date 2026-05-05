@@ -107,4 +107,4 @@ volumes:
   backend-worker-cas:
     name: vestri-backend-worker-cas
   frontend-uploads:
-    name: frontend-uploads
+    name: vestri-frontend-uploads
