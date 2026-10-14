@@ -40,7 +40,7 @@ These variables are consumed by `docker-compose.yml` for the default stack.
 | `LOG_MAX_BACKUPS` | `1` | Optional | Number of rotated backend log files kept. |
 | `TOTP_ISSUER` | `Vestri` | Optional | Issuer label shown in authenticator apps. |
 | `WORKER_TLS_CA_CERT_FILE` | empty | Optional | Extra worker CA cert file trusted by backend. |
-| `TRUSTED_PROXIES` | empty | Optional | Comma-separated trusted proxy CIDRs/IPs. |
+| `TRUSTED_PROXIES` | empty | Required behind a proxy | Comma-separated IPs/CIDRs of trusted immediate proxies. |
 | `AUTO_MIGRATE` | `true` | Optional | Run SQL migrations automatically on backend startup. |
 | `NEXT_TELEMETRY_DISABLED` | `1` | Optional | Disable Next.js telemetry in frontend container. |
 
@@ -86,7 +86,7 @@ List values are comma-separated.
 | `WORKER_TLS_CA_CERT_FILE` | empty | Optional | Additional trusted worker CA cert file. |
 | `WORKER_TLS_CA_CERT_DIR` | `./certs/worker-cas` | Optional | Directory with trusted worker CA cert files. |
 | `NODE_API_KEY_ENCRYPTION_KEY` | empty | Strongly recommended | Encryption key for stored worker API keys. |
-| `TRUSTED_PROXIES` | empty | Optional | Trusted proxy CIDRs/IPs for forwarded headers. |
+| `TRUSTED_PROXIES` | empty | Required behind a proxy | Trusted immediate proxy IPs/CIDRs for forwarded headers. |
 | `SESSION_COOKIE_SECURE` | auto based on `APP_BASE_URL` scheme | Optional | Forces `Secure` cookie flag. |
 | `WEB_AUTHN_ORIGIN` | `APP_BASE_URL` | Optional | Primary WebAuthn origin. |
 | `WEB_AUTHN_RP_ID` | host from `WEB_AUTHN_ORIGIN` | Optional | WebAuthn relying party ID. |
@@ -103,6 +103,14 @@ List values are comma-separated.
 | `GITHUB_REDIRECT_URL` | `<APP_BASE_URL>/api/oauth/github/callback` | Optional | GitHub OAuth callback URL override. |
 | `AUTO_MIGRATE` | `true` | Optional | Applies migrations during backend startup. |
 | `MIGRATIONS_DIR` | `./migrations` | Optional | Migrations directory path. |
+
+For the bundled Compose stack, requests reach the backend from the frontend container. Set `TRUSTED_PROXIES` in `.env.stack` to that container's IP (or its narrowly scoped Compose network CIDR); otherwise sign-in alerts show the frontend proxy IP. Find the current container IP with:
+
+```bash
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' vestri-frontend
+```
+
+After setting the value, recreate the backend with `docker compose --env-file .env.stack up -d --force-recreate backend`. Only trust addresses that actually belong to proxies, and ensure any public edge proxy overwrites client-supplied `X-Forwarded-For` headers.
 
 ## 4) Migration CLI Env (`vestri-backend/cmd/migrate`)
 
