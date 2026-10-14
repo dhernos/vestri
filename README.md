@@ -24,16 +24,14 @@ Create your stack env file from the example:
 cp .env.stack.example .env.stack
 ```
 
-Adjust at least these values in `.env.stack`:
+For a public installation, change these values in `.env.stack`:
 
-- `APP_BASE_URL`: URL users open in the browser (for example `https://panel.example.com`).
-- `FRONTEND_PORT`: host port for the web UI.
-- `BACKEND_PORT`: host port for the backend API container.
-- `POSTGRES_PASSWORD`: database password for the stack.
-- `NODE_API_KEY_ENCRYPTION_KEY`: secret used by backend to encrypt worker API keys at rest.
-- `WEB_AUTHN_ORIGIN`: passkey origin, should match the browser origin (scheme + host + optional port).
-- `WEB_AUTHN_RP_ID`: passkey RP ID, usually only the domain (for example `example.com`).
-- `WEB_AUTHN_ORIGINS`: comma-separated allowed passkey origins (include your `APP_BASE_URL` origin).
+- `APP_BASE_URL`: the exact public URL visitors use, including `https://` and any non-standard public port, but no trailing path (for example `https://panel.example.com`). Passkey origins and RP ID are derived from this value by default.
+- `FRONTEND_PORT`: host port published for the web UI. The container always listens on port `3000`; point Nginx at this host port.
+- `POSTGRES_PASSWORD`: replace the example database password with a strong password.
+- `NODE_API_KEY_ENCRYPTION_KEY`: replace the example with a generated 32-byte key. Keep the same value after deployment.
+
+`BACKEND_PORT` only needs changing if the backend host port conflicts with another service. For normal use, leave the other values as supplied. Do not set `WEB_AUTHN_ORIGIN`, `WEB_AUTHN_RP_ID`, or `WEB_AUTHN_ORIGINS` unless you need to override the values derived from `APP_BASE_URL`.
 
 Generate `NODE_API_KEY_ENCRYPTION_KEY` once and paste it into `.env.stack`:
 
@@ -53,7 +51,34 @@ If these commands are not available, generate the key by any other method with o
 - Base64 string that decodes to exactly 32 bytes (typically 43 or 44 chars).
 - Raw 32-character string (supported, but hex/base64 is recommended).
 
-Use one stable value and keep it unchanged after production setup, otherwise existing encrypted node API keys can no longer be decrypted.
+Use one stable value and keep it unchanged after production setup, otherwise existing encrypted node API keys can no longer be decrypted. Values such as `xy` are not valid keys.
+
+### Nginx reverse proxy
+
+If Nginx runs on the Docker host and `.env.stack` contains `FRONTEND_PORT=3333`, proxy HTTPS traffic to `http://127.0.0.1:3333`. Keep the public host and scheme in the forwarded headers so redirects do not expose the container port:
+
+```nginx
+location / {
+	proxy_pass http://127.0.0.1:3333;
+	proxy_http_version 1.1;
+	proxy_set_header Host $host;
+	proxy_set_header X-Forwarded-Host $host;
+	proxy_set_header X-Forwarded-Proto $scheme;
+	proxy_set_header X-Forwarded-Port $server_port;
+	proxy_set_header X-Real-IP $remote_addr;
+}
+```
+
+Use this inside the HTTPS server block for your domain. The browser URL in `APP_BASE_URL` should remain `https://your-domain`, not the internal `:3000` URL.
+
+### Portainer
+
+1. In Portainer, open **Stacks** and create a stack from the Vestri Git repository, or upload/paste `docker-compose.yml`.
+2. Under **Environment variables**, choose the advanced/list editor and add the entries from `.env.stack` as `NAME=value` lines. Do not commit your secrets to GitHub.
+3. Set `APP_BASE_URL` to your public HTTPS address and `FRONTEND_PORT` to the port Nginx will use (for example `3333`). Generate and enter a strong `NODE_API_KEY_ENCRYPTION_KEY` and change `POSTGRES_PASSWORD`.
+4. Deploy the stack, then configure Nginx to proxy to the host port you selected.
+
+Portainer does not automatically read a local `.env.stack` file from your computer; copy its values into the stack's environment-variable editor.
 
 Start the stack:
 

@@ -526,6 +526,18 @@
     }
   },
   "HowToPage": {
+    "deployment": {
+      "title": "Deploy Vestri with Docker and Portainer",
+      "description": "For an installation behind Nginx, you need a public URL and an available host port. Passkey settings are derived from APP_BASE_URL by default.",
+      "steps": {
+        "1": "Download docker-compose.yml and .env.stack.example from the Vestri GitHub repository.",
+        "2": "Create .env.stack from the example. Set APP_BASE_URL to your HTTPS address, FRONTEND_PORT to the port Nginx will use (for example 3333), change POSTGRES_PASSWORD, and set NODE_API_KEY_ENCRYPTION_KEY to a key generated with openssl rand -hex 32.",
+        "3": "In Portainer, create a stack from the Git repository or paste the Compose file. Copy the entries from .env.stack into the advanced environment-variable editor. Portainer does not automatically read the local file; never publish secrets to GitHub.",
+        "4": "Deploy the stack and point Nginx to http://127.0.0.1:3333. The port in this example must match FRONTEND_PORT."
+      },
+      "nginxTitle": "Nginx: forward the public address",
+      "nginxDescription": "Add this inside the HTTPS server block for your domain. These headers keep the internal container address and port out of redirects."
+    },
     "hero": {
       "kicker": "HOW-TO",
       "tagline": "Vestri Server Operations Guide",

@@ -526,6 +526,18 @@
     }
   },
   "HowToPage": {
+    "deployment": {
+      "title": "Vestri mit Docker und Portainer bereitstellen",
+      "description": "Für eine Installation hinter Nginx brauchst du nur eine öffentliche Adresse und einen freien Host-Port. Passkey-Einstellungen werden standardmäßig aus APP_BASE_URL abgeleitet.",
+      "steps": {
+        "1": "Lade docker-compose.yml und .env.stack.example aus dem Vestri-GitHub-Repository herunter.",
+        "2": "Erstelle daraus .env.stack. Setze APP_BASE_URL auf deine HTTPS-Adresse, FRONTEND_PORT auf den Port für Nginx (zum Beispiel 3333), ändere POSTGRES_PASSWORD und trage einen mit openssl rand -hex 32 erzeugten Schlüssel bei NODE_API_KEY_ENCRYPTION_KEY ein.",
+        "3": "Erstelle in Portainer unter Stacks einen Stack aus dem Git-Repository oder füge die Compose-Datei ein. Kopiere die Einträge aus .env.stack in den erweiterten Umgebungsvariablen-Editor. Portainer liest die lokale Datei nicht automatisch ein; veröffentliche Geheimnisse niemals in GitHub.",
+        "4": "Starte den Stack und richte Nginx auf http://127.0.0.1:3333 aus. Der Port im Beispiel muss zu FRONTEND_PORT passen."
+      },
+      "nginxTitle": "Nginx: öffentliche Adresse weiterreichen",
+      "nginxDescription": "Füge diesen Abschnitt in den HTTPS-Serverblock deiner Domain ein. Die Header verhindern, dass interne Container-Adresse und Port in Weiterleitungen auftauchen."
+    },
     "hero": {
       "kicker": "HOW-TO",
       "tagline": "Vestri Leitfaden für Server-Betrieb",

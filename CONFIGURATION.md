@@ -17,15 +17,15 @@ These variables are consumed by `docker-compose.yml` for the default stack.
 | `POSTGRES_USER` | `vestri` | Yes | PostgreSQL username for the stack database. |
 | `POSTGRES_PASSWORD` | `vestri` | Yes | PostgreSQL password. Change this in all real setups. |
 | `POSTGRES_DB` | `vestri` | Yes | PostgreSQL database name. |
-| `FRONTEND_PORT` | `3000` | Yes | Host port mapped to frontend container port `3000`. |
+| `FRONTEND_PORT` | `3000` | Yes | Host port mapped to frontend container port `3000`. If Nginx runs on the Docker host, proxy to this host port. |
 | `BACKEND_PORT` | `8080` | Yes | Host port mapped to backend container port `8080`. |
 | `APP_BASE_URL` | `http://localhost:3000` | Yes | Public base URL used for callbacks and generated links. |
 | `SESSION_COOKIE_SECURE` | auto (`true` if `APP_BASE_URL` is `https`) | Optional | Forces `Secure` cookie flag for auth/session cookies. |
 | `NODE_API_KEY_ENCRYPTION_KEY` | `change-me` | Strongly recommended | Encrypts stored worker API keys in backend storage. Accepted formats: `64-char hex`, base64 that decodes to `32 bytes`, or raw `32-char` string. Generate with `openssl rand -hex 32` (or use PowerShell command from README). |
-| `WEB_AUTHN_ORIGIN` | `http://localhost:3000` | For passkeys | Primary WebAuthn origin. |
-| `WEB_AUTHN_RP_ID` | `localhost` | For passkeys | WebAuthn RP ID (usually the domain only). |
+| `WEB_AUTHN_ORIGIN` | `APP_BASE_URL` | Optional override | Primary WebAuthn origin. Normally derived from `APP_BASE_URL`. |
+| `WEB_AUTHN_RP_ID` | host from `APP_BASE_URL` | Optional override | WebAuthn RP ID (usually the domain only). Normally derived from `APP_BASE_URL`. |
 | `WEB_AUTHN_RP_NAME` | `Auth Service` | Optional | Display name shown in authenticator apps. |
-| `WEB_AUTHN_ORIGINS` | `http://localhost:3000` | For passkeys | Comma-separated list of allowed WebAuthn origins. |
+| `WEB_AUTHN_ORIGINS` | `APP_BASE_URL` | Optional override | Comma-separated list of allowed WebAuthn origins. Normally derived from `APP_BASE_URL`. |
 | `NO_EMAIL_VERIFY` | `true` | Optional | Skip email verification checks. |
 | `EMAIL_SERVER_HOST` | empty | Optional | SMTP host. |
 | `EMAIL_SERVER_PORT` | `587` | Optional | SMTP port. |

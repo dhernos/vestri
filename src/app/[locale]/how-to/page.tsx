@@ -38,6 +38,15 @@ export default async function HowToPage() {
   const sslCaTrustSnippet = `docker volume inspect vestri-backend-worker-cas --format '{{ .Mountpoint }}'
 sudo cp /etc/vestri/certs/ca.crt /var/lib/docker/volumes/vestri-backend-worker-cas/_data/<node-name>.crt
 docker compose --env-file .env.stack restart backend`;
+  const nginxProxySnippet = `location / {
+    proxy_pass http://127.0.0.1:3333;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Port $server_port;
+    proxy_set_header X-Real-IP $remote_addr;
+}`;
 
   const envVariables: EnvVarGuideEntry[] = [
     {
@@ -573,6 +582,30 @@ docker compose --env-file .env.stack restart backend`;
               <Link href="/">{t("hero.actions.home")}</Link>
             </Button>
           </div>
+        </section>
+
+        <section className="rounded-2xl border bg-card/82 p-6 backdrop-blur-sm md:p-8">
+          <h2 className="text-xl font-semibold md:text-2xl">
+            {t("deployment.title")}
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground md:text-base">
+            {t("deployment.description")}
+          </p>
+          <ol className="mt-4 list-decimal space-y-2 pl-6 text-sm text-muted-foreground">
+            <li>{t("deployment.steps.1")}</li>
+            <li>{t("deployment.steps.2")}</li>
+            <li>{t("deployment.steps.3")}</li>
+            <li>{t("deployment.steps.4")}</li>
+          </ol>
+          <p className="mt-5 text-sm font-semibold">
+            {t("deployment.nginxTitle")}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("deployment.nginxDescription")}
+          </p>
+          <pre className="mt-3 overflow-x-auto rounded-md border bg-background/70 p-3 text-xs">
+            <code>{nginxProxySnippet}</code>
+          </pre>
         </section>
 
         <section className="rounded-2xl border bg-card/82 p-6 backdrop-blur-sm md:p-8">
