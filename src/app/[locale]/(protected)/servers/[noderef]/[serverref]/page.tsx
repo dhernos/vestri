@@ -621,6 +621,7 @@ export default function ServerControlsPage() {
                 browserDeletingPath={browserDeletingPath}
                 browserUnzippingPath={browserUnzippingPath}
                 groupFiles={isGroupFilesSection}
+                folderCreateBasePath={isGroupFilesSection ? basePath : undefined}
                 folderNavigationLockedRef={folderNavigationLockedRef}
                 normalizeRelativePath={normalizeRelativePath}
                 formatBytes={formatBytes}

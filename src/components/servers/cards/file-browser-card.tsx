@@ -1,11 +1,32 @@
 "use client";
 
 import type { MutableRefObject } from "react";
+import { useState } from "react";
+import { FolderPlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import type { WorkerListEntry } from "@/components/servers/cards/types";
+
+const responseMessage = async (res: Response, fallback: string) => {
+  const raw = (await res.text().catch(() => "")).trim();
+  if (!raw) {
+    return fallback;
+  }
+  try {
+    const data = JSON.parse(raw) as { message?: unknown; error?: unknown };
+    if (typeof data.message === "string" && data.message.trim()) {
+      return data.message.trim();
+    }
+    if (typeof data.error === "string" && data.error.trim()) {
+      return data.error.trim();
+    }
+  } catch {
+    return raw;
+  }
+  return raw;
+};
 
 type FileBrowserCardProps = {
   browserPath: string;
@@ -20,6 +41,7 @@ type FileBrowserCardProps = {
   browserDeletingPath: string;
   browserUnzippingPath: string;
   groupFiles?: boolean;
+  folderCreateBasePath?: string;
   folderNavigationLockedRef: MutableRefObject<boolean>;
   normalizeRelativePath: (value: string) => string;
   formatBytes: (bytes: number) => string;
@@ -50,6 +72,7 @@ export default function FileBrowserCard({
   browserDeletingPath,
   browserUnzippingPath,
   groupFiles = false,
+  folderCreateBasePath = "",
   folderNavigationLockedRef,
   normalizeRelativePath,
   formatBytes,
@@ -67,6 +90,39 @@ export default function FileBrowserCard({
   onDelete,
 }: FileBrowserCardProps) {
   const t = useTranslations("ServerPage");
+  const [newFolderName, setNewFolderName] = useState("");
+  const [creatingFolder, setCreatingFolder] = useState(false);
+  const [createFolderError, setCreateFolderError] = useState("");
+  const isGroupRoot = groupFiles && !browserPath;
+
+  const createFolder = async () => {
+    const name = newFolderName.trim();
+    if (!folderCreateBasePath || !browserPath || !name || creatingFolder) {
+      return;
+    }
+    setCreatingFolder(true);
+    setCreateFolderError("");
+    try {
+      const res = await fetch(`${folderCreateBasePath}/folders/create`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: browserPath, name }),
+      });
+      if (!res.ok) {
+        setCreateFolderError(
+          await responseMessage(res, t("groupFiles.createFolder.error"))
+        );
+        return;
+      }
+      setNewFolderName("");
+      await onRefresh();
+    } catch {
+      setCreateFolderError(t("groupFiles.createFolder.error"));
+    } finally {
+      setCreatingFolder(false);
+    }
+  };
 
   return (
     <Card>
@@ -92,21 +148,38 @@ export default function FileBrowserCard({
             {t("fileBrowser.buttons.goToRoot")}
           </Button>
         </div>
-        <div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed p-3">
-          <Input
-            key={browserUploadInputKey}
-            type="file"
-            className="max-w-xs"
-            onChange={(event) => onSelectUploadFile(event.target.files?.[0] || null)}
-          />
-          <Button onClick={onUploadToCurrentFolder} disabled={!browserUploadFile || browserUploading}>
-            {browserUploading
-              ? t("fileBrowser.buttons.uploading")
-              : t("fileBrowser.buttons.uploadToCurrentFolder")}
-          </Button>
-        </div>
+        {!isGroupRoot ? (
+          <div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed p-3">
+            <Input
+              key={browserUploadInputKey}
+              type="file"
+              className="max-w-xs"
+              onChange={(event) => onSelectUploadFile(event.target.files?.[0] || null)}
+            />
+            <Button onClick={onUploadToCurrentFolder} disabled={!browserUploadFile || browserUploading}>
+              {browserUploading
+                ? t("fileBrowser.buttons.uploading")
+                : t("fileBrowser.buttons.uploadToCurrentFolder")}
+            </Button>
+          </div>
+        ) : null}
+        {groupFiles && browserPath ? (
+          <div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed p-3">
+            <Input
+              value={newFolderName}
+              onChange={(event) => setNewFolderName(event.target.value)}
+              placeholder={t("groupFiles.createFolder.placeholder")}
+              aria-label={t("groupFiles.createFolder.placeholder")}
+            />
+            <Button onClick={() => void createFolder()} disabled={!newFolderName.trim() || creatingFolder}>
+              {creatingFolder ? t("groupFiles.createFolder.creating") : <FolderPlus />}
+              {creatingFolder ? null : t("groupFiles.createFolder.button")}
+            </Button>
+          </div>
+        ) : null}
         {browserError ? <p className="text-sm text-destructive">{browserError}</p> : null}
         {browserActionError ? <p className="text-sm text-destructive">{browserActionError}</p> : null}
+        {createFolderError ? <p className="text-sm text-destructive">{createFolderError}</p> : null}
         <div className="max-h-72 space-y-2 overflow-auto">
           {browserEntries.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("fileBrowser.empty")}</p>
@@ -160,15 +233,15 @@ export default function FileBrowserCard({
                     </span>
                     {sizeLabel ? <span className="ml-3 shrink-0 text-muted-foreground">{sizeLabel}</span> : null}
                   </button>
-                  <Button
+                  {!isGroupRoot ? <Button
                     size="sm"
                     variant="secondary"
                     onClick={() => onDownload(relativePath, entry.type)}
                     disabled={isDownloading || isDeleting || isUnzipping}
                   >
                     {isDownloading ? t("fileBrowser.buttons.downloading") : t("fileBrowser.buttons.download")}
-                  </Button>
-                  {canUnzip ? (
+                  </Button> : null}
+                  {!isGroupRoot && canUnzip ? (
                     <Button
                       size="sm"
                       variant="outline"
@@ -178,14 +251,14 @@ export default function FileBrowserCard({
                       {isUnzipping ? t("fileBrowser.buttons.unzipping") : t("fileBrowser.buttons.unzip")}
                     </Button>
                   ) : null}
-                  <Button
+                  {!isGroupRoot ? <Button
                     size="sm"
                     variant="destructive"
                     onClick={() => onDelete(relativePath, entry.type)}
                     disabled={isDeleting || isDownloading || isUnzipping}
                   >
                     {isDeleting ? t("fileBrowser.buttons.deleting") : t("fileBrowser.buttons.delete")}
-                  </Button>
+                  </Button> : null}
                 </div>
               );
             })

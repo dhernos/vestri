@@ -1409,6 +1409,12 @@
         "errors": {
           "apply": "Failed to apply the staged plugins. Some selected subservers may already have been updated."
         }
+      },
+      "createFolder": {
+        "placeholder": "New folder name",
+        "button": "Create folder",
+        "creating": "Creating...",
+        "error": "Failed to create folder."
       }
     },
     "fileEditor": {

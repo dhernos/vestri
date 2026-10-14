@@ -1409,6 +1409,12 @@
         "errors": {
           "apply": "Plugins konnten nicht angewendet werden. Einige ausgewählte Subserver wurden möglicherweise bereits aktualisiert."
         }
+      },
+      "createFolder": {
+        "placeholder": "Neuer Ordnername",
+        "button": "Ordner erstellen",
+        "creating": "Wird erstellt...",
+        "error": "Ordner konnte nicht erstellt werden."
       }
     },
     "fileEditor": {

@@ -226,6 +226,7 @@ export function ServerSidebarNav({
                                   <SidebarMenuSubButton
                                     size="sm"
                                     isActive={isActiveBackend}
+                                    className="cursor-pointer"
                                   >
                                     <span
                                       className={cn(
@@ -248,6 +249,7 @@ export function ServerSidebarNav({
                                             isActiveBackend &&
                                             activeSection === sectionItem.section
                                           }
+                                          className="cursor-pointer"
                                         >
                                           <Link
                                             href={buildServerWorkspacePath(
