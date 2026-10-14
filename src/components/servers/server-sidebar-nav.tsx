@@ -185,10 +185,7 @@ export function ServerSidebarNav({
                           </SidebarMenuSubItem>
                         ))}
 
-                        {server.kind === "velocity" &&
-                        backends.length > 0 &&
-                        server.permissions.canManageFiles &&
-                        backends.every((backend) => backend.permissions.canManageFiles) ? (
+                        {server.kind === "velocity" && server.permissions.canManageFiles ? (
                           <SidebarMenuSubItem key={`${server.id}-group-files`}>
                             <SidebarMenuSubButton
                               asChild

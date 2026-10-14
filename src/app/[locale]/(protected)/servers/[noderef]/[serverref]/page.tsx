@@ -13,6 +13,7 @@ import InteractiveConsoleCard from "@/components/servers/cards/interactive-conso
 import LogsCard from "@/components/servers/cards/logs-card";
 import ServerControlsCard from "@/components/servers/cards/controls-card";
 import VelocityCard from "@/components/servers/cards/velocity-card";
+import VelocityGroupApplyCard from "@/components/servers/cards/velocity-group-apply-card";
 import ServerStatusBlob from "@/components/servers/status-blob";
 import { Button } from "@/components/ui/button";
 import {
@@ -236,7 +237,6 @@ export default function ServerControlsPage() {
 
   const {
     velocityTemplateId,
-    velocityTemplates,
     velocityBackendName,
     velocitySoftwareField,
     velocitySoftwareOptions,
@@ -252,7 +252,6 @@ export default function ServerControlsPage() {
     velocityBackends,
     velocityAgreementOpen,
     selectedVelocityAgreement,
-    setVelocityTemplateId,
     setVelocityBackendName,
     setVelocityBackendSoftwareVersion,
     setVelocityBackendGameVersion,
@@ -533,7 +532,6 @@ export default function ServerControlsPage() {
             <VelocityCard
               nodeRef={nodeRef}
               velocityTemplateId={velocityTemplateId}
-              velocityTemplates={velocityTemplates}
               velocityBackendName={velocityBackendName}
               velocitySoftwareField={velocitySoftwareField}
               velocitySoftwareOptions={velocitySoftwareOptions}
@@ -547,7 +545,6 @@ export default function ServerControlsPage() {
               velocityCreateError={velocityCreateError}
               agreementRequired={agreementRequired}
               velocityBackends={velocityBackends}
-              onTemplateIdChange={setVelocityTemplateId}
               onBackendNameChange={setVelocityBackendName}
               onBackendSoftwareVersionChange={setVelocityBackendSoftwareVersion}
               onBackendGameVersionChange={setVelocityBackendGameVersion}
@@ -602,7 +599,15 @@ export default function ServerControlsPage() {
       {isFilesystemSection ? (
         <>
           {server.permissions.canManageFiles ? (
-            <div className="grid gap-6 lg:grid-cols-2">
+            <>
+              {isGroupFilesSection && isVelocityServer ? (
+                <VelocityGroupApplyCard
+                  basePath={basePath}
+                  backends={velocityBackends}
+                  applyingLabel={t("groupFiles.apply.applying")}
+                />
+              ) : null}
+              <div className="grid gap-6 lg:grid-cols-2">
               <FileBrowserCard
                 browserPath={browserPath}
                 browserLoading={browserLoading}
@@ -615,7 +620,7 @@ export default function ServerControlsPage() {
                 browserDownloadingPath={browserDownloadingPath}
                 browserDeletingPath={browserDeletingPath}
                 browserUnzippingPath={browserUnzippingPath}
-                groupBackendCount={isGroupFilesSection ? velocityBackends.length : undefined}
+                groupFiles={isGroupFilesSection}
                 folderNavigationLockedRef={folderNavigationLockedRef}
                 normalizeRelativePath={normalizeRelativePath}
                 formatBytes={formatBytes}
@@ -659,7 +664,8 @@ export default function ServerControlsPage() {
                   void openFile(filePath);
                 }}
               />
-            </div>
+              </div>
+            </>
           ) : (
             <FileBrowserRestrictedCard />
           )}

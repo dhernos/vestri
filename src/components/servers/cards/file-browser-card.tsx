@@ -19,7 +19,7 @@ type FileBrowserCardProps = {
   browserDownloadingPath: string;
   browserDeletingPath: string;
   browserUnzippingPath: string;
-  groupBackendCount?: number;
+  groupFiles?: boolean;
   folderNavigationLockedRef: MutableRefObject<boolean>;
   normalizeRelativePath: (value: string) => string;
   formatBytes: (bytes: number) => string;
@@ -49,7 +49,7 @@ export default function FileBrowserCard({
   browserDownloadingPath,
   browserDeletingPath,
   browserUnzippingPath,
-  groupBackendCount,
+  groupFiles = false,
   folderNavigationLockedRef,
   normalizeRelativePath,
   formatBytes,
@@ -72,14 +72,11 @@ export default function FileBrowserCard({
     <Card>
       <CardHeader>
         <CardTitle>
-          {groupBackendCount ? t("groupFiles.title") : t("fileBrowser.title")}
+          {groupFiles ? t("groupFiles.title") : t("fileBrowser.title")}
         </CardTitle>
         <CardDescription>
-          {groupBackendCount
-            ? t("groupFiles.currentFolder", {
-                count: groupBackendCount,
-                path: `/${browserPath || "."}`,
-              })
+          {groupFiles
+            ? t("groupFiles.currentFolder", { path: `/${browserPath || "."}` })
             : t("fileBrowser.currentFolder", { path: `/${browserPath || "."}` })}
         </CardDescription>
       </CardHeader>

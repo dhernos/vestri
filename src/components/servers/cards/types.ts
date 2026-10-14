@@ -27,7 +27,7 @@ export type GameServerTemplateSummary = Pick<SharedGameServerTemplate, "id" | "n
 
 export type VelocityBackendSummary = Pick<
   SharedGameServerListItem,
-  "id" | "name" | "slug" | "status" | "connectHost" | "connectPort"
+  "id" | "name" | "slug" | "status" | "connectHost" | "connectPort" | "softwareVersion"
 >;
 
 export type GameServerTemplateVersionField = Pick<

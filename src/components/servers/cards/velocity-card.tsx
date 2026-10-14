@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { buildServerWorkspacePath } from "@/features/servers/navigation";
 import type {
-  GameServerTemplateSummary,
   GameServerTemplateVersionField,
   ServerStatus,
   VelocityBackendSummary,
@@ -18,7 +17,6 @@ import type {
 type VelocityCardProps = {
   nodeRef: string;
   velocityTemplateId: string;
-  velocityTemplates: GameServerTemplateSummary[];
   velocityBackendName: string;
   velocitySoftwareField?: GameServerTemplateVersionField;
   velocitySoftwareOptions: string[];
@@ -32,7 +30,6 @@ type VelocityCardProps = {
   velocityCreateError: string;
   agreementRequired: boolean;
   velocityBackends: VelocityBackendSummary[];
-  onTemplateIdChange: (value: string) => void;
   onBackendNameChange: (value: string) => void;
   onBackendSoftwareVersionChange: (value: string) => void;
   onBackendGameVersionChange: (value: string) => void;
@@ -44,7 +41,6 @@ type VelocityCardProps = {
 export default function VelocityCard({
   nodeRef,
   velocityTemplateId,
-  velocityTemplates,
   velocityBackendName,
   velocitySoftwareField,
   velocitySoftwareOptions,
@@ -58,7 +54,6 @@ export default function VelocityCard({
   velocityCreateError,
   agreementRequired,
   velocityBackends,
-  onTemplateIdChange,
   onBackendNameChange,
   onBackendSoftwareVersionChange,
   onBackendGameVersionChange,
@@ -76,26 +71,6 @@ export default function VelocityCard({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="velocity-backend-template">{t("velocity.fields.template")}</Label>
-            <select
-              id="velocity-backend-template"
-              className="h-9 w-full rounded-md border bg-transparent px-3 text-sm"
-              value={velocityTemplateId}
-              onChange={(event) => onTemplateIdChange(event.target.value)}
-              disabled={velocityCreating || velocityTemplates.length === 0}
-            >
-              {velocityTemplates.length === 0 ? (
-                <option value="">{t("velocity.empty.templates")}</option>
-              ) : (
-                velocityTemplates.map((template) => (
-                  <option key={template.id} value={template.id}>
-                    {template.name}
-                  </option>
-                ))
-              )}
-            </select>
-          </div>
           <div className="space-y-2">
             <Label htmlFor="velocity-backend-name">{t("velocity.fields.identifier")}</Label>
             <Input

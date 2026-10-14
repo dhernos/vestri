@@ -1393,8 +1393,23 @@
       }
     },
     "groupFiles": {
-      "title": "Gruppendateien",
-      "currentFolder": "Mit {count, plural, one {# Subserver} other {# Subservern}} synchronisiert · Aktueller Ordner: {path}"
+      "title": "Plugin-Staging",
+      "currentFolder": "Velocity-Quellordner: data/vestri-plugin-staging{path}",
+      "apply": {
+        "title": "Plugins anwenden",
+        "description": "Wähle die Subserver zum Aktualisieren. Übereinstimmende Dateien werden überschrieben; andere Plugin-Dateien bleiben erhalten.",
+        "empty": "Diese Velocity-Gruppe hat keine Subserver.",
+        "noTargets": "Keine Subserver mit unterstützter Plugin-Software und Dateizugriff.",
+        "selected": "{count} ausgewählt",
+        "software": "Software: {software}",
+        "unknownSoftware": "Unbekannt",
+        "button": "Änderungen anwenden",
+        "applying": "Wird angewendet...",
+        "success": "Auf {count, plural, one {# Subserver} other {# Subservern}} angewendet.",
+        "errors": {
+          "apply": "Plugins konnten nicht angewendet werden. Einige ausgewählte Subserver wurden möglicherweise bereits aktualisiert."
+        }
+      }
     },
     "fileEditor": {
       "title": "Dateieditor",
