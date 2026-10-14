@@ -1392,6 +1392,10 @@
         "unzipArchive": "Archiv konnte nicht entpackt werden."
       }
     },
+    "groupFiles": {
+      "title": "Gruppendateien",
+      "currentFolder": "Mit {count, plural, one {# Subserver} other {# Subservern}} synchronisiert · Aktueller Ordner: {path}"
+    },
     "fileEditor": {
       "title": "Dateieditor",
       "selectFromBrowser": "Wähle eine Datei aus dem Browser",

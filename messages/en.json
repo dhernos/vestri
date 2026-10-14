@@ -1392,6 +1392,10 @@
         "unzipArchive": "Failed to unzip archive."
       }
     },
+    "groupFiles": {
+      "title": "Group Files",
+      "currentFolder": "Synced to {count, plural, one {# subserver} other {# subservers}} · Current folder: {path}"
+    },
     "fileEditor": {
       "title": "File Editor",
       "selectFromBrowser": "Select a file from browser",

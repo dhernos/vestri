@@ -19,6 +19,7 @@ type FileBrowserCardProps = {
   browserDownloadingPath: string;
   browserDeletingPath: string;
   browserUnzippingPath: string;
+  groupBackendCount?: number;
   folderNavigationLockedRef: MutableRefObject<boolean>;
   normalizeRelativePath: (value: string) => string;
   formatBytes: (bytes: number) => string;
@@ -48,6 +49,7 @@ export default function FileBrowserCard({
   browserDownloadingPath,
   browserDeletingPath,
   browserUnzippingPath,
+  groupBackendCount,
   folderNavigationLockedRef,
   normalizeRelativePath,
   formatBytes,
@@ -69,8 +71,17 @@ export default function FileBrowserCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("fileBrowser.title")}</CardTitle>
-        <CardDescription>{t("fileBrowser.currentFolder", { path: `/${browserPath || "."}` })}</CardDescription>
+        <CardTitle>
+          {groupBackendCount ? t("groupFiles.title") : t("fileBrowser.title")}
+        </CardTitle>
+        <CardDescription>
+          {groupBackendCount
+            ? t("groupFiles.currentFolder", {
+                count: groupBackendCount,
+                path: `/${browserPath || "."}`,
+              })
+            : t("fileBrowser.currentFolder", { path: `/${browserPath || "."}` })}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex flex-wrap gap-2">

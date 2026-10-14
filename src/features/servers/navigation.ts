@@ -2,6 +2,7 @@ export const serverWorkspaceSections = [
   "dashboard",
   "config",
   "filesystem",
+  "group-files",
   "console",
 ] as const;
 

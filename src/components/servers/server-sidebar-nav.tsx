@@ -185,6 +185,30 @@ export function ServerSidebarNav({
                           </SidebarMenuSubItem>
                         ))}
 
+                        {server.kind === "velocity" &&
+                        backends.length > 0 &&
+                        server.permissions.canManageFiles &&
+                        backends.every((backend) => backend.permissions.canManageFiles) ? (
+                          <SidebarMenuSubItem key={`${server.id}-group-files`}>
+                            <SidebarMenuSubButton
+                              asChild
+                              isActive={
+                                isActiveServer && activeSection === "group-files"
+                              }
+                            >
+                              <Link
+                                href={buildServerWorkspacePath(
+                                  nodeRef,
+                                  server.id,
+                                  "group-files",
+                                )}
+                              >
+                                <span>{tServer("groupFiles.title")}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ) : null}
+
                         {backends.length > 0 ? (
                           <li className="mt-1 px-2 py-1 text-[11px] uppercase tracking-wide text-sidebar-foreground/60 group-data-[collapsible=icon]:hidden">
                             {tServer("velocity.title")}

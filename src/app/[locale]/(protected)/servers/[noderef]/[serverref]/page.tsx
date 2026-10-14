@@ -47,7 +47,8 @@ export default function ServerControlsPage() {
   }, [pathname]);
   const isDashboardSection = activeSection === "dashboard";
   const isConfigSection = activeSection === "config";
-  const isFilesystemSection = activeSection === "filesystem";
+  const isGroupFilesSection = activeSection === "group-files";
+  const isFilesystemSection = activeSection === "filesystem" || isGroupFilesSection;
   const isConsoleSection = activeSection === "console";
 
   const [server, setServer] = useState<GameServerDetails | null>(null);
@@ -67,6 +68,7 @@ export default function ServerControlsPage() {
     }
     return `/api/nodes/${encodeURIComponent(nodeRef)}/servers/${encodeURIComponent(serverRef)}`;
   }, [nodeRef, serverRef]);
+  const fileApiBasePath = isGroupFilesSection ? `${basePath}/group-files` : basePath;
   const serverId = server?.id || "";
   const isServerUp = server?.status === "up";
   const canReadConsole = Boolean(server?.permissions.canReadConsole);
@@ -260,7 +262,7 @@ export default function ServerControlsPage() {
     confirmVelocityAgreementAndCreate,
   } = useVelocityBackends({
     nodeRef,
-    server: isDashboardSection ? server : null,
+    server: isDashboardSection || isGroupFilesSection ? server : null,
     t,
   });
 
@@ -313,7 +315,7 @@ export default function ServerControlsPage() {
     isZipArchiveName,
     markInvalidFileSelection,
   } = useServerFiles({
-    basePath,
+    basePath: fileApiBasePath,
     canManageFiles: canManageFiles && (isFilesystemSection || isConfigSection),
     configFiles: server?.configFiles || [],
     composePath: server?.composePath || "",
@@ -613,6 +615,7 @@ export default function ServerControlsPage() {
                 browserDownloadingPath={browserDownloadingPath}
                 browserDeletingPath={browserDeletingPath}
                 browserUnzippingPath={browserUnzippingPath}
+                groupBackendCount={isGroupFilesSection ? velocityBackends.length : undefined}
                 folderNavigationLockedRef={folderNavigationLockedRef}
                 normalizeRelativePath={normalizeRelativePath}
                 formatBytes={formatBytes}
