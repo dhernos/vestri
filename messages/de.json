@@ -1186,6 +1186,11 @@
       "serverType": "Servertyp",
       "gameVersion": "Spielversion"
     },
+    "curseForge": {
+      "urlLabel": "CurseForge-URL der Serverdatei",
+      "urlPlaceholder": "https://www.curseforge.com/minecraft/modpacks/pack-name/download/1234567",
+      "help": "Öffne auf der Modpack-Seite den Tab „Files“, klappe die gewünschte Version auf und wähle „View Full Page“. Unten findest du „Server Files“. Klicke mit der rechten Maustaste auf den Download-Button und kopiere den Link. Füge ihn hier ein."
+    },
     "empty": {
       "templates": "Keine Templates verfügbar",
       "servers": "Noch keine Game Server vorhanden."

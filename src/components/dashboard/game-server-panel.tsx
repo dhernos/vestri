@@ -41,6 +41,7 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
   const [serverName, setServerName] = useState("");
   const [softwareVersion, setSoftwareVersion] = useState("");
   const [gameVersion, setGameVersion] = useState("");
+  const [curseForgeUrl, setCurseForgeUrl] = useState("");
   const [agreementOpen, setAgreementOpen] = useState(false);
   const [creating, setCreating] = useState(false);
 
@@ -59,6 +60,7 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
   const softwareField = selectedTemplate?.versionConfig?.software;
   const gameField = selectedTemplate?.versionConfig?.game;
   const selectedAgreement = selectedTemplate?.agreement;
+  const isCurseForgeTemplate = selectedTemplate?.id === "minecraft-curseforge";
   const softwareOptions = useMemo(() => normalizeFieldOptions(softwareField), [softwareField]);
   const gameOptions = useMemo(
     () => normalizeFieldOptions(gameField, softwareVersion),
@@ -181,6 +183,7 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
           agreementAccepted,
           softwareVersion: softwareField ? softwareVersion.trim() : "",
           gameVersion: gameField ? gameVersion.trim() : "",
+          ...(isCurseForgeTemplate ? { curseForgeUrl: curseForgeUrl.trim() } : {}),
         }),
       });
 
@@ -190,6 +193,7 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
       }
 
       setServerName("");
+      setCurseForgeUrl("");
       await loadData();
       window.dispatchEvent(
         new CustomEvent("vestri:servers-changed", {
@@ -271,6 +275,22 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
                 disabled={!canCreate}
               />
             </div>
+            {isCurseForgeTemplate ? (
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="curseforge-url">{t("curseForge.urlLabel")}</Label>
+                <Input
+                  id="curseforge-url"
+                  type="url"
+                  value={curseForgeUrl}
+                  onChange={(event) => setCurseForgeUrl(event.target.value)}
+                  placeholder={t("curseForge.urlPlaceholder")}
+                  disabled={!canCreate || creating}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {t("curseForge.help")}
+                </p>
+              </div>
+            ) : null}
             {softwareField ? (
               <div className="space-y-2">
                 <Label htmlFor="server-software">{softwareField.label || t("fields.serverType")}</Label>
@@ -329,7 +349,10 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
             ) : null}
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={createServer} disabled={!canCreate || creating || !templateId}>
+            <Button
+              onClick={createServer}
+              disabled={!canCreate || creating || !templateId || (isCurseForgeTemplate && !curseForgeUrl.trim())}
+            >
               {creating ? t("buttons.creating") : t("buttons.createServer")}
             </Button>
             <Button variant="secondary" onClick={loadData} disabled={loading}>
