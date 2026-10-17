@@ -5,7 +5,13 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import ServerStatusBlob from "@/components/servers/status-blob";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -17,7 +23,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { buildServerWorkspacePath } from "@/features/servers/navigation";
-import { normalizeFieldOptions, resolveFieldValue } from "@/features/servers/template-version";
+import {
+  normalizeFieldOptions,
+  resolveFieldValue,
+} from "@/features/servers/template-version";
 import type { NodeAccessRole } from "@/features/nodes/types";
 import type {
   GameServerListItem,
@@ -30,7 +39,10 @@ type GameServerPanelProps = {
   nodeRole: NodeAccessRole | null;
 };
 
-export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelProps) {
+export default function GameServerPanel({
+  nodeRef,
+  nodeRole,
+}: GameServerPanelProps) {
   const t = useTranslations("GameServerPanel");
   const [templates, setTemplates] = useState<GameServerTemplate[]>([]);
   const [servers, setServers] = useState<GameServerListItem[]>([]);
@@ -46,30 +58,35 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
   const [creating, setCreating] = useState(false);
 
   const canCreateByRole = nodeRole === "owner" || nodeRole === "admin";
-  const canCreateByAPI = servers.some((server) => server.permissions?.canCreate);
+  const canCreateByAPI = servers.some(
+    (server) => server.permissions?.canCreate,
+  );
   const canCreate = canCreateByRole || canCreateByAPI;
 
   const basePath = useMemo(
     () => (nodeRef ? `/api/nodes/${encodeURIComponent(nodeRef)}/servers` : ""),
-    [nodeRef]
+    [nodeRef],
   );
   const selectedTemplate = useMemo(
     () => templates.find((template) => template.id === templateId) || null,
-    [templates, templateId]
+    [templates, templateId],
   );
   const softwareField = selectedTemplate?.versionConfig?.software;
   const gameField = selectedTemplate?.versionConfig?.game;
   const selectedAgreement = selectedTemplate?.agreement;
   const isCurseForgeTemplate = selectedTemplate?.id === "minecraft-curseforge";
-  const softwareOptions = useMemo(() => normalizeFieldOptions(softwareField), [softwareField]);
+  const softwareOptions = useMemo(
+    () => normalizeFieldOptions(softwareField),
+    [softwareField],
+  );
   const gameOptions = useMemo(
     () => normalizeFieldOptions(gameField, softwareVersion),
-    [gameField, softwareVersion]
+    [gameField, softwareVersion],
   );
 
   const statusLabel = useCallback(
     (status: ServerStatus) => t(`status.${status}`),
-    [t]
+    [t],
   );
 
   const loadData = useCallback(async () => {
@@ -105,7 +122,9 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
         };
 
         if (templatesRes.ok) {
-          nextTemplates = Array.isArray(templatesData.templates) ? templatesData.templates : [];
+          nextTemplates = Array.isArray(templatesData.templates)
+            ? templatesData.templates
+            : [];
         } else {
           errors.push(templatesData.message || t("errors.loadTemplates"));
         }
@@ -121,7 +140,9 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
         };
 
         if (serversRes.ok) {
-          nextServers = Array.isArray(serversData.servers) ? serversData.servers : [];
+          nextServers = Array.isArray(serversData.servers)
+            ? serversData.servers
+            : [];
         } else {
           errors.push(serversData.message || t("errors.loadServers"));
         }
@@ -162,7 +183,9 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
   }, [softwareField]);
 
   useEffect(() => {
-    setGameVersion((current) => resolveFieldValue(current, gameField, softwareVersion));
+    setGameVersion((current) =>
+      resolveFieldValue(current, gameField, softwareVersion),
+    );
   }, [gameField, softwareVersion]);
 
   const submitCreateServer = async (agreementAccepted: boolean) => {
@@ -183,7 +206,9 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
           agreementAccepted,
           softwareVersion: softwareField ? softwareVersion.trim() : "",
           gameVersion: gameField ? gameVersion.trim() : "",
-          ...(isCurseForgeTemplate ? { curseForgeUrl: curseForgeUrl.trim() } : {}),
+          ...(isCurseForgeTemplate
+            ? { curseForgeUrl: curseForgeUrl.trim() }
+            : {}),
         }),
       });
 
@@ -198,7 +223,7 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
       window.dispatchEvent(
         new CustomEvent("vestri:servers-changed", {
           detail: { nodeRef },
-        })
+        }),
       );
     } catch {
       setError(t("errors.createServer"));
@@ -240,9 +265,7 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
       <Card>
         <CardHeader>
           <CardTitle>{t("titleAlpha")}</CardTitle>
-          <CardDescription>
-            {t("description")}
-          </CardDescription>
+          <CardDescription>{t("description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
@@ -277,7 +300,9 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
             </div>
             {isCurseForgeTemplate ? (
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="curseforge-url">{t("curseForge.urlLabel")}</Label>
+                <Label htmlFor="curseforge-url">
+                  {t("curseForge.urlLabel")}
+                </Label>
                 <Input
                   id="curseforge-url"
                   type="url"
@@ -293,7 +318,9 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
             ) : null}
             {softwareField ? (
               <div className="space-y-2">
-                <Label htmlFor="server-software">{softwareField.label || t("fields.serverType")}</Label>
+                <Label htmlFor="server-software">
+                  {softwareField.label || t("fields.serverType")}
+                </Label>
                 {softwareOptions.length > 0 ? (
                   <select
                     id="server-software"
@@ -321,7 +348,9 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
             ) : null}
             {gameField ? (
               <div className="space-y-2">
-                <Label htmlFor="server-game-version">{gameField.label || t("fields.gameVersion")}</Label>
+                <Label htmlFor="server-game-version">
+                  {gameField.label || t("fields.gameVersion")}
+                </Label>
                 {gameOptions.length > 0 ? (
                   <select
                     id="server-game-version"
@@ -351,7 +380,12 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
           <div className="flex flex-wrap gap-2">
             <Button
               onClick={createServer}
-              disabled={!canCreate || creating || !templateId || (isCurseForgeTemplate && !curseForgeUrl.trim())}
+              disabled={
+                !canCreate ||
+                creating ||
+                !templateId ||
+                (isCurseForgeTemplate && !curseForgeUrl.trim())
+              }
             >
               {creating ? t("buttons.creating") : t("buttons.createServer")}
             </Button>
@@ -379,7 +413,9 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
         </CardHeader>
         <CardContent className="space-y-3">
           {servers.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("empty.servers")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("empty.servers")}
+            </p>
           ) : (
             servers.map((server) => (
               <div
@@ -388,16 +424,27 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
               >
                 <div className="space-y-1">
                   <p className="flex items-center gap-2 text-sm font-medium">
-                    <ServerStatusBlob status={server.status} size="md" label={statusLabel(server.status)} />
+                    <ServerStatusBlob
+                      status={server.status}
+                      size="md"
+                      label={statusLabel(server.status)}
+                    />
                     <span>{server.name}</span>
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {t("serverList.templateLabel")}: {server.templateName || server.templateId}
+                    {t("serverList.templateLabel")}:{" "}
+                    {server.templateName || server.templateId}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button asChild size="sm">
-                    <Link href={buildServerWorkspacePath(nodeRef, server.id, "dashboard")}>
+                    <Link
+                      href={buildServerWorkspacePath(
+                        nodeRef,
+                        server.id,
+                        "dashboard",
+                      )}
+                    >
                       {t("buttons.openControls")}
                     </Link>
                   </Button>
@@ -411,7 +458,9 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
       <Dialog open={agreementOpen} onOpenChange={setAgreementOpen}>
         <DialogContent showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle>{selectedAgreement?.title || t("agreement.title")}</DialogTitle>
+            <DialogTitle>
+              {selectedAgreement?.title || t("agreement.title")}
+            </DialogTitle>
             <DialogDescription>
               {selectedAgreement?.text || t("agreement.description")}
             </DialogDescription>
@@ -435,7 +484,11 @@ export default function GameServerPanel({ nodeRef, nodeRole }: GameServerPanelPr
             >
               {t("buttons.cancel")}
             </Button>
-            <Button type="button" onClick={confirmAgreementAndCreate} disabled={creating}>
+            <Button
+              type="button"
+              onClick={confirmAgreementAndCreate}
+              disabled={creating}
+            >
               {creating ? t("buttons.creating") : t("buttons.agreeAndCreate")}
             </Button>
           </DialogFooter>
