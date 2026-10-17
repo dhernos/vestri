@@ -4,7 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import { Download, Link2, RefreshCw, Trash2, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
 type BlueprintFile = { name: string; size: number };
@@ -18,7 +24,8 @@ const responseMessage = async (response: Response, fallback: string) => {
   if (!raw) return fallback;
   try {
     const data = JSON.parse(raw) as { message?: unknown };
-    if (typeof data.message === "string" && data.message.trim()) return data.message.trim();
+    if (typeof data.message === "string" && data.message.trim())
+      return data.message.trim();
   } catch {
     return raw;
   }
@@ -51,7 +58,13 @@ export default function SatisfactoryBlueprintsCard({
         installed?: BlueprintFile[];
       };
       setAvailable(Array.isArray(data.available) ? data.available : []);
-      setInstalled(new Set((Array.isArray(data.installed) ? data.installed : []).map((file) => file.name)));
+      setInstalled(
+        new Set(
+          (Array.isArray(data.installed) ? data.installed : []).map(
+            (file) => file.name,
+          ),
+        ),
+      );
     } catch {
       setError(t("errors.load"));
     }
@@ -169,7 +182,13 @@ export default function SatisfactoryBlueprintsCard({
             <CardTitle>{t("title")}</CardTitle>
             <CardDescription>{t("description")}</CardDescription>
           </div>
-          <Button variant="outline" size="icon" onClick={() => void load()} aria-label={t("refresh")} title={t("refresh")}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => void load()}
+            aria-label={t("refresh")}
+            title={t("refresh")}
+          >
             <RefreshCw />
           </Button>
         </div>
@@ -186,7 +205,9 @@ export default function SatisfactoryBlueprintsCard({
               event.currentTarget.value = "";
             }}
           />
-          <label className="sr-only" htmlFor="blueprint-source-url">{t("sourceUrl")}</label>
+          <label className="sr-only" htmlFor="blueprint-source-url">
+            {t("sourceUrl")}
+          </label>
           <Input
             id="blueprint-source-url"
             type="url"
@@ -195,8 +216,18 @@ export default function SatisfactoryBlueprintsCard({
             placeholder={t("sourceUrl")}
             className="min-w-56 flex-1"
           />
-          <Button onClick={() => void importFromSource()} disabled={!sourceUrl.trim() || busy !== ""}>
-            {busy === "import" ? t("importing") : <><Link2 />{t("import")}</>}
+          <Button
+            onClick={() => void importFromSource()}
+            disabled={!sourceUrl.trim() || busy !== ""}
+          >
+            {busy === "import" ? (
+              t("importing")
+            ) : (
+              <>
+                <Link2 />
+                {t("import")}
+              </>
+            )}
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">{t("stagingNote")}</p>
@@ -204,38 +235,60 @@ export default function SatisfactoryBlueprintsCard({
         <div className="divide-y rounded-md border">
           {available.length === 0 ? (
             <p className="p-3 text-sm text-muted-foreground">{t("empty")}</p>
-          ) : available.map((file) => (
-            <div key={file.name} className="flex min-w-0 flex-wrap items-center gap-3 px-3 py-2">
-              <label className="flex min-w-0 flex-1 items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={installed.has(file.name)}
-                  disabled={busy !== ""}
-                  aria-label={t("installFile", { name: file.name })}
-                  onChange={(event) => void toggleInstall(file, event.target.checked)}
-                />
-                <span className="truncate">{file.name}</span>
-                <span className="shrink-0 text-xs text-muted-foreground">{formatBytes(file.size)}</span>
-              </label>
-              <Button asChild variant="outline" size="icon" aria-label={t("download", { name: file.name })} title={t("download", { name: file.name })}>
-                <a href={`${basePath}/blueprints/download?name=${encodeURIComponent(file.name)}`}>
-                  <Download />
-                </a>
-              </Button>
-              <Button
-                variant="destructive"
-                size="icon"
-                aria-label={t("delete", { name: file.name })}
-                title={t("delete", { name: file.name })}
-                disabled={busy !== ""}
-                onClick={() => void remove(file)}
+          ) : (
+            available.map((file) => (
+              <div
+                key={file.name}
+                className="flex min-w-0 flex-wrap items-center gap-3 px-3 py-2"
               >
-                <Trash2 />
-              </Button>
-            </div>
-          ))}
+                <label className="flex min-w-0 flex-1 items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={installed.has(file.name)}
+                    disabled={busy !== ""}
+                    aria-label={t("installFile", { name: file.name })}
+                    onChange={(event) =>
+                      void toggleInstall(file, event.target.checked)
+                    }
+                  />
+                  <span className="truncate">{file.name}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {formatBytes(file.size)}
+                  </span>
+                </label>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="icon"
+                  aria-label={t("download", { name: file.name })}
+                  title={t("download", { name: file.name })}
+                >
+                  <a
+                    href={`${basePath}/blueprints/download?name=${encodeURIComponent(file.name)}`}
+                  >
+                    <Download />
+                  </a>
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  aria-label={t("delete", { name: file.name })}
+                  title={t("delete", { name: file.name })}
+                  disabled={busy !== ""}
+                  onClick={() => void remove(file)}
+                >
+                  <Trash2 />
+                </Button>
+              </div>
+            ))
+          )}
         </div>
-        {busy && busy !== "import" ? <p className="text-xs text-muted-foreground"><Upload className="mr-1 inline size-3" />{t("working", { name: busy })}</p> : null}
+        {busy && busy !== "import" ? (
+          <p className="text-xs text-muted-foreground">
+            <Upload className="mr-1 inline size-3" />
+            {t("working", { name: busy })}
+          </p>
+        ) : null}
       </CardContent>
     </Card>
   );
