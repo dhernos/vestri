@@ -12,6 +12,7 @@ import FileEditorCard from "@/components/servers/cards/file-editor-card";
 import InteractiveConsoleCard from "@/components/servers/cards/interactive-console-card";
 import LogsCard from "@/components/servers/cards/logs-card";
 import ServerControlsCard from "@/components/servers/cards/controls-card";
+import SatisfactoryBlueprintsCard from "@/components/servers/cards/satisfactory-blueprints-card";
 import VelocityCard from "@/components/servers/cards/velocity-card";
 import VelocityGroupApplyCard from "@/components/servers/cards/velocity-group-apply-card";
 import ServerStatusBlob from "@/components/servers/status-blob";
@@ -666,6 +667,11 @@ export default function ServerControlsPage() {
                 }}
               />
               </div>
+              {server.game?.toLowerCase() === "satisfactory" ? (
+                <div className="mt-6">
+                  <SatisfactoryBlueprintsCard basePath={basePath} />
+                </div>
+              ) : null}
             </>
           ) : (
             <FileBrowserRestrictedCard />

@@ -1397,6 +1397,29 @@
         "unzipArchive": "Archiv konnte nicht entpackt werden."
       }
     },
+    "satisfactoryBlueprints": {
+      "title": "Satisfactory-Baupläne",
+      "description": "Gemeinsame Bauplanbibliothek für Satisfactory-Server auf diesem Worker.",
+      "stagingNote": "Ausgewählte Dateien werden in den Ordner data/Blueprints dieses Servers kopiert. Dedicated-Server laden Baupläne nicht in Spielerprofile; Spieler müssen sie weiterhin lokal importieren.",
+      "sourceUrl": "URL einer Bauplan-Detailseite",
+      "upload": "Eine .sbp- oder .sbpcfg-Datei hochladen",
+      "import": "Importieren",
+      "importing": "Wird importiert...",
+      "refresh": "Baupläne aktualisieren",
+      "empty": "Noch keine Baupläne verfügbar.",
+      "installFile": "{name} in diesen Server kopieren",
+      "download": "{name} herunterladen",
+      "delete": "{name} löschen",
+      "confirmDelete": "{name} aus der gemeinsamen Bibliothek löschen?",
+      "working": "{name} wird aktualisiert...",
+      "errors": {
+        "load": "Baupläne konnten nicht geladen werden.",
+        "upload": "Bauplan konnte nicht hochgeladen werden.",
+        "import": "Bauplan konnte nicht von den zugelassenen Websites importiert werden.",
+        "install": "Server-Bauplandateien konnten nicht aktualisiert werden.",
+        "delete": "Bauplan konnte nicht gelöscht werden."
+      }
+    },
     "groupFiles": {
       "title": "Plugin-Staging",
       "currentFolder": "Velocity-Quellordner: data/vestri-plugin-staging{path}",

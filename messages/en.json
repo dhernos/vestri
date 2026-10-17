@@ -1397,6 +1397,29 @@
         "unzipArchive": "Failed to unzip archive."
       }
     },
+    "satisfactoryBlueprints": {
+      "title": "Satisfactory Blueprints",
+      "description": "Shared blueprint library for Satisfactory servers on this worker.",
+      "stagingNote": "Checked files are copied to this server's data/Blueprints folder. Dedicated servers do not load blueprints into player profiles; players still need to import them client-side.",
+      "sourceUrl": "Blueprint detail page URL",
+      "upload": "Upload a .sbp or .sbpcfg file",
+      "import": "Import",
+      "importing": "Importing...",
+      "refresh": "Refresh blueprints",
+      "empty": "No blueprints are available yet.",
+      "installFile": "Copy {name} into this server",
+      "download": "Download {name}",
+      "delete": "Delete {name}",
+      "confirmDelete": "Delete {name} from the shared library?",
+      "working": "Updating {name}...",
+      "errors": {
+        "load": "Failed to load blueprints.",
+        "upload": "Failed to upload blueprint.",
+        "import": "Failed to import blueprint from the approved sites.",
+        "install": "Failed to update this server's blueprint files.",
+        "delete": "Failed to delete blueprint."
+      }
+    },
     "groupFiles": {
       "title": "Plugin Staging",
       "currentFolder": "Velocity source folder: data/vestri-plugin-staging{path}",
