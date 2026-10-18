@@ -1420,16 +1420,16 @@
     },
     "backups": {
       "title": "Backups",
-      "description": "Automatic archives are created from the server data folder without stopping the server. Files may change while a backup is running.",
+      "description": "Archives are created from the server data folder without stopping the server. Files may change while a backup is running.",
       "listTitle": "Available backups",
-      "retentionDescription": "Keep one archive per day for the configured daily period, then one per week for the weekly period.",
+      "retentionDescription": "Keep every archive for the configured daily period, then one archive per week for the weekly period.",
       "loading": "Loading backups...",
       "empty": "No backups are available.",
       "fields": {
         "enabled": "Enable automatic backups",
         "interval": "Run every (days)",
         "time": "Worker local time",
-        "dailyRetention": "Keep daily backups (days)",
+        "dailyRetention": "Keep all backups (days)",
         "weeklyRetention": "Keep weekly backups (weeks)"
       },
       "buttons": {
@@ -1463,8 +1463,8 @@
     "satisfactoryBlueprints": {
       "title": "Satisfactory Blueprints",
       "description": "Blueprints uploaded to this node's shared library.",
-      "stagingNote": "Install copies the blueprint into saved/blueprints/<ServerName>, using the current in-game server name.",
-      "createSessionFirst": "Create or load a game in Satisfactory's in-game Server Manager before installing blueprints.",
+      "stagingNote": "Install copies the blueprint into saved/blueprints/<SessionName>, using the active Satisfactory game session.",
+      "createSessionFirst": "Create or load a game in Satisfactory's in-game Server Manager, then wait for its first autosave before installing blueprints.",
       "openLibrary": "Open shared upload library",
       "refresh": "Refresh blueprints",
       "empty": "No blueprints are available yet.",

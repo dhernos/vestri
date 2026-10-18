@@ -1420,16 +1420,16 @@
     },
     "backups": {
       "title": "Sicherungen",
-      "description": "Automatische Archive werden ohne Stoppen des Servers aus dem Datenordner erstellt. Dateien können sich während einer Sicherung ändern.",
+      "description": "Archive werden ohne Stoppen des Servers aus dem Datenordner erstellt. Dateien können sich während einer Sicherung ändern.",
       "listTitle": "Verfügbare Sicherungen",
-      "retentionDescription": "Im täglichen Zeitraum bleibt eine Sicherung pro Tag erhalten, danach eine pro Woche im wöchentlichen Zeitraum.",
+      "retentionDescription": "Im täglichen Zeitraum bleiben alle Sicherungen erhalten, danach eine Sicherung pro Woche im wöchentlichen Zeitraum.",
       "loading": "Sicherungen werden geladen...",
       "empty": "Keine Sicherungen verfügbar.",
       "fields": {
         "enabled": "Automatische Sicherungen aktivieren",
         "interval": "Alle (Tage)",
         "time": "Lokale Worker-Zeit",
-        "dailyRetention": "Tägliche Sicherungen behalten (Tage)",
+        "dailyRetention": "Alle Sicherungen behalten (Tage)",
         "weeklyRetention": "Wöchentliche Sicherungen behalten (Wochen)"
       },
       "buttons": {
@@ -1463,8 +1463,8 @@
     "satisfactoryBlueprints": {
       "title": "Satisfactory-Baupläne",
       "description": "Baupläne, die in die gemeinsame Bibliothek dieses Nodes hochgeladen wurden.",
-      "stagingNote": "Installieren kopiert den Bauplan nach saved/blueprints/<ServerName> und verwendet den aktuellen Ingame-Servernamen.",
-      "createSessionFirst": "Erstelle oder lade zuerst im Satisfactory-Servermanager im Spiel eine Spielsession, bevor du Baupläne installierst.",
+      "stagingNote": "Installieren kopiert den Bauplan nach saved/blueprints/<SessionName> und verwendet die aktive Satisfactory-Spielsession.",
+      "createSessionFirst": "Erstelle oder lade im Satisfactory-Servermanager im Spiel eine Spielsession und warte vor der Bauplaninstallation auf die erste automatische Sicherung.",
       "openLibrary": "Gemeinsame Upload-Bibliothek öffnen",
       "refresh": "Baupläne aktualisieren",
       "empty": "Noch keine Baupläne verfügbar.",
