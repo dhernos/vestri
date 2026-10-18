@@ -37,6 +37,7 @@ export default function SatisfactoryBlueprintsCard({
   const t = useTranslations("ServerPage.satisfactoryBlueprints");
   const [available, setAvailable] = useState<BlueprintFile[]>([]);
   const [installed, setInstalled] = useState<Set<string>>(new Set());
+  const [serverReady, setServerReady] = useState(false);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
 
@@ -54,6 +55,7 @@ export default function SatisfactoryBlueprintsCard({
       const data = (await response.json()) as {
         available?: BlueprintFile[];
         installed?: BlueprintFile[];
+        serverReady?: boolean;
       };
       setAvailable(Array.isArray(data.available) ? data.available : []);
       setInstalled(
@@ -63,8 +65,10 @@ export default function SatisfactoryBlueprintsCard({
           ),
         ),
       );
+      setServerReady(data.serverReady === true);
     } catch {
       setError(t("errors.load"));
+      setServerReady(false);
     }
   }, [basePath, t]);
 
@@ -122,6 +126,11 @@ export default function SatisfactoryBlueprintsCard({
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-xs text-muted-foreground">{t("stagingNote")}</p>
+        {!serverReady ? (
+          <p className="text-sm text-muted-foreground">
+            {t("createSessionFirst")}
+          </p>
+        ) : null}
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
         <div className="divide-y rounded-md border">
           {available.length === 0 ? (
@@ -146,7 +155,7 @@ export default function SatisfactoryBlueprintsCard({
                 ) : (
                   <Button
                     size="sm"
-                    disabled={busy !== ""}
+                    disabled={busy !== "" || !serverReady}
                     onClick={() => void install(file)}
                   >
                     {busy === file.name ? t("installing") : t("install")}

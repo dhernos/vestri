@@ -1451,6 +1451,7 @@
       },
       "errors": {
         "load": "Sicherungen konnten nicht geladen werden.",
+        "workerNotUpdated": "Ein laufender Vestri-Dienst meldet für den Backup-Endpunkt 404. Aktualisiere/deploye Backend und Worker erneut und versuche es dann noch einmal.",
         "save": "Zeitplan konnte nicht gespeichert werden.",
         "create": "Sicherung konnte nicht erstellt werden.",
         "upload": "ZIP konnte nicht hochgeladen werden. Prüfe, ob das Archiv gültig ist.",
@@ -1463,6 +1464,7 @@
       "title": "Satisfactory-Baupläne",
       "description": "Baupläne, die in die gemeinsame Bibliothek dieses Nodes hochgeladen wurden.",
       "stagingNote": "Installieren kopiert den Bauplan nach saved/blueprints/<ServerName> und verwendet den aktuellen Ingame-Servernamen.",
+      "createSessionFirst": "Erstelle oder lade zuerst im Satisfactory-Servermanager im Spiel eine Spielsession, bevor du Baupläne installierst.",
       "openLibrary": "Gemeinsame Upload-Bibliothek öffnen",
       "refresh": "Baupläne aktualisieren",
       "empty": "Noch keine Baupläne verfügbar.",

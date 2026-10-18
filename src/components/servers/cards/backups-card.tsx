@@ -44,6 +44,22 @@ const initialPolicy: BackupPolicy = {
   keepWeeklyWeeks: 4,
 };
 
+const backupResponseError = async (response: Response, fallback: string, t: ReturnType<typeof useTranslations>) => {
+  const body = (await response.text().catch(() => "")).trim();
+  if (response.status === 404 && body.toLowerCase().includes("404 page not found")) {
+    return t("backups.errors.workerNotUpdated");
+  }
+  if (!body) return fallback;
+  try {
+    const data = JSON.parse(body) as { message?: unknown; error?: unknown };
+    if (typeof data.message === "string" && data.message.trim()) return data.message.trim();
+    if (typeof data.error === "string" && data.error.trim()) return data.error.trim();
+  } catch {
+    return body.slice(0, 500);
+  }
+  return body.slice(0, 500);
+};
+
 export default function BackupsCard({ basePath }: { basePath: string }) {
   const t = useTranslations("ServerPage");
   const [state, setState] = useState<BackupState>({ policy: initialPolicy, backups: [] });
@@ -60,8 +76,10 @@ export default function BackupsCard({ basePath }: { basePath: string }) {
         credentials: "include",
         cache: "no-store",
       });
+      if (!response.ok) {
+        throw new Error(await backupResponseError(response, t("backups.errors.load"), t));
+      }
       const data = (await response.json().catch(() => ({}))) as BackupState;
-      if (!response.ok) throw new Error(t("backups.errors.load"));
       setState({
         policy: { ...initialPolicy, ...data.policy },
         backups: Array.isArray(data.backups) ? data.backups : [],
@@ -93,8 +111,10 @@ export default function BackupsCard({ basePath }: { basePath: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(state.policy),
       });
+      if (!response.ok) {
+        throw new Error(await backupResponseError(response, t("backups.errors.save"), t));
+      }
       const data = (await response.json().catch(() => ({}))) as BackupState;
-      if (!response.ok) throw new Error(data && "message" in data ? String(data.message) : t("backups.errors.save"));
       setState({ policy: { ...initialPolicy, ...data.policy }, backups: data.backups || [] });
       setNotice(t("backups.messages.saved"));
     } catch (saveError) {
@@ -113,7 +133,9 @@ export default function BackupsCard({ basePath }: { basePath: string }) {
         method: "POST",
         credentials: "include",
       });
-      if (!response.ok) throw new Error(t("backups.errors.create"));
+      if (!response.ok) {
+        throw new Error(await backupResponseError(response, t("backups.errors.create"), t));
+      }
       await load();
       setNotice(t("backups.messages.created"));
     } catch (createError) {
@@ -135,7 +157,9 @@ export default function BackupsCard({ basePath }: { basePath: string }) {
         credentials: "include",
         body: form,
       });
-      if (!response.ok) throw new Error(t("backups.errors.upload"));
+      if (!response.ok) {
+        throw new Error(await backupResponseError(response, t("backups.errors.upload"), t));
+      }
       await load();
       setNotice(t("backups.messages.uploaded"));
     } catch (uploadError) {
@@ -167,7 +191,9 @@ export default function BackupsCard({ basePath }: { basePath: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
       });
-      if (!response.ok) throw new Error(t("backups.errors.restore"));
+      if (!response.ok) {
+        throw new Error(await backupResponseError(response, t("backups.errors.restore"), t));
+      }
       await load();
       setNotice(t("backups.messages.restored"));
     } catch (restoreError) {
@@ -189,7 +215,9 @@ export default function BackupsCard({ basePath }: { basePath: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
       });
-      if (!response.ok) throw new Error(t("backups.errors.delete"));
+      if (!response.ok) {
+        throw new Error(await backupResponseError(response, t("backups.errors.delete"), t));
+      }
       await load();
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : t("backups.errors.delete"));

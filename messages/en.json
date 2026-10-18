@@ -1451,6 +1451,7 @@
       },
       "errors": {
         "load": "Failed to load backups.",
+        "workerNotUpdated": "A running Vestri service returned 404 for the backup endpoint. Update/redeploy the backend and Worker, then try again.",
         "save": "Failed to save backup schedule.",
         "create": "Failed to create backup.",
         "upload": "Failed to upload ZIP. Check that it is a valid archive.",
@@ -1463,6 +1464,7 @@
       "title": "Satisfactory Blueprints",
       "description": "Blueprints uploaded to this node's shared library.",
       "stagingNote": "Install copies the blueprint into saved/blueprints/<ServerName>, using the current in-game server name.",
+      "createSessionFirst": "Create or load a game in Satisfactory's in-game Server Manager before installing blueprints.",
       "openLibrary": "Open shared upload library",
       "refresh": "Refresh blueprints",
       "empty": "No blueprints are available yet.",
