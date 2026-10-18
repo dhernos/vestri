@@ -4,6 +4,7 @@ export const serverWorkspaceSections = [
   "filesystem",
   "group-files",
   "console",
+  "backups",
 ] as const;
 
 export type ServerWorkspaceSection = (typeof serverWorkspaceSections)[number];

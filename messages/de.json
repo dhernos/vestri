@@ -1397,6 +1397,47 @@
         "unzipArchive": "Archiv konnte nicht entpackt werden."
       }
     },
+    "backups": {
+      "title": "Sicherungen",
+      "description": "Automatische Archive werden ohne Stoppen des Servers aus dem Datenordner erstellt. Dateien können sich während einer Sicherung ändern.",
+      "listTitle": "Verfügbare Sicherungen",
+      "retentionDescription": "Im täglichen Zeitraum bleibt eine Sicherung pro Tag erhalten, danach eine pro Woche im wöchentlichen Zeitraum.",
+      "loading": "Sicherungen werden geladen...",
+      "empty": "Keine Sicherungen verfügbar.",
+      "fields": {
+        "enabled": "Automatische Sicherungen aktivieren",
+        "interval": "Alle (Tage)",
+        "time": "Lokale Worker-Zeit",
+        "dailyRetention": "Tägliche Sicherungen behalten (Tage)",
+        "weeklyRetention": "Wöchentliche Sicherungen behalten (Wochen)"
+      },
+      "buttons": {
+        "save": "Zeitplan speichern",
+        "create": "Jetzt sichern",
+        "upload": "ZIP hochladen",
+        "refresh": "Sicherungen aktualisieren",
+        "download": "Herunterladen",
+        "restore": "Wiederherstellen",
+        "delete": "Löschen"
+      },
+      "confirmRestore": "{name} wiederherstellen? Der Server wird gestoppt und sein gesamter Datenordner ersetzt. Nach der Wiederherstellung bleibt er gestoppt.",
+      "confirmDelete": "Sicherung {name} löschen?",
+      "messages": {
+        "saved": "Zeitplan gespeichert.",
+        "created": "Sicherung erstellt.",
+        "uploaded": "Sicherung hochgeladen.",
+        "restored": "Sicherung wiederhergestellt. Der Server bleibt gestoppt."
+      },
+      "errors": {
+        "load": "Sicherungen konnten nicht geladen werden.",
+        "save": "Zeitplan konnte nicht gespeichert werden.",
+        "create": "Sicherung konnte nicht erstellt werden.",
+        "upload": "ZIP konnte nicht hochgeladen werden. Prüfe, ob das Archiv gültig ist.",
+        "download": "Sicherung konnte nicht heruntergeladen werden.",
+        "restore": "Sicherung konnte nicht wiederhergestellt werden.",
+        "delete": "Sicherung konnte nicht gelöscht werden."
+      }
+    },
     "satisfactoryBlueprints": {
       "title": "Satisfactory-Baupläne",
       "description": "Gemeinsame Bauplanbibliothek für Satisfactory-Server auf diesem Worker.",

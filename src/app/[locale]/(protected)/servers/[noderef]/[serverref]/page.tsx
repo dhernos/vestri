@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import AccessCard from "@/components/servers/cards/access-card";
+import BackupsCard from "@/components/servers/cards/backups-card";
 import ConfigEditorCard from "@/components/servers/cards/config-editor-card";
 import FileBrowserCard from "@/components/servers/cards/file-browser-card";
 import FileBrowserRestrictedCard from "@/components/servers/cards/file-browser-restricted-card";
@@ -51,6 +52,7 @@ export default function ServerControlsPage() {
   const isFilesystemSection =
     activeSection === "filesystem" || isGroupFilesSection;
   const isConsoleSection = activeSection === "console";
+  const isBackupsSection = activeSection === "backups";
 
   const [server, setServer] = useState<GameServerDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -725,6 +727,14 @@ export default function ServerControlsPage() {
             <FileBrowserRestrictedCard />
           )}
         </>
+      ) : null}
+
+      {isBackupsSection ? (
+        server.permissions.canManage ? (
+          <BackupsCard basePath={basePath} />
+        ) : (
+          <FileBrowserRestrictedCard />
+        )
       ) : null}
 
       {isDashboardSection && server.permissions.canManage ? (

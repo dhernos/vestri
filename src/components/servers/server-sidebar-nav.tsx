@@ -80,6 +80,10 @@ export function ServerSidebarNav({
       section: "console",
       title: tServer("logs.title"),
     },
+    {
+      section: "backups",
+      title: tServer("backups.title"),
+    },
   ];
 
   const topLevelServers = servers.filter(
@@ -161,7 +165,13 @@ export function ServerSidebarNav({
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                       <SidebarMenuSub>
-                        {sectionItems.map((sectionItem) => (
+                        {sectionItems
+                          .filter(
+                            (sectionItem) =>
+                              sectionItem.section !== "backups" ||
+                              server.permissions.canManage,
+                          )
+                          .map((sectionItem) => (
                           <SidebarMenuSubItem
                             key={`${server.id}-${sectionItem.section}`}
                           >
@@ -183,7 +193,7 @@ export function ServerSidebarNav({
                               </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
-                        ))}
+                          ))}
 
                         {server.kind === "velocity" && server.permissions.canManageFiles ? (
                           <SidebarMenuSubItem key={`${server.id}-group-files`}>

@@ -1397,6 +1397,47 @@
         "unzipArchive": "Failed to unzip archive."
       }
     },
+    "backups": {
+      "title": "Backups",
+      "description": "Automatic archives are created from the server data folder without stopping the server. Files may change while a backup is running.",
+      "listTitle": "Available backups",
+      "retentionDescription": "Keep one archive per day for the configured daily period, then one per week for the weekly period.",
+      "loading": "Loading backups...",
+      "empty": "No backups are available.",
+      "fields": {
+        "enabled": "Enable automatic backups",
+        "interval": "Run every (days)",
+        "time": "Worker local time",
+        "dailyRetention": "Keep daily backups (days)",
+        "weeklyRetention": "Keep weekly backups (weeks)"
+      },
+      "buttons": {
+        "save": "Save schedule",
+        "create": "Create backup now",
+        "upload": "Upload ZIP",
+        "refresh": "Refresh backups",
+        "download": "Download",
+        "restore": "Restore",
+        "delete": "Delete"
+      },
+      "confirmRestore": "Restore {name}? The server will be stopped and its entire data folder replaced. It will remain stopped after the restore.",
+      "confirmDelete": "Delete backup {name}?",
+      "messages": {
+        "saved": "Backup schedule saved.",
+        "created": "Backup created.",
+        "uploaded": "Backup uploaded.",
+        "restored": "Backup restored. The server remains stopped."
+      },
+      "errors": {
+        "load": "Failed to load backups.",
+        "save": "Failed to save backup schedule.",
+        "create": "Failed to create backup.",
+        "upload": "Failed to upload ZIP. Check that it is a valid archive.",
+        "download": "Failed to download backup.",
+        "restore": "Failed to restore backup.",
+        "delete": "Failed to delete backup."
+      }
+    },
     "satisfactoryBlueprints": {
       "title": "Satisfactory Blueprints",
       "description": "Shared blueprint library for Satisfactory servers on this worker.",
