@@ -31,23 +31,26 @@ export default function NodeDetailsPage() {
     return node.accessRole === "owner";
   }, [node]);
 
-  const loadNode = useCallback(async (ref: string) => {
-    setLoading(true);
-    setError("");
-    try {
-      const result = await fetchNodeDetails(ref);
-      if (!result.ok) {
-        setError(result.message || t("errors.loadNode"));
+  const loadNode = useCallback(
+    async (ref: string) => {
+      setLoading(true);
+      setError("");
+      try {
+        const result = await fetchNodeDetails(ref);
+        if (!result.ok) {
+          setError(result.message || t("errors.loadNode"));
+          setLoading(false);
+          return;
+        }
+        setNode(result.data);
+      } catch {
+        setError(t("errors.loadNode"));
+      } finally {
         setLoading(false);
-        return;
       }
-      setNode(result.data);
-    } catch {
-      setError(t("errors.loadNode"));
-    } finally {
-      setLoading(false);
-    }
-  }, [t]);
+    },
+    [t],
+  );
 
   useEffect(() => {
     if (!nodeRef) {
@@ -61,9 +64,7 @@ export default function NodeDetailsPage() {
 
   const deleteNode = async () => {
     if (!node || deletingNode) return;
-    const confirmed = window.confirm(
-      t("delete.confirm", { name: node.name })
-    );
+    const confirmed = window.confirm(t("delete.confirm", { name: node.name }));
     if (!confirmed) {
       return;
     }
