@@ -1462,7 +1462,8 @@
     "satisfactoryBlueprints": {
       "title": "Satisfactory Blueprints",
       "description": "Blueprints uploaded to this node's shared library.",
-      "stagingNote": "Install copies the blueprint into this server's saved blueprint folder.",
+      "stagingNote": "Install copies the blueprint into saved/blueprints/<ServerName>, using the current in-game server name.",
+      "openLibrary": "Open shared upload library",
       "refresh": "Refresh blueprints",
       "empty": "No blueprints are available yet.",
       "install": "Install",

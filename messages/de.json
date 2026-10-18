@@ -1462,7 +1462,8 @@
     "satisfactoryBlueprints": {
       "title": "Satisfactory-Baupläne",
       "description": "Baupläne, die in die gemeinsame Bibliothek dieses Nodes hochgeladen wurden.",
-      "stagingNote": "Installieren kopiert den Bauplan in den Blueprint-Speicherordner dieses Servers.",
+      "stagingNote": "Installieren kopiert den Bauplan nach saved/blueprints/<ServerName> und verwendet den aktuellen Ingame-Servernamen.",
+      "openLibrary": "Gemeinsame Upload-Bibliothek öffnen",
       "refresh": "Baupläne aktualisieren",
       "empty": "Noch keine Baupläne verfügbar.",
       "install": "Installieren",
