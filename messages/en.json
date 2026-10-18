@@ -975,6 +975,27 @@
     "access": {
       "title": "Access Management",
       "description": "Invites and guest permissions are managed per game server. Open a game server and use its controls page to manage access."
+    },
+    "blueprints": {
+      "title": "Satisfactory Blueprint Library",
+      "description": "Blueprint files shared by Satisfactory servers on this node.",
+      "upload": "Upload .sbp or .sbpcfg",
+      "sourceUrl": "Blueprint page or direct download URL",
+      "approvedSources": "HTTPS imports are restricted to satisfactoryblueprints.com and satisfactory-calculator.com; verified file redirects are allowed.",
+      "import": "Import URL",
+      "importing": "Importing...",
+      "refresh": "Refresh library",
+      "empty": "No blueprints uploaded for this node yet.",
+      "download": "Download {name}",
+      "delete": "Delete {name}",
+      "confirmDelete": "Delete {name} from this node's shared library?",
+      "working": "Updating {name}...",
+      "errors": {
+        "load": "Failed to load the node blueprint library.",
+        "upload": "Failed to upload blueprint.",
+        "import": "Could not import that URL. Use a blueprint detail page or direct blueprint download from an approved site.",
+        "delete": "Failed to delete blueprint."
+      }
     }
   },
   "DashboardPage": {
@@ -1440,25 +1461,17 @@
     },
     "satisfactoryBlueprints": {
       "title": "Satisfactory Blueprints",
-      "description": "Shared blueprint library for Satisfactory servers on this worker.",
-      "stagingNote": "Checked files are copied to this server's data/Blueprints folder. Dedicated servers do not load blueprints into player profiles; players still need to import them client-side.",
-      "sourceUrl": "Blueprint detail page URL",
-      "upload": "Upload a .sbp or .sbpcfg file",
-      "import": "Import",
-      "importing": "Importing...",
+      "description": "Blueprints uploaded to this node's shared library.",
+      "stagingNote": "Install copies the blueprint into this server's saved blueprint folder.",
       "refresh": "Refresh blueprints",
       "empty": "No blueprints are available yet.",
-      "installFile": "Copy {name} into this server",
-      "download": "Download {name}",
-      "delete": "Delete {name}",
-      "confirmDelete": "Delete {name} from the shared library?",
+      "install": "Install",
+      "installing": "Installing...",
+      "installed": "Installed",
       "working": "Updating {name}...",
       "errors": {
         "load": "Failed to load blueprints.",
-        "upload": "Failed to upload blueprint.",
-        "import": "Failed to import blueprint from the approved sites.",
-        "install": "Failed to update this server's blueprint files.",
-        "delete": "Failed to delete blueprint."
+        "install": "Failed to install blueprint into this server."
       }
     },
     "groupFiles": {

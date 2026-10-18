@@ -975,6 +975,27 @@
     "access": {
       "title": "Zugriffsverwaltung",
       "description": "Einladungen und Gast-Berechtigungen werden pro Game-Server verwaltet. Öffne einen Game-Server und nutze dessen Steuerungsseite, um den Zugriff zu verwalten."
+    },
+    "blueprints": {
+      "title": "Satisfactory-Bauplanbibliothek",
+      "description": "Bauplandateien, die von Satisfactory-Servern auf diesem Node gemeinsam genutzt werden.",
+      "upload": ".sbp oder .sbpcfg hochladen",
+      "sourceUrl": "Bauplanseite oder direkter Download-Link",
+      "approvedSources": "HTTPS-Importe sind auf satisfactoryblueprints.com und satisfactory-calculator.com beschränkt; geprüfte Datei-Weiterleitungen sind erlaubt.",
+      "import": "URL importieren",
+      "importing": "Wird importiert...",
+      "refresh": "Bibliothek aktualisieren",
+      "empty": "Für diesen Node wurden noch keine Baupläne hochgeladen.",
+      "download": "{name} herunterladen",
+      "delete": "{name} löschen",
+      "confirmDelete": "{name} aus der gemeinsamen Bibliothek dieses Nodes löschen?",
+      "working": "{name} wird aktualisiert...",
+      "errors": {
+        "load": "Die Bauplanbibliothek des Nodes konnte nicht geladen werden.",
+        "upload": "Bauplan konnte nicht hochgeladen werden.",
+        "import": "Diese URL konnte nicht importiert werden. Nutze eine Bauplan-Detailseite oder einen direkten Download von einer zugelassenen Website.",
+        "delete": "Bauplan konnte nicht gelöscht werden."
+      }
     }
   },
   "DashboardPage": {
@@ -1440,25 +1461,17 @@
     },
     "satisfactoryBlueprints": {
       "title": "Satisfactory-Baupläne",
-      "description": "Gemeinsame Bauplanbibliothek für Satisfactory-Server auf diesem Worker.",
-      "stagingNote": "Ausgewählte Dateien werden in den Ordner data/Blueprints dieses Servers kopiert. Dedicated-Server laden Baupläne nicht in Spielerprofile; Spieler müssen sie weiterhin lokal importieren.",
-      "sourceUrl": "URL einer Bauplan-Detailseite",
-      "upload": "Eine .sbp- oder .sbpcfg-Datei hochladen",
-      "import": "Importieren",
-      "importing": "Wird importiert...",
+      "description": "Baupläne, die in die gemeinsame Bibliothek dieses Nodes hochgeladen wurden.",
+      "stagingNote": "Installieren kopiert den Bauplan in den Blueprint-Speicherordner dieses Servers.",
       "refresh": "Baupläne aktualisieren",
       "empty": "Noch keine Baupläne verfügbar.",
-      "installFile": "{name} in diesen Server kopieren",
-      "download": "{name} herunterladen",
-      "delete": "{name} löschen",
-      "confirmDelete": "{name} aus der gemeinsamen Bibliothek löschen?",
+      "install": "Installieren",
+      "installing": "Wird installiert...",
+      "installed": "Installiert",
       "working": "{name} wird aktualisiert...",
       "errors": {
         "load": "Baupläne konnten nicht geladen werden.",
-        "upload": "Bauplan konnte nicht hochgeladen werden.",
-        "import": "Bauplan konnte nicht von den zugelassenen Websites importiert werden.",
-        "install": "Server-Bauplandateien konnten nicht aktualisiert werden.",
-        "delete": "Bauplan konnte nicht gelöscht werden."
+        "install": "Bauplan konnte nicht auf diesem Server installiert werden."
       }
     },
     "groupFiles": {
