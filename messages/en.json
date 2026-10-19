@@ -1463,7 +1463,7 @@
     "satisfactoryBlueprints": {
       "title": "Satisfactory Blueprints",
       "description": "Blueprints uploaded to this node's shared library.",
-      "stagingNote": "Install copies the blueprint into saved/blueprints/<SessionName>, using the active Satisfactory game session.",
+      "stagingNote": "Install copies the blueprint into saved/blueprints/<SessionName>, using the active Satisfactory game session. This may require a server restart for the changes to take affect.",
       "createSessionFirst": "Create or load a game in Satisfactory's in-game Server Manager, then wait for its first autosave before installing blueprints.",
       "openLibrary": "Open shared upload library",
       "refresh": "Refresh blueprints",

@@ -4,6 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import { Check, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { FolderOpen } from "lucide-react";
+import { Link } from "@/i18n/navigation";
+import { useParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -40,6 +43,8 @@ export default function SatisfactoryBlueprintsCard({
   const [serverReady, setServerReady] = useState(false);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
+  const params = useParams<{ noderef: string; serverref: string }>();
+  const nodeRef = typeof params?.noderef === "string" ? params.noderef : "";
 
   const load = useCallback(async () => {
     setError("");
@@ -113,15 +118,25 @@ export default function SatisfactoryBlueprintsCard({
             <CardTitle>{t("title")}</CardTitle>
             <CardDescription>{t("description")}</CardDescription>
           </div>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => void load()}
-            aria-label={t("refresh")}
-            title={t("refresh")}
-          >
-            <RefreshCw />
-          </Button>
+
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline">
+              <Link href={`/nodes/${encodeURIComponent(nodeRef)}`}>
+                <FolderOpen />
+                {t("satisfactoryBlueprints.openLibrary")}
+              </Link>
+            </Button>
+
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => void load()}
+              aria-label={t("refresh")}
+              title={t("refresh")}
+            >
+              <RefreshCw />
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

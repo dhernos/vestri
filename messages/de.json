@@ -1463,7 +1463,7 @@
     "satisfactoryBlueprints": {
       "title": "Satisfactory-Baupläne",
       "description": "Baupläne, die in die gemeinsame Bibliothek dieses Nodes hochgeladen wurden.",
-      "stagingNote": "Installieren kopiert den Bauplan nach saved/blueprints/<SessionName> und verwendet die aktive Satisfactory-Spielsession.",
+      "stagingNote": "Installieren kopiert den Bauplan nach saved/blueprints/<SessionName> und verwendet die aktive Satisfactory-Spielsession. Eventuell ist ein Neustart des Servers erforderlich, damit die Änderungen wirksam werden.",
       "createSessionFirst": "Erstelle oder lade im Satisfactory-Servermanager im Spiel eine Spielsession und warte vor der Bauplaninstallation auf die erste automatische Sicherung.",
       "openLibrary": "Gemeinsame Upload-Bibliothek öffnen",
       "refresh": "Baupläne aktualisieren",

@@ -1,10 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FolderOpen } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
-import { Link, usePathname, useRouter } from "@/i18n/navigation";
+import { usePathname, useRouter } from "@/i18n/navigation";
 import AccessCard from "@/components/servers/cards/access-card";
 import BackupsCard from "@/components/servers/cards/backups-card";
 import ConfigEditorCard from "@/components/servers/cards/config-editor-card";
@@ -692,12 +691,6 @@ export default function ServerControlsPage() {
               </div>
               {server.game?.toLowerCase() === "satisfactory" ? (
                 <div className="mt-6">
-                  <Button asChild variant="outline" className="mb-3">
-                    <Link href={`/nodes/${encodeURIComponent(nodeRef)}`}>
-                      <FolderOpen />
-                      {t("satisfactoryBlueprints.openLibrary")}
-                    </Link>
-                  </Button>
                   <SatisfactoryBlueprintsCard basePath={basePath} />
                 </div>
               ) : null}
