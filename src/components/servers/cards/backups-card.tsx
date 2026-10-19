@@ -393,7 +393,7 @@ export default function BackupsCard({ basePath }: { basePath: string }) {
               <Input
                 type="file"
                 accept=".zip,application/zip"
-                className="sr-only"
+                className="sr-only peer"
                 disabled={busy !== "" || loading}
                 onChange={(event) => {
                   const file = event.target.files?.[0];
@@ -401,7 +401,7 @@ export default function BackupsCard({ basePath }: { basePath: string }) {
                   event.currentTarget.value = "";
                 }}
               />
-              <span className="inline-flex h-9 items-center gap-2 rounded-md border px-3 text-sm font-medium hover:bg-accent">
+              <span className="inline-flex h-9 items-center gap-2 rounded-md border px-3 text-sm font-medium hover:bg-accent peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-disabled:pointer-events-none peer-disabled:opacity-50">
                 {busy === "upload" ? (
                   <LoaderCircle className="size-4 animate-spin" />
                 ) : (

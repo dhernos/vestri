@@ -123,7 +123,7 @@ export default function SatisfactoryBlueprintsCard({
             <Button asChild variant="outline">
               <Link href={`/nodes/${encodeURIComponent(nodeRef)}`}>
                 <FolderOpen />
-                {t("satisfactoryBlueprints.openLibrary")}
+                {t("openLibrary")}
               </Link>
             </Button>
 
