@@ -389,7 +389,7 @@ export default function BackupsCard({ basePath }: { basePath: string }) {
               )}
               {t("backups.buttons.create")}
             </Button>
-            <label className="inline-flex cursor-pointer">
+            <label className="relative inline-flex cursor-pointer">
               <Input
                 type="file"
                 accept=".zip,application/zip"
