@@ -1480,6 +1480,28 @@
     "groupFiles": {
       "title": "Plugin Staging",
       "currentFolder": "Velocity source folder: data/vestri-plugin-staging{path}",
+      "manager": {
+        "staging": {
+          "title": "Staged plugins",
+          "description": "Upload plugins here, then drag them onto a subserver.",
+          "dropHint": "Choose files or drop them onto this card to upload.",
+          "upload": "Upload",
+          "uploading": "Uploading...",
+          "empty": "No staged plugins."
+        },
+        "servers": {
+          "title": "Subservers",
+          "description": "Drag a staged plugin onto a subserver to copy it into its plugins folder. Existing files are overwritten.",
+          "dropHere": "Drop to copy",
+          "applyAll": "Copy all staged",
+          "emptyPlugins": "No plugins found."
+        },
+        "copied": "Copied to {server}.",
+        "edit": "Edit",
+        "editorTitle": "Edit file",
+        "expand": "Expand",
+        "collapse": "Collapse"
+      },
       "apply": {
         "title": "Apply staged plugins",
         "description": "Select the subservers to update. Matching files are overwritten; other plugin files are kept.",

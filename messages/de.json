@@ -1480,6 +1480,28 @@
     "groupFiles": {
       "title": "Plugin-Staging",
       "currentFolder": "Velocity-Quellordner: data/vestri-plugin-staging{path}",
+      "manager": {
+        "staging": {
+          "title": "Bereitgestellte Plugins",
+          "description": "Lade Plugins hier hoch und ziehe sie dann auf einen Subserver.",
+          "dropHint": "Dateien auswählen oder auf diese Karte ziehen, um sie hochzuladen.",
+          "upload": "Hochladen",
+          "uploading": "Lade hoch...",
+          "empty": "Keine bereitgestellten Plugins."
+        },
+        "servers": {
+          "title": "Subserver",
+          "description": "Ziehe ein bereitgestelltes Plugin auf einen Subserver, um es in dessen Plugin-Ordner zu kopieren. Vorhandene Dateien werden überschrieben.",
+          "dropHere": "Zum Kopieren hier ablegen",
+          "applyAll": "Alle kopieren",
+          "emptyPlugins": "Keine Plugins gefunden."
+        },
+        "copied": "Nach {server} kopiert.",
+        "edit": "Bearbeiten",
+        "editorTitle": "Datei bearbeiten",
+        "expand": "Aufklappen",
+        "collapse": "Zuklappen"
+      },
       "apply": {
         "title": "Plugins anwenden",
         "description": "Wähle die Subserver zum Aktualisieren. Übereinstimmende Dateien werden überschrieben; andere Plugin-Dateien bleiben erhalten.",

@@ -15,7 +15,7 @@ import LogsCard from "@/components/servers/cards/logs-card";
 import ServerControlsCard from "@/components/servers/cards/controls-card";
 import SatisfactoryBlueprintsCard from "@/components/servers/cards/satisfactory-blueprints-card";
 import VelocityCard from "@/components/servers/cards/velocity-card";
-import VelocityGroupApplyCard from "@/components/servers/cards/velocity-group-apply-card";
+import VelocityPluginManagerCard from "@/components/servers/cards/velocity-plugin-manager-card";
 import ServerStatusBlob from "@/components/servers/status-blob";
 import { Button } from "@/components/ui/button";
 import {
@@ -621,13 +621,15 @@ export default function ServerControlsPage() {
         <>
           {server.permissions.canManageFiles ? (
             <>
-              {isGroupFilesSection && isVelocityServer ? (
-                <VelocityGroupApplyCard
-                  basePath={basePath}
-                  backends={velocityBackends}
-                  applyingLabel={t("groupFiles.apply.applying")}
-                />
-              ) : null}
+              {isGroupFilesSection ? (
+                isVelocityServer ? (
+                  <VelocityPluginManagerCard
+                    nodeRef={nodeRef}
+                    basePath={basePath}
+                    backends={velocityBackends}
+                  />
+                ) : null
+              ) : (
               <div className="grid gap-6 lg:grid-cols-2">
                 <FileBrowserCard
                   browserPath={browserPath}
@@ -643,7 +645,7 @@ export default function ServerControlsPage() {
                   browserUnzippingPath={browserUnzippingPath}
                   groupFiles={isGroupFilesSection}
                   folderCreateBasePath={
-                    isGroupFilesSection ? basePath : undefined
+                    isGroupFilesSection ? fileApiBasePath : undefined
                   }
                   folderNavigationLockedRef={folderNavigationLockedRef}
                   normalizeRelativePath={normalizeRelativePath}
@@ -689,6 +691,7 @@ export default function ServerControlsPage() {
                   }}
                 />
               </div>
+              )}
               {server.game?.toLowerCase() === "satisfactory" ? (
                 <div className="mt-6">
                   <SatisfactoryBlueprintsCard basePath={basePath} />
