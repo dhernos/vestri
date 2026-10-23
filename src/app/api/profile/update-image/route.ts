@@ -95,7 +95,7 @@ function resolveUploadDirectory(imagePath: string): string | null {
 
 class RequestBodyTooLargeError extends Error {}
 
-async function readBoundedRequestBody(request: NextRequest): Promise<Uint8Array> {
+async function readBoundedRequestBody(request: NextRequest): Promise<ArrayBuffer> {
   const contentLength = request.headers.get("content-length");
   if (
     contentLength &&
@@ -107,7 +107,7 @@ async function readBoundedRequestBody(request: NextRequest): Promise<Uint8Array>
 
   const reader = request.body?.getReader();
   if (!reader) {
-    return new Uint8Array();
+    return new ArrayBuffer(0);
   }
 
   const chunks: Uint8Array[] = [];
@@ -125,10 +125,11 @@ async function readBoundedRequestBody(request: NextRequest): Promise<Uint8Array>
     chunks.push(value);
   }
 
-  const body = new Uint8Array(totalLength);
+  const body = new ArrayBuffer(totalLength);
+  const output = new Uint8Array(body);
   let offset = 0;
   for (const chunk of chunks) {
-    body.set(chunk, offset);
+    output.set(chunk, offset);
     offset += chunk.byteLength;
   }
   return body;
@@ -186,7 +187,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let body: Uint8Array;
+  let body: ArrayBuffer;
   let formData: FormData;
   try {
     body = await readBoundedRequestBody(request);
