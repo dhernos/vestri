@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { buildServerWorkspacePath } from "@/features/servers/navigation";
 import type {
+  GameServerTemplateSummary,
   GameServerTemplateVersionField,
   ServerStatus,
   VelocityBackendSummary,
@@ -17,7 +18,9 @@ import type {
 type VelocityCardProps = {
   nodeRef: string;
   velocityTemplateId: string;
+  velocityTemplates: GameServerTemplateSummary[];
   velocityBackendName: string;
+  velocityCurseForgeUrl: string;
   velocitySoftwareField?: GameServerTemplateVersionField;
   velocitySoftwareOptions: string[];
   velocityBackendSoftwareVersion: string;
@@ -31,6 +34,8 @@ type VelocityCardProps = {
   agreementRequired: boolean;
   velocityBackends: VelocityBackendSummary[];
   onBackendNameChange: (value: string) => void;
+  onTemplateChange: (value: string) => void;
+  onCurseForgeUrlChange: (value: string) => void;
   onBackendSoftwareVersionChange: (value: string) => void;
   onBackendGameVersionChange: (value: string) => void;
   onCreateVelocityBackend: () => void;
@@ -41,7 +46,9 @@ type VelocityCardProps = {
 export default function VelocityCard({
   nodeRef,
   velocityTemplateId,
+  velocityTemplates,
   velocityBackendName,
+  velocityCurseForgeUrl,
   velocitySoftwareField,
   velocitySoftwareOptions,
   velocityBackendSoftwareVersion,
@@ -55,6 +62,8 @@ export default function VelocityCard({
   agreementRequired,
   velocityBackends,
   onBackendNameChange,
+  onTemplateChange,
+  onCurseForgeUrlChange,
   onBackendSoftwareVersionChange,
   onBackendGameVersionChange,
   onCreateVelocityBackend,
@@ -72,6 +81,26 @@ export default function VelocityCard({
       <CardContent className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
+            <Label htmlFor="velocity-backend-template">{t("velocity.fields.template")}</Label>
+            <select
+              id="velocity-backend-template"
+              className="h-9 w-full rounded-md border bg-transparent px-3 text-sm"
+              value={velocityTemplateId}
+              onChange={(event) => onTemplateChange(event.target.value)}
+              disabled={velocityCreating || velocityTemplates.length === 0}
+            >
+              {velocityTemplates.length === 0 ? (
+                <option value="">{t("velocity.empty.templates")}</option>
+              ) : (
+                velocityTemplates.map((template) => (
+                  <option key={template.id} value={template.id}>
+                    {template.name}
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="velocity-backend-name">{t("velocity.fields.identifier")}</Label>
             <Input
               id="velocity-backend-name"
@@ -81,6 +110,21 @@ export default function VelocityCard({
               disabled={velocityCreating}
             />
           </div>
+          {velocityTemplateId === "minecraft-curseforge" ? (
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="velocity-backend-curseforge-url">
+                {t("velocity.fields.curseForgeUrl")}
+              </Label>
+              <Input
+                id="velocity-backend-curseforge-url"
+                type="url"
+                value={velocityCurseForgeUrl}
+                onChange={(event) => onCurseForgeUrlChange(event.target.value)}
+                placeholder={t("velocity.fields.curseForgeUrlPlaceholder")}
+                disabled={velocityCreating}
+              />
+            </div>
+          ) : null}
           {velocitySoftwareField ? (
             <div className="space-y-2">
               <Label htmlFor="velocity-backend-software">

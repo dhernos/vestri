@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FileInput } from "@/components/ui/file-input";
 import { Input } from "@/components/ui/input";
 
 type BlueprintFile = { name: string; size: number };
@@ -165,8 +166,7 @@ export default function SatisfactoryBlueprintLibraryCard({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
-          <Input
-            type="file"
+          <FileInput
             accept=".sbp,.sbpcfg"
             className="max-w-sm"
             aria-label={t("upload")}

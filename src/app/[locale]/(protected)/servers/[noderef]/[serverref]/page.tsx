@@ -251,7 +251,9 @@ export default function ServerControlsPage() {
 
   const {
     velocityTemplateId,
+    velocityTemplates,
     velocityBackendName,
+    velocityCurseForgeUrl,
     velocitySoftwareField,
     velocitySoftwareOptions,
     velocityBackendSoftwareVersion,
@@ -267,6 +269,8 @@ export default function ServerControlsPage() {
     velocityAgreementOpen,
     selectedVelocityAgreement,
     setVelocityBackendName,
+    setVelocityTemplateId,
+    setVelocityCurseForgeUrl,
     setVelocityBackendSoftwareVersion,
     setVelocityBackendGameVersion,
     setVelocityAgreementOpen,
@@ -553,7 +557,9 @@ export default function ServerControlsPage() {
             <VelocityCard
               nodeRef={nodeRef}
               velocityTemplateId={velocityTemplateId}
+              velocityTemplates={velocityTemplates}
               velocityBackendName={velocityBackendName}
+              velocityCurseForgeUrl={velocityCurseForgeUrl}
               velocitySoftwareField={velocitySoftwareField}
               velocitySoftwareOptions={velocitySoftwareOptions}
               velocityBackendSoftwareVersion={velocityBackendSoftwareVersion}
@@ -567,6 +573,8 @@ export default function ServerControlsPage() {
               agreementRequired={agreementRequired}
               velocityBackends={velocityBackends}
               onBackendNameChange={setVelocityBackendName}
+              onTemplateChange={setVelocityTemplateId}
+              onCurseForgeUrlChange={setVelocityCurseForgeUrl}
               onBackendSoftwareVersionChange={setVelocityBackendSoftwareVersion}
               onBackendGameVersionChange={setVelocityBackendGameVersion}
               onCreateVelocityBackend={() => {

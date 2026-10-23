@@ -6,6 +6,7 @@ import { FolderPlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileInput } from "@/components/ui/file-input";
 import { Input } from "@/components/ui/input";
 import type { WorkerListEntry } from "@/components/servers/cards/types";
 
@@ -150,9 +151,8 @@ export default function FileBrowserCard({
         </div>
         {!isGroupRoot ? (
           <div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed p-3">
-            <Input
+            <FileInput
               key={browserUploadInputKey}
-              type="file"
               className="max-w-xs"
               onChange={(event) => onSelectUploadFile(event.target.files?.[0] || null)}
             />

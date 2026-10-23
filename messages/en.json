@@ -2,6 +2,12 @@
   "Common": {
     "loading": "Loading...",
     "seconds": "seconds",
+    "fileInput": {
+      "chooseFile": "Choose file",
+      "chooseFiles": "Choose files",
+      "noFileSelected": "No file selected",
+      "filesSelected": "{count} files selected"
+    },
     "time": {
       "daysUnit": "d",
       "hoursUnit": "h",
@@ -1298,7 +1304,9 @@
         "identifier": "Identifier",
         "identifierPlaceholder": "backend-1",
         "serverType": "Server type",
-        "gameVersion": "Game version"
+        "gameVersion": "Game version",
+        "curseForgeUrl": "CurseForge modpack or server file URL",
+        "curseForgeUrlPlaceholder": "https://www.curseforge.com/minecraft/modpacks/pack-name"
       },
       "buttons": {
         "create": "Create backend server",

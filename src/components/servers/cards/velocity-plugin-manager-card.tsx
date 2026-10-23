@@ -23,7 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { FileInput } from "@/components/ui/file-input";
 import {
   decodeEscapedLineBreaks,
   formatBytes,
@@ -468,9 +468,8 @@ export default function VelocityPluginManagerCard({
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed p-3">
-            <Input
+            <FileInput
               key={uploadInputKey}
-              type="file"
               multiple
               className="max-w-xs"
               aria-label={t("groupFiles.manager.staging.dropHint")}

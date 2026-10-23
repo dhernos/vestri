@@ -42,6 +42,7 @@ export const useVelocityBackends = ({ nodeRef, server, t }: UseVelocityBackendsP
   const [velocityBackendName, setVelocityBackendName] = useState("");
   const [velocityBackendSoftwareVersion, setVelocityBackendSoftwareVersion] = useState("");
   const [velocityBackendGameVersion, setVelocityBackendGameVersion] = useState("");
+  const [velocityCurseForgeUrl, setVelocityCurseForgeUrl] = useState("");
 
   const selectedVelocityTemplate = useMemo(
     () => velocityTemplates.find((template) => template.id === velocityTemplateId) || null,
@@ -202,6 +203,9 @@ export const useVelocityBackends = ({ nodeRef, server, t }: UseVelocityBackendsP
             agreementAccepted,
             softwareVersion: velocitySoftwareField ? velocityBackendSoftwareVersion.trim() : "",
             gameVersion: velocityGameField ? velocityBackendGameVersion.trim() : "",
+            ...(velocityTemplateId === "minecraft-curseforge"
+              ? { curseForgeUrl: velocityCurseForgeUrl.trim() }
+              : {}),
             parentServerRef: server.id,
           }),
         });
@@ -213,6 +217,7 @@ export const useVelocityBackends = ({ nodeRef, server, t }: UseVelocityBackendsP
         }
 
         setVelocityBackendName("");
+        setVelocityCurseForgeUrl("");
         await loadVelocityData();
         window.dispatchEvent(
           new CustomEvent("vestri:servers-changed", {
@@ -233,6 +238,7 @@ export const useVelocityBackends = ({ nodeRef, server, t }: UseVelocityBackendsP
       velocityBackendGameVersion,
       velocityBackendName,
       velocityBackendSoftwareVersion,
+      velocityCurseForgeUrl,
       velocityGameField,
       velocitySoftwareField,
       velocityTemplateId,
@@ -262,6 +268,7 @@ export const useVelocityBackends = ({ nodeRef, server, t }: UseVelocityBackendsP
     velocityGameField,
     velocityGameOptions,
     velocityBackendGameVersion,
+    velocityCurseForgeUrl,
     velocityCreating,
     velocityLoading,
     velocityError,
@@ -272,6 +279,7 @@ export const useVelocityBackends = ({ nodeRef, server, t }: UseVelocityBackendsP
     selectedVelocityAgreement,
     setVelocityTemplateId,
     setVelocityBackendName,
+    setVelocityCurseForgeUrl,
     setVelocityBackendSoftwareVersion,
     setVelocityBackendGameVersion,
     setVelocityAgreementOpen,
