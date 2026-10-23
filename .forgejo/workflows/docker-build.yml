@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    runs-on: docker-runner
+    runs-on: docker
     steps:
       - uses: https://code.forgejo.org/actions/checkout@v4
 
