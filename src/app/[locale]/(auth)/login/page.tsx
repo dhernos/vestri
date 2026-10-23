@@ -47,6 +47,23 @@ const stripLocalePrefix = (target: string, locale: string) => {
   return target;
 };
 
+const sanitizeCallbackUrl = (target: string, locale: string) => {
+  const fallback = `/${locale}/dashboard`;
+  if (!target.startsWith("/") || target.startsWith("//")) {
+    return fallback;
+  }
+
+  try {
+    const parsed = new URL(target, "https://vestri.invalid");
+    if (parsed.origin !== "https://vestri.invalid") {
+      return fallback;
+    }
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return fallback;
+  }
+};
+
 export default function LoginPage() {
   const t = useTranslations("Login");
   const tErrors = useTranslations("Errors");
@@ -57,8 +74,10 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeLocale = locale || "en";
-  const rawCallbackUrl =
-    searchParams.get("callbackUrl") || `/${activeLocale}/dashboard`;
+  const rawCallbackUrl = sanitizeCallbackUrl(
+    searchParams.get("callbackUrl") || `/${activeLocale}/dashboard`,
+    activeLocale
+  );
   const callbackUrl = stripLocalePrefix(rawCallbackUrl, activeLocale);
   const { refresh } = useAuth();
 

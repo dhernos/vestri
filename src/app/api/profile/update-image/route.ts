@@ -5,6 +5,7 @@ import { NextRequest } from "next/server";
 
 const GO_API_URL = process.env.GO_API_URL || "http://localhost:8080";
 const MAX_FILE_SIZE_BYTES = 3 * 1024 * 1024;
+const MAX_REQUEST_SIZE_BYTES = MAX_FILE_SIZE_BYTES + 64 * 1024;
 const UPLOADS_ROOT = path.join(process.cwd(), "public", "uploads");
 
 const ALLOWED_MIME_TYPES = new Set([
@@ -53,18 +54,13 @@ function detectMimeType(bytes: Uint8Array): string {
   return "";
 }
 
-function normalizeMimeType(inputType: string, bytes: Uint8Array): string | null {
-  const reported = inputType.toLowerCase();
-  if (ALLOWED_MIME_TYPES.has(reported)) {
-    return reported === "image/jpg" ? "image/jpeg" : reported;
-  }
-
+function normalizeMimeType(bytes: Uint8Array): string | null {
   const detected = detectMimeType(bytes);
   if (!detected || !ALLOWED_MIME_TYPES.has(detected)) {
     return null;
   }
 
-  return detected === "image/jpg" ? "image/jpeg" : detected;
+  return detected;
 }
 
 function extensionForMimeType(mimeType: string): "png" | "jpg" | "webp" {
@@ -75,33 +71,67 @@ function extensionForMimeType(mimeType: string): "png" | "jpg" | "webp" {
 
 function resolveUploadDirectory(imagePath: string): string | null {
   const withoutQuery = imagePath.split("?")[0].trim();
-  if (!withoutQuery.startsWith("/uploads/")) {
+  const match = /^\/uploads\/([a-f0-9]{64})\/profile\.(?:png|jpg|webp)$/.exec(
+    withoutQuery
+  );
+  if (!match) {
     return null;
   }
 
-  const relativePath = path.posix.normalize(withoutQuery.slice("/uploads/".length));
+  const candidate = path.resolve(UPLOADS_ROOT, match[1]);
+  const root = path.resolve(UPLOADS_ROOT);
+  const relativePath = path.relative(root, candidate);
   if (
     !relativePath ||
-    relativePath === "." ||
-    relativePath.startsWith("..") ||
-    relativePath.includes("/../") ||
-    relativePath.includes("\\")
+    relativePath === ".." ||
+    relativePath.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relativePath)
   ) {
     return null;
   }
 
-  const relativeDir = path.posix.dirname(relativePath);
-  if (!relativeDir || relativeDir === ".") {
-    return null;
-  }
-
-  const candidate = path.resolve(UPLOADS_ROOT, ...relativeDir.split("/"));
-  const root = path.resolve(UPLOADS_ROOT);
-  if (candidate !== root && !candidate.startsWith(root + path.sep)) {
-    return null;
-  }
-
   return candidate;
+}
+
+class RequestBodyTooLargeError extends Error {}
+
+async function readBoundedRequestBody(request: NextRequest): Promise<Uint8Array> {
+  const contentLength = request.headers.get("content-length");
+  if (
+    contentLength &&
+    /^\d+$/.test(contentLength) &&
+    Number(contentLength) > MAX_REQUEST_SIZE_BYTES
+  ) {
+    throw new RequestBodyTooLargeError();
+  }
+
+  const reader = request.body?.getReader();
+  if (!reader) {
+    return new Uint8Array();
+  }
+
+  const chunks: Uint8Array[] = [];
+  let totalLength = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+    totalLength += value.byteLength;
+    if (totalLength > MAX_REQUEST_SIZE_BYTES) {
+      await reader.cancel().catch(() => {});
+      throw new RequestBodyTooLargeError();
+    }
+    chunks.push(value);
+  }
+
+  const body = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return body;
 }
 
 async function readErrorMessage(response: Response, fallback: string): Promise<string> {
@@ -123,10 +153,54 @@ export async function POST(request: NextRequest) {
     return Response.json({ message: "Unauthorized" }, { status: 401 });
   }
 
+  let previousImage: string | null = null;
+  try {
+    const meResponse = await fetch(`${GO_API_URL}/api/auth/me`, {
+      method: "GET",
+      headers: { cookie },
+      cache: "no-store",
+    });
+    if (!meResponse.ok) {
+      return Response.json(
+        { message: "Unauthorized" },
+        { status: meResponse.status === 401 ? 401 : meResponse.status }
+      );
+    }
+
+    const mePayload = (await meResponse.json().catch(() => null)) as
+      | { image?: unknown; role?: unknown }
+      | null;
+    if (
+      typeof mePayload?.role !== "string" ||
+      !["USER", "ADMIN", "EDITOR"].includes(mePayload.role)
+    ) {
+      return Response.json({ message: "Forbidden" }, { status: 403 });
+    }
+    if (typeof mePayload?.image === "string" && mePayload.image.trim() !== "") {
+      previousImage = mePayload.image;
+    }
+  } catch {
+    return Response.json(
+      { message: "Failed to validate session" },
+      { status: 502 }
+    );
+  }
+
+  let body: Uint8Array;
   let formData: FormData;
   try {
-    formData = await request.formData();
-  } catch {
+    body = await readBoundedRequestBody(request);
+    const contentType = request.headers.get("content-type");
+    if (!contentType?.toLowerCase().startsWith("multipart/form-data;")) {
+      return Response.json({ message: "Invalid form data" }, { status: 400 });
+    }
+    formData = await new Response(body, {
+      headers: { "Content-Type": contentType },
+    }).formData();
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return Response.json({ message: "Request body too large" }, { status: 413 });
+    }
     return Response.json({ message: "Invalid form data" }, { status: 400 });
   }
 
@@ -140,7 +214,7 @@ export async function POST(request: NextRequest) {
   }
 
   const bytes = new Uint8Array(await imagePart.arrayBuffer());
-  const mimeType = normalizeMimeType(imagePart.type, bytes);
+  const mimeType = normalizeMimeType(bytes);
   if (!mimeType) {
     return Response.json({ message: "Invalid image format." }, { status: 400 });
   }
@@ -159,26 +233,6 @@ export async function POST(request: NextRequest) {
   }
 
   const imageURL = `/uploads/${hash}/${fileName}`;
-
-  let previousImage: string | null = null;
-  try {
-    const meResponse = await fetch(`${GO_API_URL}/api/auth/me`, {
-      method: "GET",
-      headers: { cookie },
-      cache: "no-store",
-    });
-
-    if (meResponse.ok) {
-      const mePayload = (await meResponse.json().catch(() => null)) as
-        | { image?: unknown }
-        | null;
-      if (typeof mePayload?.image === "string" && mePayload.image.trim() !== "") {
-        previousImage = mePayload.image;
-      }
-    }
-  } catch {
-    // Continue without previous image cleanup context.
-  }
 
   const updateResponse = await fetch(`${GO_API_URL}/api/profile/update-image`, {
     method: "POST",
