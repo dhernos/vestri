@@ -1422,7 +1422,7 @@
     },
     "backups": {
       "title": "Sicherungen",
-      "description": "Archive werden ohne Stoppen des Servers aus dem Datenordner erstellt. Dateien können sich während einer Sicherung ändern.",
+      "description": "Archive werden aus dem Datenordner des Servers erstellt. Ein laufender Server wird dafür kurz gestoppt und danach wieder gestartet.",
       "listTitle": "Verfügbare Sicherungen",
       "retentionDescription": "Im täglichen Zeitraum bleiben alle Sicherungen erhalten, danach eine Sicherung pro Woche im wöchentlichen Zeitraum.",
       "loading": "Sicherungen werden geladen...",

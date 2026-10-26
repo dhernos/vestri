@@ -1422,7 +1422,7 @@
     },
     "backups": {
       "title": "Backups",
-      "description": "Archives are created from the server data folder without stopping the server. Files may change while a backup is running.",
+      "description": "Archives are created from the server data folder. A running server is stopped briefly while the archive is written and started again afterwards.",
       "listTitle": "Available backups",
       "retentionDescription": "Keep every archive for the configured daily period, then one archive per week for the weekly period.",
       "loading": "Loading backups...",

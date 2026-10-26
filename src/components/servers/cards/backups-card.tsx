@@ -75,7 +75,13 @@ const backupResponseError = async (
   return body.slice(0, 500);
 };
 
-export default function BackupsCard({ basePath }: { basePath: string }) {
+export default function BackupsCard({
+  basePath,
+  onServerStateChange,
+}: {
+  basePath: string;
+  onServerStateChange?: () => void;
+}) {
   const t = useTranslations("ServerPage");
   const [state, setState] = useState<BackupState>({
     policy: initialPolicy,
@@ -187,6 +193,7 @@ export default function BackupsCard({ basePath }: { basePath: string }) {
       );
     } finally {
       setBusy("");
+      onServerStateChange?.();
     }
   };
 
@@ -257,6 +264,7 @@ export default function BackupsCard({ basePath }: { basePath: string }) {
       );
     } finally {
       setBusy("");
+      onServerStateChange?.();
     }
   };
 

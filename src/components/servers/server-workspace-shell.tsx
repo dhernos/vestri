@@ -369,9 +369,15 @@ export function ServerWorkspaceShell({
 
     window.addEventListener("focus", refresh);
     document.addEventListener("visibilitychange", onVisibilityChange);
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        refresh();
+      }
+    }, 20000);
     return () => {
       window.removeEventListener("focus", refresh);
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.clearInterval(timer);
     };
   }, [refreshServerStatuses, selectedNodeRef, showServerNavigation]);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { usePathname, useRouter } from "@/i18n/navigation";
@@ -157,17 +157,50 @@ export default function ServerControlsPage() {
   const pollServerStatusUntil = useCallback(
     async (expected: ServerStatus) => {
       let latest = await refreshServerStatus();
-      for (let attempt = 0; attempt < 5; attempt += 1) {
+      for (let attempt = 0; attempt < 10; attempt += 1) {
         if (latest === expected) {
           break;
         }
-        await wait(700);
+        await wait(1000);
         latest = await refreshServerStatus();
       }
       return latest;
     },
     [refreshServerStatus, wait],
   );
+
+  const lastStatusRef = useRef<ServerStatus | undefined>(undefined);
+  useEffect(() => {
+    lastStatusRef.current = server?.status;
+  }, [server?.status]);
+
+  useEffect(() => {
+    if (!basePath || !serverId || stackActionLoading) {
+      return;
+    }
+    const tick = async () => {
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+      const before = lastStatusRef.current;
+      const next = await refreshServerStatus();
+      if (next && next !== before) {
+        notifyServersChanged({
+          changeType: "status",
+          serverRef: serverId,
+          status: next,
+        });
+      }
+    };
+    const timer = window.setInterval(() => void tick(), 10000);
+    return () => window.clearInterval(timer);
+  }, [
+    basePath,
+    notifyServersChanged,
+    refreshServerStatus,
+    serverId,
+    stackActionLoading,
+  ]);
 
   const loadServer = useCallback(async () => {
     if (!nodeRef) {
@@ -403,7 +436,23 @@ export default function ServerControlsPage() {
         credentials: "include",
       });
       if (!res.ok) {
-        setStackError(t(`controls.errors.${action}`));
+        const failure = (await res.json().catch(() => ({}))) as {
+          output?: string;
+        };
+        const detail = failure.output?.trim().slice(-300);
+        setStackError(
+          detail
+            ? `${t(`controls.errors.${action}`)} ${detail}`
+            : t(`controls.errors.${action}`),
+        );
+        const failedStatus = await refreshServerStatus();
+        if (failedStatus) {
+          notifyServersChanged({
+            changeType: "status",
+            serverRef: server.id,
+            status: failedStatus,
+          });
+        }
         return;
       }
       const expectedStatus: ServerStatus = action === "start" ? "up" : "down";
@@ -742,7 +791,12 @@ export default function ServerControlsPage() {
 
       {isBackupsSection ? (
         server.permissions.canManage ? (
-          <BackupsCard basePath={basePath} />
+          <BackupsCard
+            basePath={basePath}
+            onServerStateChange={() => {
+              void refreshServerStatus();
+            }}
+          />
         ) : (
           <FileBrowserRestrictedCard />
         )
