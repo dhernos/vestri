@@ -85,7 +85,6 @@ List values are comma-separated.
 | `TOTP_ISSUER` | `Vestri` | Optional | Issuer name in authenticator apps. |
 | `WORKER_TLS_CA_CERT_FILE` | empty | Optional | Additional trusted worker CA cert file. |
 | `WORKER_TLS_CA_CERT_DIR` | `./certs/worker-cas` | Optional | Directory with trusted worker CA cert files. |
-| `WORKER_TCP_MSS` | `1240` | Optional | TCP MSS clamp (Linux) for backend-to-worker connections so large transfers work over tunnels like WireGuard without a manual MTU. `0` disables. |
 | `NODE_API_KEY_ENCRYPTION_KEY` | empty | Strongly recommended | Encryption key for stored worker API keys. |
 | `TRUSTED_PROXIES` | empty | Required behind a proxy | Trusted immediate proxy IPs/CIDRs for forwarded headers. |
 | `SESSION_COOKIE_SECURE` | auto based on `APP_BASE_URL` scheme | Optional | Forces `Secure` cookie flag. |

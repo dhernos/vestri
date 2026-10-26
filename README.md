@@ -66,10 +66,30 @@ location / {
 	proxy_set_header X-Forwarded-Proto $scheme;
 	proxy_set_header X-Forwarded-Port $server_port;
 	proxy_set_header X-Real-IP $remote_addr;
+
+	# Large uploads (files, backups): stream instead of buffering the whole body on disk first.
+	client_max_body_size 1g;
+	proxy_request_buffering off;
+	proxy_read_timeout 900s;
+	proxy_send_timeout 900s;
 }
 ```
 
 Use this inside the HTTPS server block for your domain. The browser URL in `APP_BASE_URL` should remain `https://your-domain`, not the internal `:3000` URL.
+
+#### Slow or stalling uploads over WireGuard
+
+If you reach Vestri through a WireGuard tunnel and large uploads crawl at a few KB/s (small requests work fine), the tunnel's path MTU is smaller than the interface MTU and the ICMP "fragmentation needed" replies never arrive. This affects every TCP service behind the tunnel, not just Vestri. Fix it on the WireGuard server by clamping the TCP MSS. Use your working MTU minus 40 (for example `1360 - 40 = 1320`):
+
+```ini
+# [Interface] section of the server's WireGuard config
+PostUp   = iptables -t mangle -A POSTROUTING -o wg0 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1320
+PostUp   = iptables -t mangle -A PREROUTING  -i wg0 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1320
+PostDown = iptables -t mangle -D POSTROUTING -o wg0 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1320
+PostDown = iptables -t mangle -D PREROUTING  -i wg0 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1320
+```
+
+Restart the tunnel (`wg-quick down wg0 && wg-quick up wg0`) and start a new upload. Alternatively, set `MTU = 1360` (or lower) in each client's WireGuard config. The MSS clamp only affects TCP; for UDP traffic such as game servers, lower the MTU in the WireGuard config instead.
 
 ### Portainer
 
