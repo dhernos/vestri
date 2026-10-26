@@ -511,11 +511,6 @@
     "session": {
       "loggedInAs": "Logged in as",
       "roleLabel": "Role: {role}",
-      "detailsTitle": "Session details",
-      "detailsCta": "Show session details",
-      "detailsLoading": "Loading...",
-      "loginTime": "Login Time:",
-      "expiresAt": "Expires At:",
       "signOut": "Sign out"
     },
     "cta": {
@@ -527,8 +522,7 @@
       "howTo": "How-to"
     },
     "errors": {
-      "invalidSession": "Your session has expired or is invalid. Please log in again.",
-      "sessionDetails": "Could not load session details."
+      "invalidSession": "Your session has expired or is invalid. Please log in again."
     }
   },
   "HowToPage": {

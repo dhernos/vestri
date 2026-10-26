@@ -511,11 +511,6 @@
     "session": {
       "loggedInAs": "Angemeldet als",
       "roleLabel": "Rolle: {role}",
-      "detailsTitle": "Sitzungsdetails",
-      "detailsCta": "Sitzungsdetails anzeigen",
-      "detailsLoading": "Lädt...",
-      "loginTime": "Login-Zeit:",
-      "expiresAt": "Läuft ab:",
       "signOut": "Abmelden"
     },
     "cta": {
@@ -527,8 +522,7 @@
       "howTo": "How-to"
     },
     "errors": {
-      "invalidSession": "Ihre Sitzung ist abgelaufen oder ungültig. Bitte erneut anmelden.",
-      "sessionDetails": "Sitzungsdetails konnten nicht geladen werden."
+      "invalidSession": "Ihre Sitzung ist abgelaufen oder ungültig. Bitte erneut anmelden."
     }
   },
   "HowToPage": {
