@@ -31,6 +31,10 @@ import { useServerConsole } from "@/features/servers/hooks/use-server-console";
 import { useServerFiles } from "@/features/servers/hooks/use-server-files";
 import { useVelocityBackends } from "@/features/servers/hooks/use-velocity-backends";
 import { normalizeServerWorkspaceSection } from "@/features/servers/navigation";
+import {
+  setPendingStackAction,
+  usePendingStackAction,
+} from "@/features/servers/stack-action-store";
 import type { GameServerDetails, ServerStatus } from "@/features/servers/types";
 import styles from "./page.module.css";
 
@@ -58,9 +62,6 @@ export default function ServerControlsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [stackActionLoading, setStackActionLoading] = useState<
-    "" | "start" | "stop"
-  >("");
   const [stackError, setStackError] = useState("");
   const [imageRepulling, setImageRepulling] = useState(false);
   const [imageRepullError, setImageRepullError] = useState("");
@@ -73,6 +74,7 @@ export default function ServerControlsPage() {
     }
     return `/api/nodes/${encodeURIComponent(nodeRef)}/servers/${encodeURIComponent(serverRef)}`;
   }, [nodeRef, serverRef]);
+  const stackActionLoading = usePendingStackAction(basePath);
   const fileApiBasePath = isGroupFilesSection
     ? `${basePath}/group-files`
     : basePath;
@@ -428,7 +430,7 @@ export default function ServerControlsPage() {
     if (action === "stop") {
       stopExecSession();
     }
-    setStackActionLoading(action);
+    setPendingStackAction(basePath, action);
     setStackError("");
     try {
       const res = await fetch(`${basePath}/${action}`, {
@@ -469,7 +471,7 @@ export default function ServerControlsPage() {
     } catch {
       setStackError(t(`controls.errors.${action}`));
     } finally {
-      setStackActionLoading("");
+      setPendingStackAction(basePath, "");
     }
   };
 
@@ -694,6 +696,7 @@ export default function ServerControlsPage() {
                   browserUploadInputKey={browserUploadInputKey}
                   browserUploadFile={browserUploadFile}
                   browserUploading={browserUploading}
+                  uploadScope={`${fileApiBasePath}/files/upload`}
                   browserError={browserError}
                   browserActionError={browserActionError}
                   browserEntries={browserEntries}

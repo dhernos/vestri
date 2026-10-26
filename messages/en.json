@@ -1420,6 +1420,12 @@
         "unzipArchive": "Failed to unzip archive."
       }
     },
+    "uploads": {
+      "processing": "Upload received, transferring to the node...",
+      "done": "Upload complete.",
+      "cancel": "Cancel upload",
+      "dismiss": "Dismiss"
+    },
     "backups": {
       "title": "Backups",
       "description": "Archives are created from the server data folder. A running server is stopped briefly while the archive is written and started again afterwards.",

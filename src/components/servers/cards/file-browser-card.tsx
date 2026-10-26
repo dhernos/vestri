@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileInput } from "@/components/ui/file-input";
 import { Input } from "@/components/ui/input";
+import UploadProgressList from "@/components/uploads/upload-progress-list";
 import type { WorkerListEntry } from "@/components/servers/cards/types";
 
 const responseMessage = async (res: Response, fallback: string) => {
@@ -35,6 +36,7 @@ type FileBrowserCardProps = {
   browserUploadInputKey: number;
   browserUploadFile: File | null;
   browserUploading: boolean;
+  uploadScope: string;
   browserError: string;
   browserActionError: string;
   browserEntries: WorkerListEntry[];
@@ -66,6 +68,7 @@ export default function FileBrowserCard({
   browserUploadInputKey,
   browserUploadFile,
   browserUploading,
+  uploadScope,
   browserError,
   browserActionError,
   browserEntries,
@@ -163,6 +166,7 @@ export default function FileBrowserCard({
             </Button>
           </div>
         ) : null}
+        <UploadProgressList scope={uploadScope} />
         {groupFiles && browserPath ? (
           <div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed p-3">
             <Input

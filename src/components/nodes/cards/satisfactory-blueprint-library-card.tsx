@@ -13,6 +13,13 @@ import {
 } from "@/components/ui/card";
 import { FileInput } from "@/components/ui/file-input";
 import { Input } from "@/components/ui/input";
+import UploadProgressList from "@/components/uploads/upload-progress-list";
+import {
+  hasActiveUpload,
+  startUpload,
+  subscribeUploadCompletion,
+  useUploads,
+} from "@/features/uploads/upload-store";
 
 type BlueprintFile = { name: string; size: number };
 
@@ -43,6 +50,8 @@ export default function SatisfactoryBlueprintLibraryCard({
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const basePath = `/api/nodes/${encodeURIComponent(nodeRef)}/satisfactory-blueprints`;
+  const uploadScope = `${basePath}/upload`;
+  const uploading = hasActiveUpload(useUploads(uploadScope));
 
   const load = useCallback(async () => {
     setError("");
@@ -67,28 +76,23 @@ export default function SatisfactoryBlueprintLibraryCard({
     return () => window.clearTimeout(timer);
   }, [load]);
 
-  const upload = async (file?: File) => {
+  useEffect(
+    () =>
+      subscribeUploadCompletion(uploadScope, (job) => {
+        if (job.status === "done") void load();
+      }),
+    [load, uploadScope],
+  );
+
+  const upload = (file?: File) => {
     if (!file) return;
-    setBusy(file.name);
     setError("");
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      const response = await fetch(`${basePath}/upload`, {
-        method: "POST",
-        credentials: "include",
-        body: form,
-      });
-      if (!response.ok) {
-        setError(await responseMessage(response, t("errors.upload")));
-        return;
-      }
-      await load();
-    } catch {
-      setError(t("errors.upload"));
-    } finally {
-      setBusy("");
-    }
+    startUpload({
+      scope: uploadScope,
+      url: uploadScope,
+      file,
+      fallbackError: t("errors.upload"),
+    });
   };
 
   const importFromSource = async () => {
@@ -170,9 +174,9 @@ export default function SatisfactoryBlueprintLibraryCard({
             accept=".sbp,.sbpcfg"
             className="max-w-sm"
             aria-label={t("upload")}
-            disabled={busy !== ""}
+            disabled={busy !== "" || uploading}
             onChange={(event) => {
-              void upload(event.target.files?.[0]);
+              upload(event.target.files?.[0]);
               event.currentTarget.value = "";
             }}
           />
@@ -196,6 +200,7 @@ export default function SatisfactoryBlueprintLibraryCard({
             {busy === "import" ? t("importing") : t("import")}
           </Button>
         </div>
+        <UploadProgressList scope={uploadScope} />
         <p className="text-xs text-muted-foreground">{t("approvedSources")}</p>
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
         <div className="divide-y rounded-md border">

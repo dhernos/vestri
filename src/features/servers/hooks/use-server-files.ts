@@ -19,6 +19,12 @@ import {
 } from "@/features/servers/file-utils";
 import type { TranslateFn } from "@/features/servers/i18n";
 import type { ConfigRow, GameServerConfigFile, WorkerListEntry } from "@/features/servers/types";
+import {
+  hasActiveUpload,
+  startUpload,
+  subscribeUploadCompletion,
+  useUploads,
+} from "@/features/uploads/upload-store";
 
 type UseServerFilesParams = {
   basePath: string;
@@ -64,7 +70,8 @@ export const useServerFiles = ({
   const [browserActionError, setBrowserActionError] = useState("");
   const [browserUploadFile, setBrowserUploadFile] = useState<File | null>(null);
   const [browserUploadInputKey, setBrowserUploadInputKey] = useState(0);
-  const [browserUploading, setBrowserUploading] = useState(false);
+  const uploadScope = `${basePath}/files/upload`;
+  const browserUploading = hasActiveUpload(useUploads(uploadScope));
   const [browserDownloadingPath, setBrowserDownloadingPath] = useState("");
   const [browserDeletingPath, setBrowserDeletingPath] = useState("");
   const [browserUnzippingPath, setBrowserUnzippingPath] = useState("");
@@ -286,7 +293,7 @@ export const useServerFiles = ({
     }
   };
 
-  const uploadFileToCurrentFolder = async () => {
+  const uploadFileToCurrentFolder = () => {
     if (!canManageFiles || !basePath || !browserUploadFile) {
       return;
     }
@@ -299,33 +306,32 @@ export const useServerFiles = ({
       return;
     }
 
-    const formData = new FormData();
-    formData.append("path", uploadPath);
-    formData.append("file", browserUploadFile);
-
-    setBrowserUploading(true);
     setBrowserActionError("");
-    try {
-      const res = await fetch(`${basePath}/files/upload`, {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      });
-      if (!res.ok) {
-        const message = await responseMessage(res, t("fileBrowser.errors.uploadFile"));
-        setBrowserActionError(message);
-        return;
-      }
-
-      setBrowserUploadFile(null);
-      setBrowserUploadInputKey((prev) => prev + 1);
-      await loadBrowserEntries();
-    } catch {
-      setBrowserActionError(t("fileBrowser.errors.uploadFile"));
-    } finally {
-      setBrowserUploading(false);
-    }
+    startUpload({
+      scope: uploadScope,
+      url: uploadScope,
+      file: browserUploadFile,
+      fields: { path: uploadPath },
+      fallbackError: t("fileBrowser.errors.uploadFile"),
+    });
+    setBrowserUploadFile(null);
+    setBrowserUploadInputKey((prev) => prev + 1);
   };
+
+  const loadBrowserEntriesRef = useRef(loadBrowserEntries);
+  useEffect(() => {
+    loadBrowserEntriesRef.current = loadBrowserEntries;
+  }, [loadBrowserEntries]);
+
+  useEffect(
+    () =>
+      subscribeUploadCompletion(uploadScope, (job) => {
+        if (job.status === "done") {
+          void loadBrowserEntriesRef.current();
+        }
+      }),
+    [uploadScope]
+  );
 
   const deleteBrowserPath = async (
     relativePath: string,

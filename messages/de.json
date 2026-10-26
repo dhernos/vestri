@@ -1420,6 +1420,12 @@
         "unzipArchive": "Archiv konnte nicht entpackt werden."
       }
     },
+    "uploads": {
+      "processing": "Upload empfangen, wird an die Node übertragen...",
+      "done": "Upload abgeschlossen.",
+      "cancel": "Upload abbrechen",
+      "dismiss": "Schließen"
+    },
     "backups": {
       "title": "Sicherungen",
       "description": "Archive werden aus dem Datenordner des Servers erstellt. Ein laufender Server wird dafür kurz gestoppt und danach wieder gestartet.",

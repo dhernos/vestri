@@ -24,12 +24,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FileInput } from "@/components/ui/file-input";
+import UploadProgressList from "@/components/uploads/upload-progress-list";
 import {
   decodeEscapedLineBreaks,
   formatBytes,
   sortEntries,
 } from "@/features/servers/file-utils";
 import type { GameServerListItem, WorkerListEntry } from "@/features/servers/types";
+import {
+  hasActiveUpload,
+  startUpload,
+  subscribeUploadCompletion,
+  useUploads,
+} from "@/features/uploads/upload-store";
 
 type VelocityPluginManagerCardProps = {
   nodeRef: string;
@@ -360,9 +367,10 @@ export default function VelocityPluginManagerCard({
 }: VelocityPluginManagerCardProps) {
   const t = useTranslations("ServerPage");
   const stagingApi = `${basePath}/group-files`;
+  const uploadScope = `${stagingApi}/files/upload`;
   const [stagingReload, setStagingReload] = useState(0);
   const [backendReload, setBackendReload] = useState<Record<string, number>>({});
-  const [uploading, setUploading] = useState(false);
+  const uploading = hasActiveUpload(useUploads(uploadScope));
   const [uploadInputKey, setUploadInputKey] = useState(0);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [dragOverId, setDragOverId] = useState("");
@@ -378,37 +386,29 @@ export default function VelocityPluginManagerCard({
   );
 
   const uploadFiles = useCallback(
-    async (files: File[]) => {
+    (files: File[]) => {
       if (!basePath || files.length === 0) {
         return;
       }
-      setUploading(true);
       setMessage(null);
-      try {
-        for (const file of files) {
-          const formData = new FormData();
-          formData.append("path", `${stagingRoot}/${file.name}`);
-          formData.append("file", file);
-          const res = await fetch(`${stagingApi}/files/upload`, {
-            method: "POST",
-            credentials: "include",
-            body: formData,
-          });
-          if (!res.ok) {
-            setMessage({ kind: "error", text: await responseMessage(res, t("fileBrowser.errors.uploadFile")) });
-            return;
-          }
-        }
-        setSelectedFiles([]);
-        setUploadInputKey((current) => current + 1);
-      } catch {
-        setMessage({ kind: "error", text: t("fileBrowser.errors.uploadFile") });
-      } finally {
-        setStagingReload((current) => current + 1);
-        setUploading(false);
+      for (const file of files) {
+        startUpload({
+          scope: uploadScope,
+          url: uploadScope,
+          file,
+          fields: { path: `${stagingRoot}/${file.name}` },
+          fallbackError: t("fileBrowser.errors.uploadFile"),
+        });
       }
+      setSelectedFiles([]);
+      setUploadInputKey((current) => current + 1);
     },
-    [basePath, stagingApi, t]
+    [basePath, uploadScope, t]
+  );
+
+  useEffect(
+    () => subscribeUploadCompletion(uploadScope, () => setStagingReload((current) => current + 1)),
+    [uploadScope]
   );
 
   const applyToBackend = async (backend: GameServerListItem, items?: string[]) => {
@@ -458,7 +458,7 @@ export default function VelocityPluginManagerCard({
           if (hasType(event, "Files")) {
             event.preventDefault();
             setStagingDragOver(false);
-            void uploadFiles(Array.from(event.dataTransfer.files));
+            uploadFiles(Array.from(event.dataTransfer.files));
           }
         }}
       >
@@ -475,12 +475,13 @@ export default function VelocityPluginManagerCard({
               aria-label={t("groupFiles.manager.staging.dropHint")}
               onChange={(event) => setSelectedFiles(Array.from(event.target.files || []))}
             />
-            <Button onClick={() => void uploadFiles(selectedFiles)} disabled={selectedFiles.length === 0 || uploading}>
+            <Button onClick={() => uploadFiles(selectedFiles)} disabled={selectedFiles.length === 0 || uploading}>
               {uploading ? <LoaderCircle className="animate-spin" /> : <Upload />}
               {uploading ? t("groupFiles.manager.staging.uploading") : t("groupFiles.manager.staging.upload")}
             </Button>
             <p className="w-full text-xs text-muted-foreground">{t("groupFiles.manager.staging.dropHint")}</p>
           </div>
+          <UploadProgressList scope={uploadScope} />
           <div className="max-h-96 overflow-auto">
             <PluginTree
               apiBase={stagingApi}

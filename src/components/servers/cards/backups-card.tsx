@@ -22,6 +22,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import UploadProgressList from "@/components/uploads/upload-progress-list";
+import {
+  hasActiveUpload,
+  startUpload,
+  subscribeUploadCompletion,
+  useUploads,
+} from "@/features/uploads/upload-store";
 
 type BackupPolicy = {
   enabled: boolean;
@@ -197,34 +204,33 @@ export default function BackupsCard({
     }
   };
 
-  const uploadBackup = async (file: File) => {
-    setBusy("upload");
+  const uploadScope = `${basePath}/backups/upload`;
+  const uploading = hasActiveUpload(useUploads(uploadScope));
+
+  useEffect(
+    () =>
+      subscribeUploadCompletion(uploadScope, (job) => {
+        if (job.status === "done") {
+          setNotice(t("backups.messages.uploaded"));
+          void load();
+        }
+      }),
+    [load, t, uploadScope],
+  );
+
+  const uploadBackup = (file: File) => {
     setError("");
     setNotice("");
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      const response = await fetch(`${basePath}/backups/upload`, {
-        method: "POST",
-        credentials: "include",
-        body: form,
-      });
-      if (!response.ok) {
-        throw new Error(
-          await backupResponseError(response, t("backups.errors.upload"), t),
-        );
-      }
-      await load();
-      setNotice(t("backups.messages.uploaded"));
-    } catch (uploadError) {
-      setError(
-        uploadError instanceof Error
-          ? uploadError.message
-          : t("backups.errors.upload"),
-      );
-    } finally {
-      setBusy("");
-    }
+    startUpload({
+      scope: uploadScope,
+      url: uploadScope,
+      file,
+      fallbackError: t("backups.errors.upload"),
+      mapError: (status, body) =>
+        status === 404 && body.toLowerCase().includes("404 page not found")
+          ? t("backups.errors.workerNotUpdated")
+          : null,
+    });
   };
 
   const downloadBackup = async (name: string) => {
@@ -402,15 +408,15 @@ export default function BackupsCard({
                 type="file"
                 accept=".zip,application/zip"
                 className="sr-only peer"
-                disabled={busy !== "" || loading}
+                disabled={busy !== "" || loading || uploading}
                 onChange={(event) => {
                   const file = event.target.files?.[0];
-                  if (file) void uploadBackup(file);
+                  if (file) uploadBackup(file);
                   event.currentTarget.value = "";
                 }}
               />
               <span className="inline-flex h-9 items-center gap-2 rounded-md border px-3 text-sm font-medium hover:bg-accent peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-disabled:pointer-events-none peer-disabled:opacity-50">
-                {busy === "upload" ? (
+                {uploading ? (
                   <LoaderCircle className="size-4 animate-spin" />
                 ) : (
                   <Upload className="size-4" />
@@ -429,6 +435,7 @@ export default function BackupsCard({
               <RefreshCw className={loading ? "animate-spin" : ""} />
             </Button>
           </div>
+          <UploadProgressList scope={uploadScope} />
           {notice ? (
             <p role="status" className="text-sm text-success">
               {notice}
