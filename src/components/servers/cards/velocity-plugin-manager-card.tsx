@@ -465,9 +465,9 @@ export default function VelocityPluginManagerCard({
     server,
     ...backends.filter(
       (backend) =>
-      pluginSoftware.has(
-        (backend.softwareVersion || "").trim().toUpperCase(),
-      ) && backend.permissions.canManageFiles,
+        pluginSoftware.has(
+          (backend.softwareVersion || "").trim().toUpperCase(),
+        ) && backend.permissions.canManageFiles,
     ),
   ];
 
@@ -657,9 +657,9 @@ export default function VelocityPluginManagerCard({
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
               {targets.map((backend) => {
-                const software = (backend.softwareVersion || "")
-                  .trim()
-                  .toUpperCase() || (backend.id === server.id ? "VELOCITY" : "");
+                const software =
+                  (backend.softwareVersion || "").trim().toUpperCase() ||
+                  (backend.id === server.id ? "VELOCITY" : "");
                 const apiBase =
                   backend.id === server.id
                     ? basePath
