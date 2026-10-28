@@ -693,10 +693,11 @@ export default function ServerControlsPage() {
           {server.permissions.canManageFiles ? (
             <>
               {isGroupFilesSection ? (
-                isVelocityServer ? (
+                isVelocityServer && server ? (
                   <VelocityPluginManagerCard
                     nodeRef={nodeRef}
                     basePath={basePath}
+                    server={server}
                     backends={velocityBackends}
                   />
                 ) : null

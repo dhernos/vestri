@@ -51,6 +51,7 @@ import {
 type VelocityPluginManagerCardProps = {
   nodeRef: string;
   basePath: string;
+  server: GameServerListItem;
   backends: GameServerListItem[];
 };
 
@@ -438,6 +439,7 @@ function PluginFileEditorDialog({
 export default function VelocityPluginManagerCard({
   nodeRef,
   basePath,
+  server,
   backends,
 }: VelocityPluginManagerCardProps) {
   const t = useTranslations("ServerPage");
@@ -459,12 +461,15 @@ export default function VelocityPluginManagerCard({
     text: string;
   } | null>(null);
 
-  const targets = backends.filter(
-    (backend) =>
+  const targets = [
+    server,
+    ...backends.filter(
+      (backend) =>
       pluginSoftware.has(
         (backend.softwareVersion || "").trim().toUpperCase(),
       ) && backend.permissions.canManageFiles,
-  );
+    ),
+  ];
 
   const uploadFiles = useCallback(
     (files: File[]) => {
@@ -577,9 +582,9 @@ export default function VelocityPluginManagerCard({
               setStagingReload((current) => current + 1);
               setBackendReload((current) =>
                 Object.fromEntries(
-                  backends.map((backend) => [
-                    backend.id,
-                    (current[backend.id] || 0) + 1,
+                  targets.map((target) => [
+                    target.id,
+                    (current[target.id] || 0) + 1,
                   ]),
                 ),
               );
@@ -645,11 +650,7 @@ export default function VelocityPluginManagerCard({
               {message.text}
             </p>
           ) : null}
-          {backends.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {t("groupFiles.apply.empty")}
-            </p>
-          ) : targets.length === 0 ? (
+          {targets.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               {t("groupFiles.apply.noTargets")}
             </p>
@@ -658,7 +659,11 @@ export default function VelocityPluginManagerCard({
               {targets.map((backend) => {
                 const software = (backend.softwareVersion || "")
                   .trim()
-                  .toUpperCase();
+                  .toUpperCase() || (backend.id === server.id ? "VELOCITY" : "");
+                const apiBase =
+                  backend.id === server.id
+                    ? basePath
+                    : `/api/nodes/${encodeURIComponent(nodeRef)}/servers/${encodeURIComponent(backend.id)}`;
                 const isDropTarget = dragOverId === backend.id;
                 return (
                   <div
@@ -717,7 +722,7 @@ export default function VelocityPluginManagerCard({
                     ) : null}
                     <div className="max-h-72 overflow-auto">
                       <PluginTree
-                        apiBase={`/api/nodes/${encodeURIComponent(nodeRef)}/servers/${encodeURIComponent(backend.id)}`}
+                        apiBase={apiBase}
                         path={backendRoot}
                         reloadKey={backendReload[backend.id] || 0}
                         emptyLabel={t(
