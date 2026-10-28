@@ -2,15 +2,44 @@
 
 import type { MutableRefObject } from "react";
 import { useState } from "react";
-import { Copy, Download, EllipsisVertical, FolderInput, FolderPlus, LoaderCircle, Pencil, Trash2, ArchiveRestore } from "lucide-react";
+import {
+  Copy,
+  Download,
+  EllipsisVertical,
+  FolderInput,
+  FolderPlus,
+  LoaderCircle,
+  Pencil,
+  Trash2,
+  ArchiveRestore,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { FileInput } from "@/components/ui/file-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import UploadProgressList from "@/components/uploads/upload-progress-list";
 import type { WorkerListEntry } from "@/components/servers/cards/types";
 
@@ -35,7 +64,11 @@ const responseMessage = async (res: Response, fallback: string) => {
 
 type FileBrowserCardProps = {
   fileActionsBasePath: string;
-  onEntryTransferred: (source: string, dest: string, operation: "copy" | "move" | "rename") => void;
+  onEntryTransferred: (
+    source: string,
+    dest: string,
+    operation: "copy" | "move" | "rename",
+  ) => void;
   browserPath: string;
   browserLoading: boolean;
   browserUploadInputKey: number;
@@ -62,7 +95,10 @@ type FileBrowserCardProps = {
   onNavigateDirectory: (relativePath: string) => void;
   onOpenFile: (relativePath: string) => void;
   onInvalidFileSelection: () => void;
-  onDownload: (relativePath: string, entryType: WorkerListEntry["type"]) => void;
+  onDownload: (
+    relativePath: string,
+    entryType: WorkerListEntry["type"],
+  ) => void;
   onUnzip: (relativePath: string) => void;
   onDelete: (relativePath: string, entryType: WorkerListEntry["type"]) => void;
 };
@@ -104,13 +140,20 @@ export default function FileBrowserCard({
   const [newFolderName, setNewFolderName] = useState("");
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [createFolderError, setCreateFolderError] = useState("");
-  const [transfer, setTransfer] = useState<{ operation: "copy" | "move" | "rename"; source: string } | null>(null);
+  const [transfer, setTransfer] = useState<{
+    operation: "copy" | "move" | "rename";
+    source: string;
+  } | null>(null);
   const [destination, setDestination] = useState("");
   const [transferring, setTransferring] = useState(false);
   const [transferError, setTransferError] = useState("");
   const isGroupRoot = groupFiles && !browserPath;
 
-  const startTransfer = (operation: "copy" | "move" | "rename", source: string, name: string) => {
+  const startTransfer = (
+    operation: "copy" | "move" | "rename",
+    source: string,
+    name: string,
+  ) => {
     setTransfer({ operation, source });
     setDestination(operation === "rename" ? name : source);
     setTransferError("");
@@ -119,13 +162,18 @@ export default function FileBrowserCard({
   const submitTransfer = async () => {
     if (!transfer || transferring) return;
     const target = destination.trim();
-    if (!target || target.split(/[\\/]/).some((part) => part === ".." || part === ".") || (transfer.operation === "rename" && /[\\/]/.test(target))) {
+    if (
+      !target ||
+      target.split(/[\\/]/).some((part) => part === ".." || part === ".") ||
+      (transfer.operation === "rename" && /[\\/]/.test(target))
+    ) {
       setTransferError(t("fileBrowser.transfer.invalidDestination"));
       return;
     }
-    const dest = transfer.operation === "rename"
-      ? `${transfer.source.slice(0, transfer.source.lastIndexOf("/") + 1)}${target}`
-      : target;
+    const dest =
+      transfer.operation === "rename"
+        ? `${transfer.source.slice(0, transfer.source.lastIndexOf("/") + 1)}${target}`
+        : target;
     if (dest === transfer.source) {
       setTransferError(t("fileBrowser.transfer.sameDestination"));
       return;
@@ -137,10 +185,16 @@ export default function FileBrowserCard({
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: transfer.source, dest, operation: transfer.operation }),
+        body: JSON.stringify({
+          source: transfer.source,
+          dest,
+          operation: transfer.operation,
+        }),
       });
       if (!res.ok) {
-        setTransferError(await responseMessage(res, t("fileBrowser.transfer.error")));
+        setTransferError(
+          await responseMessage(res, t("fileBrowser.transfer.error")),
+        );
         return;
       }
       setTransfer(null);
@@ -169,7 +223,7 @@ export default function FileBrowserCard({
       });
       if (!res.ok) {
         setCreateFolderError(
-          await responseMessage(res, t("groupFiles.createFolder.error"))
+          await responseMessage(res, t("groupFiles.createFolder.error")),
         );
         return;
       }
@@ -184,25 +238,72 @@ export default function FileBrowserCard({
 
   return (
     <Card>
-      <Dialog open={transfer !== null} onOpenChange={(open) => { if (!open && !transferring) setTransfer(null); }}>
+      <Dialog
+        open={transfer !== null}
+        onOpenChange={(open) => {
+          if (!open && !transferring) setTransfer(null);
+        }}
+      >
         <DialogContent showCloseButton={!transferring}>
           <DialogHeader>
-            <DialogTitle>{transfer ? t(`fileBrowser.buttons.${transfer.operation}`) : ""}</DialogTitle>
-            <DialogDescription className="break-all">{transfer?.source}</DialogDescription>
+            <DialogTitle>
+              {transfer ? t(`fileBrowser.buttons.${transfer.operation}`) : ""}
+            </DialogTitle>
+            <DialogDescription className="break-all">
+              {transfer?.source}
+            </DialogDescription>
           </DialogHeader>
-          <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void submitTransfer(); }}>
+          <form
+            className="space-y-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void submitTransfer();
+            }}
+          >
             <div className="space-y-2">
               <Label htmlFor="file-transfer-destination">
-                {t(transfer?.operation === "rename" ? "fileBrowser.transfer.newName" : "fileBrowser.transfer.destination")}
+                {t(
+                  transfer?.operation === "rename"
+                    ? "fileBrowser.transfer.newName"
+                    : "fileBrowser.transfer.destination",
+                )}
               </Label>
-              <Input id="file-transfer-destination" value={destination} onChange={(event) => setDestination(event.target.value)} disabled={transferring} autoFocus autoComplete="off" required />
+              <Input
+                id="file-transfer-destination"
+                value={destination}
+                onChange={(event) => setDestination(event.target.value)}
+                disabled={transferring}
+                autoFocus
+                autoComplete="off"
+                required
+              />
             </div>
-            {transferError ? <p role="alert" className="text-sm text-destructive">{transferError}</p> : null}
+            {transferError ? (
+              <p role="alert" className="text-sm text-destructive">
+                {transferError}
+              </p>
+            ) : null}
             <DialogFooter>
-              <Button type="button" variant="outline" disabled={transferring} onClick={() => setTransfer(null)}>{t("fileBrowser.buttons.cancel")}</Button>
-              <Button type="submit" disabled={transferring || !destination.trim()}>
-                {transferring ? <LoaderCircle className="animate-spin" /> : null}
-                {transferring ? t("fileBrowser.transfer.working") : transfer ? t(`fileBrowser.buttons.${transfer.operation}`) : ""}
+              <Button
+                type="button"
+                variant="outline"
+                disabled={transferring}
+                onClick={() => setTransfer(null)}
+              >
+                {t("fileBrowser.buttons.cancel")}
+              </Button>
+              <Button
+                type="submit"
+                disabled={transferring || !destination.trim()}
+              >
+                {transferring ? (
+                  <LoaderCircle className="animate-spin" />
+                ) : null}
+                {transferring
+                  ? t("fileBrowser.transfer.working")
+                  : transfer
+                    ? t(`fileBrowser.buttons.${transfer.operation}`)
+                    : ""}
               </Button>
             </DialogFooter>
           </form>
@@ -215,13 +316,21 @@ export default function FileBrowserCard({
         <CardDescription>
           {groupFiles
             ? t("groupFiles.currentFolder", { path: `/${browserPath || "."}` })
-            : t("fileBrowser.currentFolder", { path: `/${browserPath || "."}` })}
+            : t("fileBrowser.currentFolder", {
+                path: `/${browserPath || "."}`,
+              })}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={onRefresh} disabled={browserLoading}>
-            {browserLoading ? t("fileBrowser.buttons.loading") : t("fileBrowser.buttons.refresh")}
+          <Button
+            variant="secondary"
+            onClick={onRefresh}
+            disabled={browserLoading}
+          >
+            {browserLoading
+              ? t("fileBrowser.buttons.loading")
+              : t("fileBrowser.buttons.refresh")}
           </Button>
           <Button variant="outline" onClick={onGoUp} disabled={!browserPath}>
             {t("fileBrowser.buttons.upOneLevel")}
@@ -235,9 +344,14 @@ export default function FileBrowserCard({
             <FileInput
               key={browserUploadInputKey}
               className="max-w-xs"
-              onChange={(event) => onSelectUploadFile(event.target.files?.[0] || null)}
+              onChange={(event) =>
+                onSelectUploadFile(event.target.files?.[0] || null)
+              }
             />
-            <Button onClick={onUploadToCurrentFolder} disabled={!browserUploadFile || browserUploading}>
+            <Button
+              onClick={onUploadToCurrentFolder}
+              disabled={!browserUploadFile || browserUploading}
+            >
               {browserUploading
                 ? t("fileBrowser.buttons.uploading")
                 : t("fileBrowser.buttons.uploadToCurrentFolder")}
@@ -253,38 +367,56 @@ export default function FileBrowserCard({
               placeholder={t("groupFiles.createFolder.placeholder")}
               aria-label={t("groupFiles.createFolder.placeholder")}
             />
-            <Button onClick={() => void createFolder()} disabled={!newFolderName.trim() || creatingFolder}>
-              {creatingFolder ? t("groupFiles.createFolder.creating") : <FolderPlus />}
+            <Button
+              onClick={() => void createFolder()}
+              disabled={!newFolderName.trim() || creatingFolder}
+            >
+              {creatingFolder ? (
+                t("groupFiles.createFolder.creating")
+              ) : (
+                <FolderPlus />
+              )}
               {creatingFolder ? null : t("groupFiles.createFolder.button")}
             </Button>
           </div>
         ) : null}
-        {browserError ? <p className="text-sm text-destructive">{browserError}</p> : null}
-        {browserActionError ? <p className="text-sm text-destructive">{browserActionError}</p> : null}
-        {createFolderError ? <p className="text-sm text-destructive">{createFolderError}</p> : null}
+        {browserError ? (
+          <p className="text-sm text-destructive">{browserError}</p>
+        ) : null}
+        {browserActionError ? (
+          <p className="text-sm text-destructive">{browserActionError}</p>
+        ) : null}
+        {createFolderError ? (
+          <p className="text-sm text-destructive">{createFolderError}</p>
+        ) : null}
         <div className="max-h-72 space-y-2 overflow-auto">
           {browserEntries.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("fileBrowser.empty")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("fileBrowser.empty")}
+            </p>
           ) : (
             browserEntries.map((entry) => {
               const relativePath = normalizeRelativePath(
-                browserPath ? `${browserPath}/${entry.name}` : entry.name
+                browserPath ? `${browserPath}/${entry.name}` : entry.name,
               );
-              const sizeLabel = entry.type === "dir" ? "" : formatBytes(entry.size);
+              const sizeLabel =
+                entry.type === "dir" ? "" : formatBytes(entry.size);
               const isDownloading = browserDownloadingPath === relativePath;
               const isDeleting = browserDeletingPath === relativePath;
-              const canUnzip = entry.type === "file" && isZipArchiveName(entry.name);
+              const canUnzip =
+                entry.type === "file" && isZipArchiveName(entry.name);
               const isUnzipping = browserUnzippingPath === relativePath;
-              const isBusy = isDownloading || isDeleting || isUnzipping || transferring;
+              const isBusy =
+                isDownloading || isDeleting || isUnzipping || transferring;
               const canTransfer = entry.type === "file" || entry.type === "dir";
               const typeKey =
                 entry.type === "dir"
                   ? "dir"
                   : entry.type === "file"
-                  ? "file"
-                  : entry.type === "symlink"
-                  ? "symlink"
-                  : "other";
+                    ? "file"
+                    : entry.type === "symlink"
+                      ? "symlink"
+                      : "other";
               const typeLabel = `[${t(`fileBrowser.entryTypes.${typeKey}`)}] `;
 
               return (
@@ -315,26 +447,83 @@ export default function FileBrowserCard({
                       {typeLabel}
                       {entry.name}
                     </span>
-                    {sizeLabel ? <span className="ml-3 shrink-0 text-muted-foreground">{sizeLabel}</span> : null}
+                    {sizeLabel ? (
+                      <span className="ml-3 shrink-0 text-muted-foreground">
+                        {sizeLabel}
+                      </span>
+                    ) : null}
                   </button>
                   {!isGroupRoot ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button size="icon" variant="ghost" className="size-8 shrink-0" disabled={isBusy}
-                          aria-label={t("fileBrowser.buttons.actionsFor", { name: entry.name })}
-                          title={t("fileBrowser.buttons.actions")}>
-                          {isBusy ? <LoaderCircle className="animate-spin" /> : <EllipsisVertical />}
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="size-8 shrink-0"
+                          disabled={isBusy}
+                          aria-label={t("fileBrowser.buttons.actionsFor", {
+                            name: entry.name,
+                          })}
+                          title={t("fileBrowser.buttons.actions")}
+                        >
+                          {isBusy ? (
+                            <LoaderCircle className="animate-spin" />
+                          ) : (
+                            <EllipsisVertical />
+                          )}
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => startTransfer("copy", relativePath, entry.name)} disabled={!canTransfer}><Copy />{t("fileBrowser.buttons.copy")}</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => startTransfer("move", relativePath, entry.name)} disabled={!canTransfer}><FolderInput />{t("fileBrowser.buttons.move")}</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => startTransfer("rename", relativePath, entry.name)} disabled={!canTransfer}><Pencil />{t("fileBrowser.buttons.rename")}</DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() =>
+                            startTransfer("copy", relativePath, entry.name)
+                          }
+                          disabled={!canTransfer}
+                        >
+                          <Copy />
+                          {t("fileBrowser.buttons.copy")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() =>
+                            startTransfer("move", relativePath, entry.name)
+                          }
+                          disabled={!canTransfer}
+                        >
+                          <FolderInput />
+                          {t("fileBrowser.buttons.move")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() =>
+                            startTransfer("rename", relativePath, entry.name)
+                          }
+                          disabled={!canTransfer}
+                        >
+                          <Pencil />
+                          {t("fileBrowser.buttons.rename")}
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onSelect={() => onDownload(relativePath, entry.type)}><Download />{t("fileBrowser.buttons.download")}</DropdownMenuItem>
-                        {canUnzip ? <DropdownMenuItem onSelect={() => onUnzip(relativePath)}><ArchiveRestore />{t("fileBrowser.buttons.unzip")}</DropdownMenuItem> : null}
+                        <DropdownMenuItem
+                          onSelect={() => onDownload(relativePath, entry.type)}
+                        >
+                          <Download />
+                          {t("fileBrowser.buttons.download")}
+                        </DropdownMenuItem>
+                        {canUnzip ? (
+                          <DropdownMenuItem
+                            onSelect={() => onUnzip(relativePath)}
+                          >
+                            <ArchiveRestore />
+                            {t("fileBrowser.buttons.unzip")}
+                          </DropdownMenuItem>
+                        ) : null}
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem variant="destructive" onSelect={() => onDelete(relativePath, entry.type)}><Trash2 />{t("fileBrowser.buttons.delete")}</DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onSelect={() => onDelete(relativePath, entry.type)}
+                        >
+                          <Trash2 />
+                          {t("fileBrowser.buttons.delete")}
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   ) : null}

@@ -642,7 +642,9 @@ export default function ServerControlsPage() {
         </>
       ) : null}
 
-      {activeSection === "whitelist" && isVelocityServer && server.permissions.canManage ? (
+      {activeSection === "whitelist" &&
+      isVelocityServer &&
+      server.permissions.canManage ? (
         <VelocityWhitelist key={basePath} basePath={basePath} />
       ) : null}
 
@@ -695,70 +697,72 @@ export default function ServerControlsPage() {
                   />
                 ) : null
               ) : (
-              <div className="grid gap-6 lg:grid-cols-2">
-                <FileBrowserCard
-                  fileActionsBasePath={fileApiBasePath}
-                  onEntryTransferred={onEntryTransferred}
-                  browserPath={browserPath}
-                  browserLoading={browserLoading}
-                  browserUploadInputKey={browserUploadInputKey}
-                  browserUploadFile={browserUploadFile}
-                  browserUploading={browserUploading}
-                  uploadScope={`${fileApiBasePath}/files/upload`}
-                  browserError={browserError}
-                  browserActionError={browserActionError}
-                  browserEntries={browserEntries}
-                  browserDownloadingPath={browserDownloadingPath}
-                  browserDeletingPath={browserDeletingPath}
-                  browserUnzippingPath={browserUnzippingPath}
-                  groupFiles={isGroupFilesSection}
-                  folderCreateBasePath={
-                    isGroupFilesSection ? fileApiBasePath : undefined
-                  }
-                  folderNavigationLockedRef={folderNavigationLockedRef}
-                  normalizeRelativePath={normalizeRelativePath}
-                  formatBytes={formatBytes}
-                  isZipArchiveName={isZipArchiveName}
-                  onRefresh={() => {
-                    void loadBrowserEntries();
-                  }}
-                  onGoUp={() => setBrowserPath(parentRelativePath(browserPath))}
-                  onGoRoot={() => setBrowserPath("")}
-                  onSelectUploadFile={setBrowserUploadFile}
-                  onUploadToCurrentFolder={() => {
-                    void uploadFileToCurrentFolder();
-                  }}
-                  onNavigateDirectory={setBrowserPath}
-                  onOpenFile={(relativePath) => {
-                    void openFile(relativePath);
-                  }}
-                  onInvalidFileSelection={markInvalidFileSelection}
-                  onDownload={(relativePath, entryType) => {
-                    void downloadBrowserPath(relativePath, entryType);
-                  }}
-                  onUnzip={(relativePath) => {
-                    void unzipArchiveInCurrentFolder(relativePath);
-                  }}
-                  onDelete={(relativePath, entryType) => {
-                    void deleteBrowserPath(relativePath, entryType);
-                  }}
-                />
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <FileBrowserCard
+                    fileActionsBasePath={fileApiBasePath}
+                    onEntryTransferred={onEntryTransferred}
+                    browserPath={browserPath}
+                    browserLoading={browserLoading}
+                    browserUploadInputKey={browserUploadInputKey}
+                    browserUploadFile={browserUploadFile}
+                    browserUploading={browserUploading}
+                    uploadScope={`${fileApiBasePath}/files/upload`}
+                    browserError={browserError}
+                    browserActionError={browserActionError}
+                    browserEntries={browserEntries}
+                    browserDownloadingPath={browserDownloadingPath}
+                    browserDeletingPath={browserDeletingPath}
+                    browserUnzippingPath={browserUnzippingPath}
+                    groupFiles={isGroupFilesSection}
+                    folderCreateBasePath={
+                      isGroupFilesSection ? fileApiBasePath : undefined
+                    }
+                    folderNavigationLockedRef={folderNavigationLockedRef}
+                    normalizeRelativePath={normalizeRelativePath}
+                    formatBytes={formatBytes}
+                    isZipArchiveName={isZipArchiveName}
+                    onRefresh={() => {
+                      void loadBrowserEntries();
+                    }}
+                    onGoUp={() =>
+                      setBrowserPath(parentRelativePath(browserPath))
+                    }
+                    onGoRoot={() => setBrowserPath("")}
+                    onSelectUploadFile={setBrowserUploadFile}
+                    onUploadToCurrentFolder={() => {
+                      void uploadFileToCurrentFolder();
+                    }}
+                    onNavigateDirectory={setBrowserPath}
+                    onOpenFile={(relativePath) => {
+                      void openFile(relativePath);
+                    }}
+                    onInvalidFileSelection={markInvalidFileSelection}
+                    onDownload={(relativePath, entryType) => {
+                      void downloadBrowserPath(relativePath, entryType);
+                    }}
+                    onUnzip={(relativePath) => {
+                      void unzipArchiveInCurrentFolder(relativePath);
+                    }}
+                    onDelete={(relativePath, entryType) => {
+                      void deleteBrowserPath(relativePath, entryType);
+                    }}
+                  />
 
-                <FileEditorCard
-                  filePath={filePath}
-                  fileContent={fileContent}
-                  fileLoading={fileLoading}
-                  fileSaving={fileSaving}
-                  fileError={fileError}
-                  onFileContentChange={setFileContent}
-                  onSaveFile={() => {
-                    void saveFile();
-                  }}
-                  onReloadFile={() => {
-                    void openFile(filePath);
-                  }}
-                />
-              </div>
+                  <FileEditorCard
+                    filePath={filePath}
+                    fileContent={fileContent}
+                    fileLoading={fileLoading}
+                    fileSaving={fileSaving}
+                    fileError={fileError}
+                    onFileContentChange={setFileContent}
+                    onSaveFile={() => {
+                      void saveFile();
+                    }}
+                    onReloadFile={() => {
+                      void openFile(filePath);
+                    }}
+                  />
+                </div>
               )}
               {server.game?.toLowerCase() === "satisfactory" ? (
                 <div className="mt-6">
