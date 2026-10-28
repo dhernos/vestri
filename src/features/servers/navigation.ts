@@ -3,6 +3,7 @@ export const serverWorkspaceSections = [
   "config",
   "filesystem",
   "group-files",
+  "whitelist",
   "console",
   "backups",
 ] as const;

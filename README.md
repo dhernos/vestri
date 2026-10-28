@@ -176,6 +176,14 @@ Then create the node in Vestri UI with:
 - Base URL: usually `https://<worker-host>:8031`
 - API key: content of `/etc/vestri/api.key`
 
+## Velocity Whitelist
+
+Velocity servers have an admin-only **Whitelist** tab, disabled until a subserver exists. The main subserver is the first target in the `try` list in `data/velocity.toml`.
+
+Adding a Minecraft username resolves its official Mojang profile and writes the online UUID and canonical name to the main subserver's `data/whitelist.json`, even when that subserver runs in offline mode. Admins can also view and remove entries. Existing entries are preserved; invalid whitelist files must be repaired before changes are accepted.
+
+The backend needs HTTPS access to `api.mojang.com`. Whitelist enforcement remains controlled by the subserver's `white-list` setting. After edits, run `whitelist reload` on the main subserver or restart it to apply the file changes.
+
 ## Security
 
 - Do not expose Vestri directly to the public internet.

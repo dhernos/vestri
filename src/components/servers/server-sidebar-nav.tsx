@@ -216,6 +216,29 @@ export function ServerSidebarNav({
                           </SidebarMenuSubItem>
                         ) : null}
 
+                        {server.kind === "velocity" && server.permissions.canManage ? (
+                          <SidebarMenuSubItem key={`${server.id}-whitelist`}>
+                            <SidebarMenuSubButton
+                              asChild
+                              isActive={isActiveServer && activeSection === "whitelist"}
+                            >
+                              {backends.length > 0 ? (
+                                <Link href={buildServerWorkspacePath(nodeRef, server.id, "whitelist")}>
+                                  <span>{tServer("whitelist.title")}</span>
+                                </Link>
+                              ) : (
+                                <span
+                                  aria-disabled="true"
+                                  title={tServer("whitelist.unavailable")}
+                                  className="pointer-events-none opacity-50"
+                                >
+                                  {tServer("whitelist.title")}
+                                </span>
+                              )}
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ) : null}
+
                         {backends.length > 0 ? (
                           <li className="mt-1 px-2 py-1 text-[11px] uppercase tracking-wide text-sidebar-foreground/60 group-data-[collapsible=icon]:hidden">
                             {tServer("velocity.title")}

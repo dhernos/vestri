@@ -16,6 +16,7 @@ import ServerControlsCard from "@/components/servers/cards/controls-card";
 import SatisfactoryBlueprintsCard from "@/components/servers/cards/satisfactory-blueprints-card";
 import VelocityCard from "@/components/servers/cards/velocity-card";
 import VelocityPluginManagerCard from "@/components/servers/cards/velocity-plugin-manager-card";
+import VelocityWhitelist from "@/components/servers/cards/velocity-whitelist";
 import ServerStatusBlob from "@/components/servers/status-blob";
 import { Button } from "@/components/ui/button";
 import {
@@ -638,6 +639,10 @@ export default function ServerControlsPage() {
             />
           ) : null}
         </>
+      ) : null}
+
+      {activeSection === "whitelist" && isVelocityServer && server.permissions.canManage ? (
+        <VelocityWhitelist key={basePath} basePath={basePath} />
       ) : null}
 
       {isConsoleSection ? (

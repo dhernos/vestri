@@ -1485,6 +1485,23 @@
         "install": "Bauplan konnte nicht auf diesem Server installiert werden."
       }
     },
+    "whitelist": {
+      "title": "Whitelist",
+      "mainServer": "Haupt-Unterserver: {name}",
+      "username": "Minecraft-Spielername",
+      "add": "Spieler hinzufügen",
+      "remove": "{name} entfernen",
+      "refresh": "Whitelist aktualisieren",
+      "loading": "Whitelist wird geladen...",
+      "unavailable": "Noch kein Haupt-Unterserver vorhanden.",
+      "empty": "Keine Spieler auf der Whitelist.",
+      "count": "{count, plural, one {# Spieler} other {# Spieler}}",
+      "saved": "In whitelist.json gespeichert; Whitelist-Neuladen oder Neustart des Haupt-Unterservers ausstehend.",
+      "errors": {
+        "load": "Whitelist konnte nicht geladen werden.",
+        "save": "Whitelist konnte nicht gespeichert werden."
+      }
+    },
     "groupFiles": {
       "title": "Plugin-Staging",
       "currentFolder": "Velocity-Quellordner: data/vestri-plugin-staging{path}",

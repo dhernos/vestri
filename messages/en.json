@@ -1485,6 +1485,23 @@
         "install": "Failed to install blueprint into this server."
       }
     },
+    "whitelist": {
+      "title": "Whitelist",
+      "mainServer": "Main subserver: {name}",
+      "username": "Minecraft username",
+      "add": "Add player",
+      "remove": "Remove {name}",
+      "refresh": "Refresh whitelist",
+      "loading": "Loading whitelist...",
+      "unavailable": "No main subserver available yet.",
+      "empty": "No players on the whitelist.",
+      "count": "{count, plural, one {# player} other {# players}}",
+      "saved": "Saved to whitelist.json; pending whitelist reload or main subserver restart.",
+      "errors": {
+        "load": "Failed to load whitelist.",
+        "save": "Failed to save whitelist."
+      }
+    },
     "groupFiles": {
       "title": "Plugin Staging",
       "currentFolder": "Velocity source folder: data/vestri-plugin-staging{path}",
