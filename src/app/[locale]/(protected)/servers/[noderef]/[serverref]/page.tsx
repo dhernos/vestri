@@ -367,6 +367,7 @@ export default function ServerControlsPage() {
     formatBytes,
     isZipArchiveName,
     markInvalidFileSelection,
+    onEntryTransferred,
   } = useServerFiles({
     basePath: fileApiBasePath,
     canManageFiles: canManageFiles && (isFilesystemSection || isConfigSection),
@@ -696,6 +697,8 @@ export default function ServerControlsPage() {
               ) : (
               <div className="grid gap-6 lg:grid-cols-2">
                 <FileBrowserCard
+                  fileActionsBasePath={fileApiBasePath}
+                  onEntryTransferred={onEntryTransferred}
                   browserPath={browserPath}
                   browserLoading={browserLoading}
                   browserUploadInputKey={browserUploadInputKey}

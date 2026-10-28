@@ -537,7 +537,16 @@ export const useServerFiles = ({
     setFileError(t("fileEditor.errors.onlyRegularTextFiles"));
   };
 
+  const onEntryTransferred = (source: string, dest: string, operation: "copy" | "move" | "rename") => {
+    if (operation === "copy") return;
+    const cleanDestination = normalizeRelativePath(dest);
+    setFilePath((current) => current === source || current.startsWith(`${source}/`)
+      ? `${cleanDestination}${current.slice(source.length)}`
+      : current);
+  };
+
   return {
+    onEntryTransferred,
     browserPath,
     setBrowserPath,
     browserEntries,

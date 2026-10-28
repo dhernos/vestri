@@ -1397,7 +1397,21 @@
         "other": "SONSTIGES"
       },
       "confirmDeletePath": "{label} \"{path}\" löschen?",
+      "transfer": {
+        "newName": "Neuer Name",
+        "destination": "Zielpfad (relativ zum Root, inklusive Name)",
+        "working": "Wird ausgeführt...",
+        "error": "Dateiaktion fehlgeschlagen.",
+        "invalidDestination": "Gib ein gültiges Ziel ohne übergeordnete Verzeichnisangaben ein.",
+        "sameDestination": "Wähle einen anderen Namen oder Zielpfad."
+      },
       "buttons": {
+        "actions": "Dateiaktionen",
+        "actionsFor": "Aktionen für {name}",
+        "copy": "Kopieren",
+        "move": "Verschieben",
+        "rename": "Umbenennen",
+        "cancel": "Abbrechen",
         "loading": "Lädt...",
         "refresh": "Aktualisieren",
         "upOneLevel": "Eine Ebene hoch",

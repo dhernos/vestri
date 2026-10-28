@@ -1397,7 +1397,21 @@
         "other": "OTHER"
       },
       "confirmDeletePath": "Delete {label} \"{path}\"?",
+      "transfer": {
+        "newName": "New name",
+        "destination": "Destination path (relative to root, including name)",
+        "working": "Working...",
+        "error": "File operation failed.",
+        "invalidDestination": "Enter a valid destination without parent-directory segments.",
+        "sameDestination": "Choose a different name or destination."
+      },
       "buttons": {
+        "actions": "File actions",
+        "actionsFor": "Actions for {name}",
+        "copy": "Copy",
+        "move": "Move",
+        "rename": "Rename",
+        "cancel": "Cancel",
         "loading": "Loading...",
         "refresh": "Refresh",
         "upOneLevel": "Up one level",
