@@ -1,3 +1,5 @@
+import type { GameServerListItem } from "@/features/servers/types";
+
 export const serverWorkspaceSections = [
   "dashboard",
   "config",
@@ -6,7 +8,12 @@ export const serverWorkspaceSections = [
   "whitelist",
   "console",
   "backups",
+  "databases",
 ] as const;
+
+export const canManageServerDatabases = (server: GameServerListItem) =>
+  server.permissions.canManage &&
+  (server.game?.toLowerCase() === "minecraft" || server.kind === "velocity");
 
 export type ServerWorkspaceSection = (typeof serverWorkspaceSections)[number];
 

@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { FileInput } from "@/components/ui/file-input";
 import UploadProgressList from "@/components/uploads/upload-progress-list";
+import LinkedPaperPlugins from "@/components/servers/cards/linked-paper-plugins";
 import {
   decodeEscapedLineBreaks,
   formatBytes,
@@ -467,6 +468,13 @@ export default function VelocityPluginManagerCard({
           <CardDescription>{t("groupFiles.manager.staging.description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
+          <LinkedPaperPlugins
+            apiBase={stagingApi}
+            onChange={() => {
+              setStagingReload((current) => current + 1);
+              setBackendReload((current) => Object.fromEntries(backends.map((backend) => [backend.id, (current[backend.id] || 0) + 1])));
+            }}
+          />
           <div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed p-3">
             <FileInput
               key={uploadInputKey}

@@ -3,6 +3,18 @@
 Vestri is a web control panel for game server infrastructure.  
 It connects frontend, backend, and standalone workers so teams can manage nodes, servers, console, files, and access rights in one place.
 
+## Minecraft and Velocity Databases
+
+Server administrators can use the **Databases** tab on Minecraft and Velocity servers to create MariaDB or PostgreSQL databases, view connection credentials, and start, stop, or delete them. The display name is limited to 48 characters; the backend generates the actual database name, username, and password.
+
+Databases are internal services reachable only on the server's Docker network, using the displayed hostname and internal port (MariaDB: 3306, PostgreSQL: 5432). No public database port is published. Creation does not require a game server restart. Credentials and a JDBC connection URL are available only to server administrators.
+
+Database data is persistent across stops and starts. **Stop** retains the data; **Delete** permanently removes the database and its data and requires typing its exact display name. Plugin configurations are not edited automatically; use the displayed internal connection details in the relevant plugin configuration.
+
+Deploy the updated frontend, backend, and worker together. The game server's Docker network must already exist: start the Minecraft server or Velocity proxy once before creating a database. Velocity databases use the group network and can also be reached by its subservers; create group-shared databases on the Velocity server for clear ownership. Standalone servers use their own Compose network. No game server restart is needed to attach a database.
+
+The worker keeps private Compose files and credentials outside `fs_base_path`, in a sibling `.vestri-databases-<hash>` directory with owner-only access. Database contents live in named Docker volumes. Back up these volumes separately using database-native dumps; the existing game-server backup does not include them. Deleting a game server is blocked until its database containers have been explicitly deleted. The plugin user is scoped to the generated database and does not receive database-administrator credentials.
+
 ## Screenshots
 
 Coming Soon!
@@ -183,6 +195,16 @@ Velocity servers have an admin-only **Whitelist** tab, disabled until a subserve
 Adding a Minecraft username resolves its official Mojang profile and writes the online UUID and canonical name to the main subserver's `data/whitelist.json`, even when that subserver runs in offline mode. Admins can also view and remove entries. Existing entries are preserved; invalid whitelist files must be repaired before changes are accepted.
 
 The backend needs HTTPS access to `api.mojang.com`. Whitelist enforcement remains controlled by the subserver's `white-list` setting. After edits, run `whitelist reload` on the main subserver or restart it to apply the file changes.
+
+## Linked Paper Plugins
+
+Velocity's Plugin Staging includes a linked-plugin manager for HTTPS project links from Modrinth (`https://modrinth.com/plugin/<project>`) and Hangar (`https://hangar.papermc.io/<author>/<project>`). Downloading a link adds the latest compatible stable Paper release to staging; use the existing staging controls to copy it to a subserver initially.
+
+Update checks run when the manager loads and every 15 minutes while it is open, with results cached on the worker for six hours. Opening the manager after the cache expires refreshes the check. There is no unattended nightly job, and updates are never installed automatically.
+
+When an update is available, **Update all** downloads and verifies the latest stable release, replaces it in staging and on every Paper/Purpur subserver in the group, and removes all older filenames recorded for that plugin. Configuration folders and unrelated files are kept. Restart the affected subservers afterward. File-management permission is required on the Velocity server and every target; all targets must have the same explicit Minecraft version (not `LATEST`). Mixed-version groups, Spigot/Bukkit targets, arbitrary download hosts, paid plugins, and dependency installation are not supported by this linked Paper workflow.
+
+Tracking is stored in `data/vestri-plugin-staging/tracked-plugins.json` on the Velocity server. It survives backend restarts, caches provider checks, and retains filename history for retrying partial deployments. **Stop tracking** leaves all plugin files in place. Existing manually uploaded JARs are not identified automatically: remove any untracked older copy of a plugin before deploying its first linked release. Only filenames observed through tracking are removed during updates.
 
 ## Security
 

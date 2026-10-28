@@ -21,6 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   buildServerWorkspacePath,
+  canManageServerDatabases,
   type ServerWorkspaceSection,
 } from "@/features/servers/navigation";
 import type { GameServerListItem, ServerStatus } from "@/features/servers/types";
@@ -83,6 +84,10 @@ export function ServerSidebarNav({
     {
       section: "backups",
       title: tServer("backups.title"),
+    },
+    {
+      section: "databases",
+      title: tServer("databases.title"),
     },
   ];
 
@@ -168,8 +173,10 @@ export function ServerSidebarNav({
                         {sectionItems
                           .filter(
                             (sectionItem) =>
-                              sectionItem.section !== "backups" ||
-                              server.permissions.canManage,
+                              (sectionItem.section !== "backups" ||
+                                server.permissions.canManage) &&
+                              (sectionItem.section !== "databases" ||
+                                canManageServerDatabases(server)),
                           )
                           .map((sectionItem) => (
                           <SidebarMenuSubItem
@@ -273,7 +280,10 @@ export function ServerSidebarNav({
                                 </CollapsibleTrigger>
                                 <CollapsibleContent>
                                   <ul className="ml-2 mt-1 flex min-w-0 flex-col gap-1 border-l border-sidebar-border px-2 py-0.5 group-data-[collapsible=icon]:hidden">
-                                    {sectionItems.map((sectionItem) => (
+                                    {sectionItems.filter((sectionItem) =>
+                                      sectionItem.section !== "databases" ||
+                                      canManageServerDatabases(backend),
+                                    ).map((sectionItem) => (
                                       <li key={`${backend.id}-${sectionItem.section}`}>
                                         <SidebarMenuSubButton
                                           asChild

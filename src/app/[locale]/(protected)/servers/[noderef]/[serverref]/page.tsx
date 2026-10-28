@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import AccessCard from "@/components/servers/cards/access-card";
 import BackupsCard from "@/components/servers/cards/backups-card";
+import DatabasesSection from "@/components/servers/cards/databases-section";
 import ConfigEditorCard from "@/components/servers/cards/config-editor-card";
 import FileBrowserCard from "@/components/servers/cards/file-browser-card";
 import FileBrowserRestrictedCard from "@/components/servers/cards/file-browser-restricted-card";
@@ -31,7 +32,7 @@ import { useServerAccess } from "@/features/servers/hooks/use-server-access";
 import { useServerConsole } from "@/features/servers/hooks/use-server-console";
 import { useServerFiles } from "@/features/servers/hooks/use-server-files";
 import { useVelocityBackends } from "@/features/servers/hooks/use-velocity-backends";
-import { normalizeServerWorkspaceSection } from "@/features/servers/navigation";
+import { canManageServerDatabases, normalizeServerWorkspaceSection } from "@/features/servers/navigation";
 import {
   setPendingStackAction,
   usePendingStackAction,
@@ -814,6 +815,16 @@ export default function ServerControlsPage() {
           />
         ) : (
           <FileBrowserRestrictedCard />
+        )
+      ) : null}
+
+      {activeSection === "databases" ? (
+        canManageServerDatabases(server) ? (
+          <DatabasesSection key={basePath} basePath={basePath} />
+        ) : (
+          <p role="alert" className="text-sm text-muted-foreground">
+            {t("databases.restricted")}
+          </p>
         )
       ) : null}
 
