@@ -1328,7 +1328,7 @@
       }
     },
     "logs": {
-      "title": "Console Logs (Read-Only)",
+      "title": "Console / Logs",
       "description": "Switch between manual refresh and automatic live updates.",
       "buttons": {
         "autoUpdate": "Auto update",

@@ -1328,7 +1328,7 @@
       }
     },
     "logs": {
-      "title": "Konsolen-Logs (Read-Only)",
+      "title": "Console / Logs",
       "description": "Zwischen manueller Aktualisierung und automatischen Live-Updates wechseln.",
       "buttons": {
         "autoUpdate": "Automatisch",

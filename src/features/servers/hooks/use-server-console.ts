@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FitAddon } from "@xterm/addon-fit";
 import type { Terminal } from "@xterm/xterm";
+import { consoleLogText } from "@/features/servers/console-log-text";
 import type { TranslateFn } from "@/features/servers/i18n";
 import type {
   ConnectionStatus,
@@ -1230,7 +1231,7 @@ export const useServerConsole = ({
   };
 
   return {
-    consoleOutput,
+    consoleOutput: consoleLogText(consoleOutput),
     consoleStatus,
     consoleError,
     consoleRefreshMode,
