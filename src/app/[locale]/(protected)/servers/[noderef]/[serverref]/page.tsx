@@ -32,7 +32,10 @@ import { useServerAccess } from "@/features/servers/hooks/use-server-access";
 import { useServerConsole } from "@/features/servers/hooks/use-server-console";
 import { useServerFiles } from "@/features/servers/hooks/use-server-files";
 import { useVelocityBackends } from "@/features/servers/hooks/use-velocity-backends";
-import { canManageServerDatabases, normalizeServerWorkspaceSection } from "@/features/servers/navigation";
+import {
+  canManageServerDatabases,
+  normalizeServerWorkspaceSection,
+} from "@/features/servers/navigation";
 import {
   setPendingStackAction,
   usePendingStackAction,

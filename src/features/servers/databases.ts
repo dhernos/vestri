@@ -13,21 +13,34 @@ export type DatabaseEntry = {
   error?: string;
 };
 
-export type DatabaseTemplate = { id: DatabaseEngine; name: string; port: number };
-export type DatabaseState = { databases: DatabaseEntry[]; templates: DatabaseTemplate[] };
+export type DatabaseTemplate = {
+  id: DatabaseEngine;
+  name: string;
+  port: number;
+};
+export type DatabaseState = {
+  databases: DatabaseEntry[];
+  templates: DatabaseTemplate[];
+};
 export type DatabaseAction = "start" | "stop" | "delete";
 
 export const isValidDatabaseDisplayName = (name: string) =>
   name.trim().length > 0 && name.trim().length <= 48;
 
-export const databaseJdbcUrl = (database: Pick<DatabaseEntry, "engine" | "host" | "port" | "database">) => {
-  const host = database.host.includes(":") && !database.host.startsWith("[")
-    ? `[${database.host}]`
-    : database.host;
+export const databaseJdbcUrl = (
+  database: Pick<DatabaseEntry, "engine" | "host" | "port" | "database">,
+) => {
+  const host =
+    database.host.includes(":") && !database.host.startsWith("[")
+      ? `[${database.host}]`
+      : database.host;
   return `jdbc:${database.engine === "mariadb" ? "mysql" : "postgresql"}://${host}:${database.port}/${database.database}`;
 };
 
-export async function databaseResponseError(response: Response, fallback: string) {
+export async function databaseResponseError(
+  response: Response,
+  fallback: string,
+) {
   const text = (await response.text().catch(() => "")).trim();
   if (!text) return fallback;
   try {

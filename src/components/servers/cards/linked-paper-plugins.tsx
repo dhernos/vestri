@@ -54,7 +54,10 @@ export default function LinkedPaperPlugins({
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [confirmation, setConfirmation] = useState<{ plugin: LinkedPlugin; action: "update" | "remove" } | null>(null);
+  const [confirmation, setConfirmation] = useState<{
+    plugin: LinkedPlugin;
+    action: "update" | "remove";
+  } | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -71,7 +74,8 @@ export default function LinkedPaperPlugins({
           setError("");
         }
       } catch (failure) {
-        if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : t("error"));
+        if (!controller.signal.aborted)
+          setError(failure instanceof Error ? failure.message : t("error"));
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
@@ -84,26 +88,45 @@ export default function LinkedPaperPlugins({
     };
   }, [apiBase, t]);
 
-  const mutate = async (action: "import" | "update" | "remove", plugin?: LinkedPlugin) => {
+  const mutate = async (
+    action: "import" | "update" | "remove",
+    plugin?: LinkedPlugin,
+  ) => {
     if (busy) return;
     setBusy(plugin?.id || "import");
     setError("");
     setNotice("");
     try {
-      const response = await fetch(`${apiBase}/plugins${action === "import" ? "" : `/${action}`}`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(action === "import" ? { url } : { id: plugin?.id }),
-      });
+      const response = await fetch(
+        `${apiBase}/plugins${action === "import" ? "" : `/${action}`}`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(
+            action === "import" ? { url } : { id: plugin?.id },
+          ),
+        },
+      );
       setPlugins(await pluginResponse(response));
       setConfirmation(null);
       if (action === "import") setURL("");
-      setNotice(t(action === "update" ? "updated" : action === "remove" ? "removed" : "downloaded"));
+      setNotice(
+        t(
+          action === "update"
+            ? "updated"
+            : action === "remove"
+              ? "removed"
+              : "downloaded",
+        ),
+      );
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : t("error"));
       try {
-        const response = await fetch(`${apiBase}/plugins`, { credentials: "include", cache: "no-store" });
+        const response = await fetch(`${apiBase}/plugins`, {
+          credentials: "include",
+          cache: "no-store",
+        });
         setPlugins(await pluginResponse(response));
       } catch {
         setNotice(t("reloadAfterError"));
@@ -134,28 +157,69 @@ export default function LinkedPaperPlugins({
           className="min-w-0 basis-48 flex-1"
           disabled={Boolean(busy)}
         />
-        <Button type="submit" disabled={!url.trim() || Boolean(busy) || loading}>
-          {busy === "import" ? <LoaderCircle className="animate-spin" /> : <Download />}
+        <Button
+          type="submit"
+          disabled={!url.trim() || Boolean(busy) || loading}
+        >
+          {busy === "import" ? (
+            <LoaderCircle className="animate-spin" />
+          ) : (
+            <Download />
+          )}
           {t("download")}
         </Button>
       </form>
-      {error ? <p role="alert" className="wrap-break-word text-sm text-destructive">{error}</p> : null}
-      {notice ? <p role="status" className="text-xs text-muted-foreground">{notice}</p> : null}
-      {loading ? <LoaderCircle aria-label={t("loading")} className="size-4 animate-spin" /> : null}
+      {error ? (
+        <p role="alert" className="wrap-break-word text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
+      {notice ? (
+        <p role="status" className="text-xs text-muted-foreground">
+          {notice}
+        </p>
+      ) : null}
+      {loading ? (
+        <LoaderCircle
+          aria-label={t("loading")}
+          className="size-4 animate-spin"
+        />
+      ) : null}
       <div className="divide-y">
         {plugins.map((plugin) => {
-          const updateAvailable = plugin.latest.version && plugin.installed.version !== plugin.latest.version;
+          const updateAvailable =
+            plugin.latest.version &&
+            plugin.installed.version !== plugin.latest.version;
           return (
-            <div key={plugin.id} className="flex min-w-0 flex-wrap items-center gap-2 py-3">
+            <div
+              key={plugin.id}
+              className="flex min-w-0 flex-wrap items-center gap-2 py-3"
+            >
               <div className="min-w-0 basis-40 flex-1">
-                <p className="wrap-break-word text-sm font-medium">{plugin.source.project}</p>
-                <p className="break-all text-xs text-muted-foreground">{plugin.installed.filename}</p>
-                <p className={`text-xs ${plugin.pending || updateAvailable ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>
-                  {plugin.pending ? t("pending") : updateAvailable ? t("available", { filename: plugin.latest.filename }) : t("current")}
+                <p className="wrap-break-word text-sm font-medium">
+                  {plugin.source.project}
                 </p>
-                {plugin.checkError ? <p className="wrap-break-word text-xs text-destructive">{t("checkFailed", { error: plugin.checkError })}</p> : null}
+                <p className="break-all text-xs text-muted-foreground">
+                  {plugin.installed.filename}
+                </p>
+                <p
+                  className={`text-xs ${plugin.pending || updateAvailable ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}
+                >
+                  {plugin.pending
+                    ? t("pending")
+                    : updateAvailable
+                      ? t("available", { filename: plugin.latest.filename })
+                      : t("current")}
+                </p>
+                {plugin.checkError ? (
+                  <p className="wrap-break-word text-xs text-destructive">
+                    {t("checkFailed", { error: plugin.checkError })}
+                  </p>
+                ) : null}
                 <p className="text-xs text-muted-foreground">
-                  {t("checked", { date: new Date(plugin.checkedAt).toLocaleString() })}
+                  {t("checked", {
+                    date: new Date(plugin.checkedAt).toLocaleString(),
+                  })}
                 </p>
               </div>
               {plugin.pending || updateAvailable ? (
@@ -165,7 +229,11 @@ export default function LinkedPaperPlugins({
                   disabled={Boolean(busy)}
                   onClick={() => setConfirmation({ plugin, action: "update" })}
                 >
-                  {busy === plugin.id ? <LoaderCircle className="animate-spin" /> : <RefreshCw />}
+                  {busy === plugin.id ? (
+                    <LoaderCircle className="animate-spin" />
+                  ) : (
+                    <RefreshCw />
+                  )}
                   {plugin.pending ? t("retry") : t("update")}
                 </Button>
               ) : null}
@@ -183,19 +251,57 @@ export default function LinkedPaperPlugins({
           );
         })}
       </div>
-      <Dialog open={Boolean(confirmation)} onOpenChange={(open) => { if (!open && !busy) setConfirmation(null); }}>
+      <Dialog
+        open={Boolean(confirmation)}
+        onOpenChange={(open) => {
+          if (!open && !busy) setConfirmation(null);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t(confirmation?.action === "remove" ? "stopTracking" : "confirmTitle")}</DialogTitle>
+            <DialogTitle>
+              {t(
+                confirmation?.action === "remove"
+                  ? "stopTracking"
+                  : "confirmTitle",
+              )}
+            </DialogTitle>
             <DialogDescription>
-              {t(confirmation?.action === "remove" ? "confirmRemove" : "confirmUpdate", { plugin: confirmation?.plugin.source.project || "" })}
+              {t(
+                confirmation?.action === "remove"
+                  ? "confirmRemove"
+                  : "confirmUpdate",
+                { plugin: confirmation?.plugin.source.project || "" },
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" disabled={Boolean(busy)} onClick={() => setConfirmation(null)}>{t("cancel")}</Button>
-            <Button disabled={Boolean(busy)} onClick={() => { if (confirmation) void mutate(confirmation.action, confirmation.plugin); }}>
-              {busy ? <LoaderCircle className="animate-spin" /> : confirmation?.action === "remove" ? <Unlink /> : <RefreshCw />}
-              {t(confirmation?.action === "remove" ? "stopTracking" : "confirmButton")}
+            <Button
+              variant="outline"
+              disabled={Boolean(busy)}
+              onClick={() => setConfirmation(null)}
+            >
+              {t("cancel")}
+            </Button>
+            <Button
+              disabled={Boolean(busy)}
+              onClick={() => {
+                if (confirmation)
+                  void mutate(confirmation.action, confirmation.plugin);
+              }}
+            >
+              {busy ? (
+                <LoaderCircle className="animate-spin" />
+              ) : confirmation?.action === "remove" ? (
+                <Unlink />
+              ) : (
+                <RefreshCw />
+              )}
+              {t(
+                confirmation?.action === "remove"
+                  ? "stopTracking"
+                  : "confirmButton",
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

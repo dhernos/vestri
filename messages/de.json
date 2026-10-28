@@ -1280,9 +1280,24 @@
       "deleteDescription": "{name} und alle zugehörigen Daten dauerhaft löschen? Dies kann nicht rückgängig gemacht werden. Gib zur Bestätigung den exakten Anzeigenamen ein. Beim Stoppen bleiben die Daten erhalten.",
       "confirmName": "Anzeigename bestätigen",
       "cancel": "Abbrechen",
-      "states": { "running": "Gestartet", "stopped": "Gestoppt", "starting": "Startet", "unknown": "Unbekannt" },
-      "errors": { "load": "Datenbanken konnten nicht geladen werden.", "mutate": "Die Datenbankaktion ist fehlgeschlagen.", "copy": "Kopieren in die Zwischenablage fehlgeschlagen." },
-      "notices": { "create": "Datenbank erstellt.", "start": "Start der Datenbank angefordert.", "stop": "Stopp der Datenbank angefordert. Die Daten bleiben erhalten.", "delete": "Datenbank und zugehörige Daten gelöscht.", "copied": "In die Zwischenablage kopiert." }
+      "states": {
+        "running": "Gestartet",
+        "stopped": "Gestoppt",
+        "starting": "Startet",
+        "unknown": "Unbekannt"
+      },
+      "errors": {
+        "load": "Datenbanken konnten nicht geladen werden.",
+        "mutate": "Die Datenbankaktion ist fehlgeschlagen.",
+        "copy": "Kopieren in die Zwischenablage fehlgeschlagen."
+      },
+      "notices": {
+        "create": "Datenbank erstellt.",
+        "start": "Start der Datenbank angefordert.",
+        "stop": "Stopp der Datenbank angefordert. Die Daten bleiben erhalten.",
+        "delete": "Datenbank und zugehörige Daten gelöscht.",
+        "copied": "In die Zwischenablage kopiert."
+      }
     },
     "loading": "Lädt...",
     "errors": {

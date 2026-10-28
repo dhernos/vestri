@@ -24,7 +24,10 @@ import {
   canManageServerDatabases,
   type ServerWorkspaceSection,
 } from "@/features/servers/navigation";
-import type { GameServerListItem, ServerStatus } from "@/features/servers/types";
+import type {
+  GameServerListItem,
+  ServerStatus,
+} from "@/features/servers/types";
 
 type ServerSidebarNavProps = {
   nodeRef: string;
@@ -179,35 +182,37 @@ export function ServerSidebarNav({
                                 canManageServerDatabases(server)),
                           )
                           .map((sectionItem) => (
-                          <SidebarMenuSubItem
-                            key={`${server.id}-${sectionItem.section}`}
-                          >
-                            <SidebarMenuSubButton
-                              asChild
-                              isActive={
-                                isActiveServer &&
-                                activeSection === sectionItem.section
-                              }
+                            <SidebarMenuSubItem
+                              key={`${server.id}-${sectionItem.section}`}
                             >
-                              <Link
-                                href={buildServerWorkspacePath(
-                                  nodeRef,
-                                  server.id,
-                                  sectionItem.section,
-                                )}
+                              <SidebarMenuSubButton
+                                asChild
+                                isActive={
+                                  isActiveServer &&
+                                  activeSection === sectionItem.section
+                                }
                               >
-                                <span>{sectionItem.title}</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
+                                <Link
+                                  href={buildServerWorkspacePath(
+                                    nodeRef,
+                                    server.id,
+                                    sectionItem.section,
+                                  )}
+                                >
+                                  <span>{sectionItem.title}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
                           ))}
 
-                        {server.kind === "velocity" && server.permissions.canManageFiles ? (
+                        {server.kind === "velocity" &&
+                        server.permissions.canManageFiles ? (
                           <SidebarMenuSubItem key={`${server.id}-group-files`}>
                             <SidebarMenuSubButton
                               asChild
                               isActive={
-                                isActiveServer && activeSection === "group-files"
+                                isActiveServer &&
+                                activeSection === "group-files"
                               }
                             >
                               <Link
@@ -223,14 +228,23 @@ export function ServerSidebarNav({
                           </SidebarMenuSubItem>
                         ) : null}
 
-                        {server.kind === "velocity" && server.permissions.canManage ? (
+                        {server.kind === "velocity" &&
+                        server.permissions.canManage ? (
                           <SidebarMenuSubItem key={`${server.id}-whitelist`}>
                             <SidebarMenuSubButton
                               asChild
-                              isActive={isActiveServer && activeSection === "whitelist"}
+                              isActive={
+                                isActiveServer && activeSection === "whitelist"
+                              }
                             >
                               {backends.length > 0 ? (
-                                <Link href={buildServerWorkspacePath(nodeRef, server.id, "whitelist")}>
+                                <Link
+                                  href={buildServerWorkspacePath(
+                                    nodeRef,
+                                    server.id,
+                                    "whitelist",
+                                  )}
+                                >
                                   <span>{tServer("whitelist.title")}</span>
                                 </Link>
                               ) : (
@@ -253,7 +267,8 @@ export function ServerSidebarNav({
                         ) : null}
 
                         {backends.map((backend) => {
-                          const isActiveBackend = backend.id === activeServerRef;
+                          const isActiveBackend =
+                            backend.id === activeServerRef;
                           return (
                             <Collapsible
                               key={backend.id}
@@ -280,32 +295,38 @@ export function ServerSidebarNav({
                                 </CollapsibleTrigger>
                                 <CollapsibleContent>
                                   <ul className="ml-2 mt-1 flex min-w-0 flex-col gap-1 border-l border-sidebar-border px-2 py-0.5 group-data-[collapsible=icon]:hidden">
-                                    {sectionItems.filter((sectionItem) =>
-                                      sectionItem.section !== "databases" ||
-                                      canManageServerDatabases(backend),
-                                    ).map((sectionItem) => (
-                                      <li key={`${backend.id}-${sectionItem.section}`}>
-                                        <SidebarMenuSubButton
-                                          asChild
-                                          size="sm"
-                                          isActive={
-                                            isActiveBackend &&
-                                            activeSection === sectionItem.section
-                                          }
-                                          className="cursor-pointer"
+                                    {sectionItems
+                                      .filter(
+                                        (sectionItem) =>
+                                          sectionItem.section !== "databases" ||
+                                          canManageServerDatabases(backend),
+                                      )
+                                      .map((sectionItem) => (
+                                        <li
+                                          key={`${backend.id}-${sectionItem.section}`}
                                         >
-                                          <Link
-                                            href={buildServerWorkspacePath(
-                                              nodeRef,
-                                              backend.id,
-                                              sectionItem.section,
-                                            )}
+                                          <SidebarMenuSubButton
+                                            asChild
+                                            size="sm"
+                                            isActive={
+                                              isActiveBackend &&
+                                              activeSection ===
+                                                sectionItem.section
+                                            }
+                                            className="cursor-pointer"
                                           >
-                                            <span>{sectionItem.title}</span>
-                                          </Link>
-                                        </SidebarMenuSubButton>
-                                      </li>
-                                    ))}
+                                            <Link
+                                              href={buildServerWorkspacePath(
+                                                nodeRef,
+                                                backend.id,
+                                                sectionItem.section,
+                                              )}
+                                            >
+                                              <span>{sectionItem.title}</span>
+                                            </Link>
+                                          </SidebarMenuSubButton>
+                                        </li>
+                                      ))}
                                   </ul>
                                 </CollapsibleContent>
                               </li>
@@ -327,7 +348,10 @@ export function ServerSidebarNav({
               tooltip={tGameServer("buttons.createServer")}
               className="justify-center font-semibold"
             >
-              <Link href={createServerHref} aria-label={tGameServer("buttons.createServer")}>
+              <Link
+                href={createServerHref}
+                aria-label={tGameServer("buttons.createServer")}
+              >
                 <span className="w-full text-center">+</span>
               </Link>
             </SidebarMenuButton>

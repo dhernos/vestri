@@ -1280,9 +1280,24 @@
       "deleteDescription": "Permanently delete {name} and its data? This cannot be undone. Enter its exact display name to confirm. Stopping a database instead keeps its data.",
       "confirmName": "Confirm display name",
       "cancel": "Cancel",
-      "states": { "running": "Running", "stopped": "Stopped", "starting": "Starting", "unknown": "Unknown" },
-      "errors": { "load": "Could not load databases.", "mutate": "The database operation failed.", "copy": "Could not copy to the clipboard." },
-      "notices": { "create": "Database created.", "start": "Database start requested.", "stop": "Database stop requested. Its data is retained.", "delete": "Database and its data deleted.", "copied": "Copied to clipboard." }
+      "states": {
+        "running": "Running",
+        "stopped": "Stopped",
+        "starting": "Starting",
+        "unknown": "Unknown"
+      },
+      "errors": {
+        "load": "Could not load databases.",
+        "mutate": "The database operation failed.",
+        "copy": "Could not copy to the clipboard."
+      },
+      "notices": {
+        "create": "Database created.",
+        "start": "Database start requested.",
+        "stop": "Database stop requested. Its data is retained.",
+        "delete": "Database and its data deleted.",
+        "copied": "Copied to clipboard."
+      }
     },
     "loading": "Loading...",
     "errors": {
