@@ -23,6 +23,8 @@ The map, assets, tiles, and live updates travel through the existing authenticat
 
 Vestri reads `data/plugins/BlueMap/webserver.conf` inside the server directory. Keep the standard generated configuration with literal `enabled` and `port` values; a custom numeric port is supported. Keep BlueMap's `map-data-root` and `live-data-root` relative (their default is `maps`) so that data stays behind the authenticated proxy. Custom external scripts, fonts, or tile/CDN URLs are intentionally blocked by the map's content security policy.
 
+If the browser blocks the map with `frame-ancestors 'none'`, update and restart the backend: map responses must replace the default API frame restrictions, not append a second policy. Any external reverse proxy must also avoid adding `X-Frame-Options: DENY` or `frame-ancestors 'none'` to the map view route. Keep those protections on other routes.
+
 All users with access to a server can view its map; it is not publicly accessible. Install only trusted BlueMap builds and custom web scripts: the embedded map is served on the panel's origin. Deploy the updated frontend, backend, and worker together. The worker uses a separate map-asset rate-limit budget of 20 times its configured request rate and burst, so tile loading does not consume the control API's budget.
 
 ## Screenshots
