@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Download, LoaderCircle, RefreshCw, Unlink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ import {
 type PluginRelease = { version: string; filename: string };
 type LinkedPlugin = {
   id: string;
-  source: { provider: string; project: string };
+  source: { provider: string; project: string; version?: string };
   installed: PluginRelease;
   latest: PluginRelease;
   checkedAt: string;
@@ -43,9 +43,11 @@ async function pluginResponse(response: Response): Promise<LinkedPlugin[]> {
 export default function LinkedPaperPlugins({
   apiBase,
   onChange,
+  children,
 }: {
   apiBase: string;
   onChange: () => void;
+  children?: ReactNode;
 }) {
   const t = useTranslations("ServerPage.groupFiles.linked");
   const [plugins, setPlugins] = useState<LinkedPlugin[]>([]);
@@ -169,6 +171,7 @@ export default function LinkedPaperPlugins({
           {t("download")}
         </Button>
       </form>
+      {children}
       {error ? (
         <p role="alert" className="wrap-break-word text-sm text-destructive">
           {error}
@@ -185,9 +188,11 @@ export default function LinkedPaperPlugins({
           className="size-4 animate-spin"
         />
       ) : null}
-      <div className="divide-y">
+      <div className="max-h-72 divide-y overflow-y-auto overscroll-contain pr-1">
         {plugins.map((plugin) => {
+          const pinned = Boolean(plugin.source.version);
           const updateAvailable =
+            !pinned &&
             plugin.latest.version &&
             plugin.installed.version !== plugin.latest.version;
           return (
@@ -207,6 +212,8 @@ export default function LinkedPaperPlugins({
                 >
                   {plugin.pending
                     ? t("pending")
+                      : pinned
+                      ? t("pinned", { version: plugin.source.version ?? "" })
                     : updateAvailable
                       ? t("available", { filename: plugin.latest.filename })
                       : t("current")}

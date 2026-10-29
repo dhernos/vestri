@@ -1568,8 +1568,8 @@
       "title": "Plugin Staging",
       "linked": {
         "title": "Linked Paper plugins",
-        "placeholder": "Modrinth or Hangar plugin URL",
-        "linkLabel": "Paper plugin project link",
+        "placeholder": "Modrinth or Hangar project URL, or Hangar CDN JAR link",
+        "linkLabel": "Plugin project or direct JAR URL",
         "download": "Download",
         "loading": "Loading linked plugins",
         "error": "Plugin operation failed.",
@@ -1578,6 +1578,7 @@
         "updated": "Updated all Paper/Purpur subservers. Restart them to load the new release.",
         "removed": "Tracking stopped. Plugin files were kept.",
         "current": "Up to date",
+        "pinned": "Pinned version {version}",
         "available": "Update available: {filename}",
         "pending": "Deployment incomplete",
         "checked": "Last checked: {date}",

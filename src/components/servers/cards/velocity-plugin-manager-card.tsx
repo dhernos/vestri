@@ -500,6 +500,29 @@ export default function VelocityPluginManagerCard({
     [uploadScope],
   );
 
+  useEffect(() => {
+    const scrollPageDuringPluginDrag = (event: globalThis.DragEvent) => {
+      if (
+        !event.dataTransfer ||
+        !Array.from(event.dataTransfer.types).includes(pluginMime)
+      ) {
+        return;
+      }
+      const edgeSize = 72;
+      if (event.clientY < edgeSize) {
+        window.scrollBy(0, -Math.ceil((edgeSize - event.clientY) / 4));
+      } else if (window.innerHeight - event.clientY < edgeSize) {
+        window.scrollBy(
+          0,
+          Math.ceil((edgeSize - (window.innerHeight - event.clientY)) / 4),
+        );
+      }
+    };
+    document.addEventListener("dragover", scrollPageDuringPluginDrag);
+    return () =>
+      document.removeEventListener("dragover", scrollPageDuringPluginDrag);
+  }, []);
+
   const applyToBackend = async (
     backend: GameServerListItem,
     items?: string[],
@@ -589,7 +612,18 @@ export default function VelocityPluginManagerCard({
                 ),
               );
             }}
-          />
+          >
+            <div className="max-h-72 overflow-y-auto overscroll-contain pr-1">
+              <PluginTree
+                apiBase={stagingApi}
+                path={stagingRoot}
+                reloadKey={stagingReload}
+                draggableRoot
+                emptyLabel={t("groupFiles.manager.staging.empty")}
+                onEdit={setEditor}
+              />
+            </div>
+          </LinkedPaperPlugins>
           <div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed p-3">
             <FileInput
               key={uploadInputKey}
@@ -618,16 +652,6 @@ export default function VelocityPluginManagerCard({
             </p>
           </div>
           <UploadProgressList scope={uploadScope} />
-          <div className="max-h-96 overflow-auto">
-            <PluginTree
-              apiBase={stagingApi}
-              path={stagingRoot}
-              reloadKey={stagingReload}
-              draggableRoot
-              emptyLabel={t("groupFiles.manager.staging.empty")}
-              onEdit={setEditor}
-            />
-          </div>
         </CardContent>
       </Card>
 

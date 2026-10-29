@@ -1568,8 +1568,8 @@
       "title": "Plugin-Staging",
       "linked": {
         "title": "Verknüpfte Paper-Plugins",
-        "placeholder": "Modrinth- oder Hangar-Plugin-URL",
-        "linkLabel": "Paper-Plugin-Projektlink",
+        "placeholder": "Modrinth-/Hangar-Projekt-URL oder Hangar-CDN-JAR-Link",
+        "linkLabel": "Plugin-Projekt- oder direkter JAR-Link",
         "download": "Herunterladen",
         "loading": "Verknüpfte Plugins werden geladen",
         "error": "Plugin-Aktion fehlgeschlagen.",
@@ -1578,6 +1578,7 @@
         "updated": "Alle Paper-/Purpur-Subserver aktualisiert. Starte sie neu, um die neue Version zu laden.",
         "removed": "Nachverfolgung beendet. Plugin-Dateien bleiben erhalten.",
         "current": "Aktuell",
+        "pinned": "Version {version} ist fixiert",
         "available": "Update verfügbar: {filename}",
         "pending": "Verteilung unvollständig",
         "checked": "Zuletzt geprüft: {date}",
