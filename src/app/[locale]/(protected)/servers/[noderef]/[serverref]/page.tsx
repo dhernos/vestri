@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "@/i18n/navigation";
 import AccessCard from "@/components/servers/cards/access-card";
 import BackupsCard from "@/components/servers/cards/backups-card";
 import DatabasesSection from "@/components/servers/cards/databases-section";
+import ServerMap from "@/components/servers/cards/server-map";
 import ConfigEditorCard from "@/components/servers/cards/config-editor-card";
 import FileBrowserCard from "@/components/servers/cards/file-browser-card";
 import FileBrowserRestrictedCard from "@/components/servers/cards/file-browser-restricted-card";
@@ -34,6 +35,7 @@ import { useServerFiles } from "@/features/servers/hooks/use-server-files";
 import { useVelocityBackends } from "@/features/servers/hooks/use-velocity-backends";
 import {
   canManageServerDatabases,
+  canViewServerMap,
   normalizeServerWorkspaceSection,
 } from "@/features/servers/navigation";
 import {
@@ -828,6 +830,16 @@ export default function ServerControlsPage() {
         ) : (
           <p role="alert" className="text-sm text-muted-foreground">
             {t("databases.restricted")}
+          </p>
+        )
+      ) : null}
+
+      {activeSection === "map" ? (
+        canViewServerMap(server) ? (
+          <ServerMap key={basePath} basePath={basePath} />
+        ) : (
+          <p role="alert" className="text-sm text-muted-foreground">
+            {t("map.restricted")}
           </p>
         )
       ) : null}

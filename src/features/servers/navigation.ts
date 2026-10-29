@@ -9,11 +9,18 @@ export const serverWorkspaceSections = [
   "console",
   "backups",
   "databases",
+  "map",
 ] as const;
 
 export const canManageServerDatabases = (server: GameServerListItem) =>
   server.permissions.canManage &&
   (server.game?.toLowerCase() === "minecraft" || server.kind === "velocity");
+
+export const canViewServerMap = (server: GameServerListItem) =>
+  server.permissions.canView &&
+  server.game?.toLowerCase() === "minecraft" &&
+  server.kind !== "velocity" &&
+  ["PAPER", "PURPUR"].includes(server.softwareVersion?.trim().toUpperCase() || "");
 
 export type ServerWorkspaceSection = (typeof serverWorkspaceSections)[number];
 

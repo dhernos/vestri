@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import {
   buildServerWorkspacePath,
   canManageServerDatabases,
+  canViewServerMap,
   type ServerWorkspaceSection,
 } from "@/features/servers/navigation";
 import type {
@@ -91,6 +92,10 @@ export function ServerSidebarNav({
     {
       section: "databases",
       title: tServer("databases.title"),
+    },
+    {
+      section: "map",
+      title: tServer("map.title"),
     },
   ];
 
@@ -179,7 +184,9 @@ export function ServerSidebarNav({
                               (sectionItem.section !== "backups" ||
                                 server.permissions.canManage) &&
                               (sectionItem.section !== "databases" ||
-                                canManageServerDatabases(server)),
+                                canManageServerDatabases(server)) &&
+                              (sectionItem.section !== "map" ||
+                                canViewServerMap(server)),
                           )
                           .map((sectionItem) => (
                             <SidebarMenuSubItem
@@ -298,8 +305,10 @@ export function ServerSidebarNav({
                                     {sectionItems
                                       .filter(
                                         (sectionItem) =>
-                                          sectionItem.section !== "databases" ||
-                                          canManageServerDatabases(backend),
+                                          (sectionItem.section !== "databases" ||
+                                            canManageServerDatabases(backend)) &&
+                                          (sectionItem.section !== "map" ||
+                                            canViewServerMap(backend)),
                                       )
                                       .map((sectionItem) => (
                                         <li

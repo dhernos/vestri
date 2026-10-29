@@ -1251,6 +1251,16 @@
     }
   },
   "ServerPage": {
+    "map": {
+      "title": "Map",
+      "frameTitle": "BlueMap Minecraft map",
+      "description": "Explore your world with BlueMap through Vestri. No additional public port or port forwarding is required.",
+      "setup": "Install the BlueMap plugin on this Paper/Purpur server and start it once. Keep BlueMap's integrated webserver enabled. Initial map rendering may take a while.",
+      "loading": "Connecting to BlueMap...",
+      "reload": "Reload map",
+      "unavailable": "BlueMap is unavailable. Check the plugin configuration and server logs.",
+      "restricted": "Maps are only available for Paper/Purpur Minecraft servers."
+    },
     "databases": {
       "title": "Databases",
       "restricted": "Databases are only available to administrators of Minecraft and Velocity servers.",

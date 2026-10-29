@@ -15,6 +15,16 @@ Deploy the updated frontend, backend, and worker together. The game server's Doc
 
 The worker keeps private Compose files and credentials outside `fs_base_path`, in a sibling `.vestri-databases-<hash>` directory with owner-only access. Database contents live in named Docker volumes. Back up these volumes separately using database-native dumps; the existing game-server backup does not include them. Deleting a game server is blocked until its database containers have been explicitly deleted. The plugin user is scoped to the generated database and does not receive database-administrator credentials.
 
+## Minecraft BlueMap
+
+Paper and Purpur servers (including Velocity subservers) have a **Map** entry in the left server menu. Install the BlueMap plugin on the Minecraft server, start it once, and leave its integrated webserver enabled. Initial rendering can take a while. Missing configuration, a stopped server, or an unreachable webserver is shown on the Map page with a reload action.
+
+The map, assets, tiles, and live updates travel through the existing authenticated Vestri frontend, backend, and worker connection. **Do not publish or forward BlueMap's port** (normally 8100); no Compose port mapping is needed. The worker must run on the Docker host with access to the Minecraft container's bridge-network IP. Host-network containers and remote Docker daemons without a reachable container network are not supported by this integration.
+
+Vestri reads `data/plugins/BlueMap/webserver.conf` inside the server directory. Keep the standard generated configuration with literal `enabled` and `port` values; a custom numeric port is supported. Keep BlueMap's `map-data-root` and `live-data-root` relative (their default is `maps`) so that data stays behind the authenticated proxy. Custom external scripts, fonts, or tile/CDN URLs are intentionally blocked by the map's content security policy.
+
+All users with access to a server can view its map; it is not publicly accessible. Install only trusted BlueMap builds and custom web scripts: the embedded map is served on the panel's origin. Deploy the updated frontend, backend, and worker together. The worker uses a separate map-asset rate-limit budget of 20 times its configured request rate and burst, so tile loading does not consume the control API's budget.
+
 ## Screenshots
 
 Coming Soon!

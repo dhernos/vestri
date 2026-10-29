@@ -1251,6 +1251,16 @@
     }
   },
   "ServerPage": {
+    "map": {
+      "title": "Karte",
+      "frameTitle": "BlueMap Minecraft-Karte",
+      "description": "Erkunde deine Welt mit BlueMap direkt in Vestri. Kein weiterer öffentlicher Port und keine Portweiterleitung erforderlich.",
+      "setup": "Installiere BlueMap auf diesem Paper/Purpur-Server und starte ihn einmal. Der integrierte BlueMap-Webserver muss aktiviert bleiben. Das erste Rendern der Karte kann einige Zeit dauern.",
+      "loading": "Verbindung zu BlueMap wird hergestellt...",
+      "reload": "Karte neu laden",
+      "unavailable": "BlueMap ist nicht verfügbar. Prüfe die Plugin-Konfiguration und die Server-Logs.",
+      "restricted": "Karten sind nur für Paper/Purpur-Minecraft-Server verfügbar."
+    },
     "databases": {
       "title": "Datenbanken",
       "restricted": "Datenbanken sind nur für Administratoren von Minecraft- und Velocity-Servern verfügbar.",
