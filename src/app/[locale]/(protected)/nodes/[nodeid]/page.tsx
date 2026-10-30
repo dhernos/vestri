@@ -14,6 +14,8 @@ import { deleteNodeById, fetchNodeDetails } from "@/features/nodes/api";
 import type { WorkerNode } from "@/features/nodes/types";
 import { Link, useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 export default function NodeDetailsPage() {
   const t = useTranslations("NodeDetailsPage");
@@ -145,8 +147,16 @@ export default function NodeDetailsPage() {
 
         {node.accessRole === "owner" || node.accessRole === "admin" ? (
           <>
-            <MinecraftTemplateManager key={node.id} nodeRef={node.id} />
-            <MinecraftPluginLibrary nodeRef={node.id} />
+            <Card className="min-w-0" aria-labelledby="node-minecraft-title">
+              <CardHeader>
+                <CardTitle id="node-minecraft-title">Minecraft</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <MinecraftTemplateManager key={node.id} nodeRef={node.id} />
+                <Separator />
+                <MinecraftPluginLibrary nodeRef={node.id} />
+              </CardContent>
+            </Card>
             <SatisfactoryBlueprintLibraryCard nodeRef={node.id} />
           </>
         ) : null}
