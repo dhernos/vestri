@@ -3,6 +3,75 @@
 Vestri is a web control panel for game server infrastructure.  
 It connects frontend, backend, and standalone workers so teams can manage nodes, servers, console, files, and access rights in one place.
 
+## Dynamic Minecraft Servers
+
+Node owners and admins can manage **Minecraft Game Templates** on the node details page. The workflow is:
+
+1. Upload mandatory plugin JARs and their configuration folders to the node's **Minecraft Plugin Library**. Every Velocity group on this node uses this same library.
+2. Create a **Base server**, select Paper or Purpur and an explicit Minecraft release, select mandatory plugins/configurations, and accept the Minecraft EULA. The server JAR and default files are downloaded without starting a container. Open its files to upload or edit plugin configurations. Plugins that generate their configuration on first boot must have those files prepared separately and uploaded.
+3. Create **Worlds** and upload each world's contents, including `level.dat`, using folder upload. Create **Game plugins** packages and upload JARs alongside their configuration folders. Folder upload strips the selected outer folder; its contents go into the selected destination.
+4. Create a **Game template** by selecting a base server, an optional world, optional game-plugin packages, a Velocity proxy on this node, and an instance limit. This makes an independent snapshot. Later changes to the base, world, or plugin packages do not silently change existing templates. Plugin packages are applied in selection order; later files overwrite earlier files with the same relative path.
+5. Spawn instances from the panel, or issue a template-scoped API key. An empty world selection clears any inherited seed and generates a new world for every instance. A selected world is cloned; its runtime lock and Bukkit world identity are removed. Live instances have independent writable copies, and deleting them does not delete the template.
+
+The worker stores shared resources below its configured `fs_base_path`:
+
+```text
+.vestri-minecraft/<node-id>/
+	plugins/                         shared mandatory plugins and configs
+	tracked-plugins.json              shared plugin-update tracking
+	bases/<resource-id>/data/         prepared, never-started base servers
+	worlds/<resource-id>/data/        world contents, including level.dat
+	plugin-packs/<resource-id>/data/   game plugin JARs and config folders
+	templates/<resource-id>/data/     composed game-server snapshots
+mcgame-<unique-id>/                 disposable instance and Compose file
+```
+
+Each resource also has a `manifest.json` beside `data`. Names are kept in the database; stable IDs in paths prevent naming conflicts and path traversal. The reserved `.vestri-minecraft` directory cannot collide with a normal game server slug, so deleting a regular server cannot remove the library. Back up the shared resource directories **and PostgreSQL** together. Plugin-package overlays are limited to 5,000 files and 16 directory levels per package. A node permits at most 100 tracked dynamic instances, with a configurable limit of 1-100 per game template; stopped or failed instances count until deleted.
+
+### Deployment and Velocity Bridge
+
+Deploy the updated frontend, backend, and worker together. Apply backend migration `000008_minecraft_templates` before using the feature, through the existing migration mechanism or `go run ./cmd/migrate` from the backend directory with `DATABASE_URL` configured. No existing migration is changed.
+
+Build the included bridge from the backend repository with Java 17+ and Maven:
+
+```bash
+mvn -f velocity-plugin/pom.xml package
+```
+
+Install `velocity-plugin/target/vestri-dynamic-servers-1.0.0.jar` in the selected Velocity proxy's `data/plugins` directory and restart that proxy once. The bridge uses the Velocity 3.3 API. The proxy must be running with its interactive console enabled (`stdin_open: true`, `tty: true`, as in the standard Vestri template). The worker must run on Linux for its PTY console support. No extra public plugin port or plugin API key is needed.
+
+Subsequent spawns/deletions synchronize the running proxy through the console-only `vestridynamic sync` command. The backend writes `data/vestri-dynamic-servers.json`; the bridge only manages names matching `mcgame-<32 hex characters>` and their corresponding internal Docker hostnames on port 25565. Keep that namespace reserved. Dynamic games are not added to the Velocity fallback list. This bridge is necessary because stock `velocity reload` does not unregister removed backend servers.
+
+Existing Velocity staging folders (`<proxy-root>/data/vestri-plugin-staging`) are preserved, not merged automatically. Before switching, copy their `plugins` contents into `.vestri-minecraft/<node-id>/plugins`, resolving duplicate filenames intentionally. To preserve update tracking from one group, copy its `tracked-plugins.json` beside the new `plugins` folder; multiple manifests must not be blindly concatenated. Other groups can re-import their tracked plugin links. Existing deployed server plugins are not moved or deleted.
+
+### Spawn API
+
+Create an API key in the node's **API keys** view and select exactly one game template. The token is shown only once and is stored only as a SHA-256 digest. Keys expire after 1-365 days, can be revoked, and stop working if their issuing user loses node-admin access. A revoked key does not stop existing games; a node admin can still delete those instances from the panel.
+
+Use the panel's public **HTTPS** origin. Do not expose the HTTP backend directly. Pass the key only in the `Authorization` header, never in a URL or query string. Do not reuse the worker's administrative API key.
+
+```bash
+# MINECRAFT_API_KEY is the template-scoped token, not the worker API key.
+curl -X POST https://panel.example.com/api/minecraft/v1/instances/ \
+	-H "Authorization: Bearer $MINECRAFT_API_KEY" \
+	-H 'Content-Type: application/json' \
+	-d '{"requestId":"fe392ba1-0602-43de-acbf-509a34e7c651"}'
+```
+
+The response is `202 Accepted` with `serverId`, `slug`, internal `host`, `port`, `parentId`, and `state: "starting"`. This confirms container startup and proxy registration, **not Minecraft/plugin readiness**. The game controller should wait for its normal game-ready signal before sending players, and use the returned `slug` as the Velocity server name.
+
+Retry the **same request UUID** with the **same key** after a timeout or partial startup failure. It returns/restarts the existing instance rather than creating a second server. A new game must use a new UUID. Limits count failed starts too; error responses after creation include `serverId` so the instance can be removed. After an instance is deleted its request UUID is no longer retained and must not be reused.
+
+```bash
+curl https://panel.example.com/api/minecraft/v1/instances/ \
+	-H "Authorization: Bearer $MINECRAFT_API_KEY"
+
+curl -X DELETE https://panel.example.com/api/minecraft/v1/instances/SERVER_ID \
+	-H "Authorization: Bearer $MINECRAFT_API_KEY"
+```
+
+Listing and deletion only expose instances created by that exact API key for its assigned template, never normal servers or another key's games. Deletion stops the container, removes the proxy registration, and deletes only the instance files and database record. Move players back to a lobby before deleting a game. Attached databases must be removed separately before instance deletion. Successful deletion returns `204`; unknown or inaccessible instances return `404`. Requests are limited to 30 per minute per key (`429`, `Retry-After: 60`); conflicting operations or exhausted instance limits return `409` and should be retried with backoff.
+
 ## Minecraft and Velocity Databases
 
 Server administrators can use the **Databases** tab on Minecraft and Velocity servers to create MariaDB or PostgreSQL databases, view connection credentials, and start, stop, or delete them. The display name is limited to 48 characters; the backend generates the actual database name, username, and password.

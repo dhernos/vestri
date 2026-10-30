@@ -5,6 +5,7 @@ import type { DragEvent } from "react";
 import {
   ChevronDown,
   ChevronRight,
+  Download,
   File as FileIcon,
   Folder as FolderIcon,
   LoaderCircle,
@@ -55,7 +56,7 @@ type VelocityPluginManagerCardProps = {
   backends: GameServerListItem[];
 };
 
-type EditorTarget = { apiBase: string; path: string };
+export type EditorTarget = { apiBase: string; path: string };
 
 const pluginMime = "application/x-vestri-plugin";
 const pluginSoftware = new Set(["PAPER", "PURPUR", "SPIGOT", "BUKKIT"]);
@@ -91,7 +92,7 @@ type PluginTreeProps = {
   onEdit: (target: EditorTarget) => void;
 };
 
-function PluginTree({
+export function PluginTree({
   apiBase,
   path,
   depth = 0,
@@ -167,7 +168,7 @@ function PluginTree({
   }, [apiBase, path, reloadKey, localKey, t]);
 
   const remove = async (entry: WorkerListEntry) => {
-    const entryPath = `${path}/${entry.name}`;
+    const entryPath = path ? `${path}/${entry.name}` : entry.name;
     const label =
       entry.type === "dir"
         ? t("fileBrowser.labels.folder")
@@ -222,11 +223,12 @@ function PluginTree({
         <p className="text-xs text-muted-foreground">{emptyLabel}</p>
       ) : null}
       {entries.map((entry) => {
-        const entryPath = `${path}/${entry.name}`;
+        const entryPath = path ? `${path}/${entry.name}` : entry.name;
         const isDir = entry.type === "dir";
         const isOpen = expanded.includes(entryPath);
         const editable =
-          entry.type === "file" && !/\.(jar|zip)$/i.test(entry.name);
+          entry.type === "file" &&
+          /\.(ya?ml|json|conf|config|toml|txt|properties|cfg|ini|xml|lang|log|sk|js|lua|csv|md|secret)$/i.test(entry.name);
         const isDeleting = deleting === entryPath;
         return (
           <div key={`${entry.type}-${entry.name}`}>
@@ -283,6 +285,18 @@ function PluginTree({
                 </Button>
               ) : null}
               <Button
+                asChild
+                size="icon"
+                variant="ghost"
+                className="size-6"
+                title={t("fileBrowser.buttons.download")}
+                aria-label={t("fileBrowser.buttons.download")}
+              >
+                <a href={`${apiBase}/files/download?path=${encodeURIComponent(entryPath)}`} download>
+                  <Download className="size-3.5" />
+                </a>
+              </Button>
+              <Button
                 size="icon"
                 variant="ghost"
                 className="size-6 text-destructive"
@@ -317,7 +331,7 @@ function PluginTree({
   );
 }
 
-function PluginFileEditorDialog({
+export function PluginFileEditorDialog({
   target,
   onClose,
 }: {

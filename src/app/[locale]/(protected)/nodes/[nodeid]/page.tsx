@@ -7,6 +7,8 @@ import HealthBlob from "@/components/nodes/health";
 import NodeAccessCard from "@/components/nodes/cards/node-access-card";
 import NodeInfoCard from "@/components/nodes/cards/node-info-card";
 import SatisfactoryBlueprintLibraryCard from "@/components/nodes/cards/satisfactory-blueprint-library-card";
+import MinecraftPluginLibrary from "@/components/nodes/cards/minecraft-plugin-library";
+import MinecraftTemplateManager from "@/components/nodes/cards/minecraft-template-manager";
 import { ServerWorkspaceShell } from "@/components/servers/server-workspace-shell";
 import { deleteNodeById, fetchNodeDetails } from "@/features/nodes/api";
 import type { WorkerNode } from "@/features/nodes/types";
@@ -142,7 +144,11 @@ export default function NodeDetailsPage() {
         <NodeAccessCard />
 
         {node.accessRole === "owner" || node.accessRole === "admin" ? (
-          <SatisfactoryBlueprintLibraryCard nodeRef={node.id} />
+          <>
+            <MinecraftTemplateManager key={node.id} nodeRef={node.id} />
+            <MinecraftPluginLibrary nodeRef={node.id} />
+            <SatisfactoryBlueprintLibraryCard nodeRef={node.id} />
+          </>
         ) : null}
 
         <div className="flex gap-2">
