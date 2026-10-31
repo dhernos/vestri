@@ -3,11 +3,16 @@
 import { useCallback, useEffect, useState } from "react";
 import type { DragEvent } from "react";
 import {
+  Archive,
+  ArchiveRestore,
   ChevronDown,
   ChevronRight,
+  Copy,
   Download,
+  EllipsisVertical,
   File as FileIcon,
   Folder as FolderIcon,
+  FolderInput,
   LoaderCircle,
   Pencil,
   Trash2,
@@ -15,6 +20,14 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Card,
   CardContent,
@@ -88,6 +101,8 @@ type PluginTreeProps = {
   depth?: number;
   reloadKey: number;
   draggableRoot?: boolean;
+  fileActions?: boolean;
+  onChanged?: () => void;
   emptyLabel: string;
   onEdit: (target: EditorTarget) => void;
 };
@@ -98,6 +113,8 @@ export function PluginTree({
   depth = 0,
   reloadKey,
   draggableRoot = false,
+  fileActions = false,
+  onChanged,
   emptyLabel,
   onEdit,
 }: PluginTreeProps) {
@@ -108,6 +125,91 @@ export function PluginTree({
   const [expanded, setExpanded] = useState<string[]>([]);
   const [deleting, setDeleting] = useState("");
   const [localKey, setLocalKey] = useState(0);
+  const [actionBusy, setActionBusy] = useState(false);
+  const [transfer, setTransfer] = useState<{
+    operation: "copy" | "move" | "rename";
+    source: string;
+  } | null>(null);
+  const [destination, setDestination] = useState("");
+  const [transferError, setTransferError] = useState("");
+
+  const refresh = () => {
+    if (onChanged) onChanged();
+    else setLocalKey((current) => current + 1);
+  };
+  const startTransfer = (
+    operation: "copy" | "move" | "rename",
+    source: string,
+    name: string,
+  ) => {
+    setTransfer({ operation, source });
+    setDestination(operation === "rename" ? name : source);
+    setTransferError("");
+  };
+  const submitTransfer = async () => {
+    if (!transfer || actionBusy) return;
+    const target = destination.trim();
+    if (
+      !target ||
+      target.split(/[\\/]/).some((part) => part === ".." || part === ".") ||
+      (transfer.operation === "rename" && /[\\/]/.test(target))
+    ) {
+      setTransferError(t("fileBrowser.transfer.invalidDestination"));
+      return;
+    }
+    const dest = transfer.operation === "rename"
+      ? `${transfer.source.slice(0, transfer.source.lastIndexOf("/") + 1)}${target}`
+      : target;
+    if (dest === transfer.source) {
+      setTransferError(t("fileBrowser.transfer.sameDestination"));
+      return;
+    }
+    setActionBusy(true);
+    setTransferError("");
+    try {
+      const res = await fetch(`${apiBase}/files/transfer`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source: transfer.source, dest, operation: transfer.operation }),
+      });
+      if (!res.ok) {
+        setTransferError(await responseMessage(res, t("fileBrowser.transfer.error")));
+        return;
+      }
+      setTransfer(null);
+      refresh();
+    } catch {
+      setTransferError(t("fileBrowser.transfer.error"));
+    } finally {
+      setActionBusy(false);
+    }
+  };
+  const unzip = async (entryPath: string) => {
+    if (actionBusy) return;
+    setActionBusy(true);
+    setError("");
+    try {
+      const res = await fetch(`${apiBase}/files/unzip`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source: entryPath,
+          dest: entryPath.slice(0, Math.max(0, entryPath.lastIndexOf("/"))),
+        }),
+      });
+      if (!res.ok) {
+        setError(await responseMessage(res, t("fileBrowser.errors.unzipArchive")));
+        return;
+      }
+      refresh();
+    } catch {
+      setError(t("fileBrowser.errors.unzipArchive"));
+    } finally {
+      setActionBusy(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -198,7 +300,7 @@ export function PluginTree({
         );
         return;
       }
-      setLocalKey((current) => current + 1);
+      refresh();
     } catch {
       setError(t("fileBrowser.errors.deletePath"));
     } finally {
@@ -279,7 +381,7 @@ export function PluginTree({
                   title={t("groupFiles.manager.edit")}
                   aria-label={t("groupFiles.manager.edit")}
                   onClick={() => onEdit({ apiBase, path: entryPath })}
-                  disabled={isDeleting}
+                  disabled={isDeleting || actionBusy}
                 >
                   <Pencil className="size-3.5" />
                 </Button>
@@ -296,6 +398,43 @@ export function PluginTree({
                   <Download className="size-3.5" />
                 </a>
               </Button>
+              {fileActions ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="size-6 shrink-0"
+                      title={t("fileBrowser.buttons.actions")}
+                      aria-label={t("fileBrowser.buttons.actions")}
+                      disabled={Boolean(deleting) || actionBusy}
+                    >
+                      <EllipsisVertical className="size-3.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={() => startTransfer("copy", entryPath, entry.name)}>
+                      <Copy />{t("fileBrowser.buttons.copy")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => startTransfer("move", entryPath, entry.name)}>
+                      <FolderInput />{t("fileBrowser.buttons.move")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => startTransfer("rename", entryPath, entry.name)}>
+                      <Pencil />{t("fileBrowser.buttons.rename")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <a href={`${apiBase}/files/download?path=${encodeURIComponent(entryPath)}&archive=zip`} download>
+                        <Archive />{t("fileBrowser.buttons.downloadZip")}
+                      </a>
+                    </DropdownMenuItem>
+                    {!isDir && /\.zip$/i.test(entry.name) ? (
+                      <DropdownMenuItem onSelect={() => void unzip(entryPath)}>
+                        <ArchiveRestore />{t("fileBrowser.buttons.unzip")}
+                      </DropdownMenuItem>
+                    ) : null}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : null}
               <Button
                 size="icon"
                 variant="ghost"
@@ -303,7 +442,7 @@ export function PluginTree({
                 title={t("fileBrowser.buttons.delete")}
                 aria-label={t("fileBrowser.buttons.delete")}
                 onClick={() => void remove(entry)}
-                disabled={isDeleting}
+                disabled={isDeleting || actionBusy}
               >
                 {isDeleting ? (
                   <LoaderCircle className="size-3.5 animate-spin" />
@@ -319,6 +458,8 @@ export function PluginTree({
                   path={entryPath}
                   depth={depth + 1}
                   reloadKey={reloadKey}
+                  fileActions={fileActions}
+                  onChanged={onChanged}
                   emptyLabel={emptyLabel}
                   onEdit={onEdit}
                 />
@@ -327,6 +468,28 @@ export function PluginTree({
           </div>
         );
       })}
+      {transfer ? (
+        <Dialog open onOpenChange={(open) => { if (!open && !actionBusy) setTransfer(null); }}>
+          <DialogContent aria-describedby={undefined}>
+            <DialogHeader>
+              <DialogTitle>{t(`fileBrowser.buttons.${transfer.operation}`)}</DialogTitle>
+            </DialogHeader>
+            <p className="break-all text-sm text-muted-foreground">{transfer.source}</p>
+            <Label>
+              {t(transfer.operation === "rename" ? "fileBrowser.transfer.newName" : "fileBrowser.transfer.destination")}
+              <Input value={destination} onChange={(event) => setDestination(event.target.value)} disabled={actionBusy} />
+            </Label>
+            {transferError ? <p role="alert" className="text-sm text-destructive">{transferError}</p> : null}
+            <DialogFooter>
+              <Button variant="outline" disabled={actionBusy} onClick={() => setTransfer(null)}>{t("fileBrowser.buttons.cancel")}</Button>
+              <Button disabled={actionBusy} onClick={() => void submitTransfer()}>
+                {actionBusy ? <LoaderCircle className="size-4 animate-spin" /> : null}
+                {t(`fileBrowser.buttons.${transfer.operation}`)}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </div>
   );
 }

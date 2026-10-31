@@ -306,6 +306,8 @@ function ResourceFiles({
           apiBase={fileApi}
           path=""
           reloadKey={reload}
+          fileActions
+          onChanged={() => setReload((current) => current + 1)}
           emptyLabel={t("empty")}
           onEdit={setEditor}
         />
@@ -349,6 +351,7 @@ export default function MinecraftTemplateManager({
   const [baseId, setBaseId] = useState("");
   const [worldId, setWorldId] = useState("");
   const [pluginIds, setPluginIds] = useState<string[]>([]);
+  const [sharedPlugins, setSharedPlugins] = useState<string[]>([]);
   const [parentId, setParentId] = useState("");
   const [limit, setLimit] = useState(5);
   const [agreement, setAgreement] = useState(false);
@@ -472,6 +475,7 @@ export default function MinecraftTemplateManager({
             baseId,
             worldId,
             pluginIds,
+            sharedPlugins,
             parentId,
             maxInstances: limit,
           },
@@ -485,6 +489,8 @@ export default function MinecraftTemplateManager({
     if (result) {
       setCreateOpen(false);
       setName("");
+      setPluginIds([]);
+      setSharedPlugins([]);
       if (creatingKey) setToken(String(result.token));
       else if (view !== "templates") setFiles(result.resource as Resource);
     }
@@ -553,6 +559,8 @@ export default function MinecraftTemplateManager({
               disabled={loading || Boolean(busy)}
               onClick={() => {
                 setName("");
+                setPluginIds([]);
+                setSharedPlugins([]);
                 setCreateOpen(true);
               }}
             >
@@ -895,6 +903,23 @@ export default function MinecraftTemplateManager({
                       {plugin.name}
                     </Label>
                   ))}
+                </fieldset>
+                <fieldset className="space-y-2">
+                  <legend className="mb-2 text-sm">{t("sharedLibraryPlugins")}</legend>
+                  {mandatoryChoices.length ? (
+                    mandatoryChoices.map((plugin) => (
+                      <Label key={plugin} className="flex min-w-0 items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={sharedPlugins.includes(plugin)}
+                          onChange={() => setSharedPlugins((current) => toggle(current, plugin))}
+                        />
+                        <span className="break-all">{plugin}</span>
+                      </Label>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{t("sharedLibraryEmpty")}</p>
+                  )}
                 </fieldset>
                 <label className="block space-y-2 text-sm">
                   <span>{t("maxInstances")}</span>
