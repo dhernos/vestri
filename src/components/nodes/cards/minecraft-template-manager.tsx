@@ -296,7 +296,10 @@ function ResourceFiles({
             {sharedPluginOptions.length ? (
               <div className="grid max-h-40 gap-2 overflow-y-auto sm:grid-cols-2">
                 {sharedPluginOptions.map((plugin) => (
-                  <Label key={plugin} className="flex min-w-0 items-center gap-2">
+                  <Label
+                    key={plugin}
+                    className="flex min-w-0 items-center gap-2"
+                  >
                     <input
                       type="checkbox"
                       checked={sharedPlugins.includes(plugin)}
