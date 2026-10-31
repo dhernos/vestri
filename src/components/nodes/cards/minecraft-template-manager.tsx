@@ -905,20 +905,31 @@ export default function MinecraftTemplateManager({
                   ))}
                 </fieldset>
                 <fieldset className="space-y-2">
-                  <legend className="mb-2 text-sm">{t("sharedLibraryPlugins")}</legend>
+                  <legend className="mb-2 text-sm">
+                    {t("sharedLibraryPlugins")}
+                  </legend>
                   {mandatoryChoices.length ? (
                     mandatoryChoices.map((plugin) => (
-                      <Label key={plugin} className="flex min-w-0 items-center gap-2">
+                      <Label
+                        key={plugin}
+                        className="flex min-w-0 items-center gap-2"
+                      >
                         <input
                           type="checkbox"
                           checked={sharedPlugins.includes(plugin)}
-                          onChange={() => setSharedPlugins((current) => toggle(current, plugin))}
+                          onChange={() =>
+                            setSharedPlugins((current) =>
+                              toggle(current, plugin),
+                            )
+                          }
                         />
                         <span className="break-all">{plugin}</span>
                       </Label>
                     ))
                   ) : (
-                    <p className="text-sm text-muted-foreground">{t("sharedLibraryEmpty")}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {t("sharedLibraryEmpty")}
+                    </p>
                   )}
                 </fieldset>
                 <label className="block space-y-2 text-sm">

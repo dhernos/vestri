@@ -157,9 +157,10 @@ export function PluginTree({
       setTransferError(t("fileBrowser.transfer.invalidDestination"));
       return;
     }
-    const dest = transfer.operation === "rename"
-      ? `${transfer.source.slice(0, transfer.source.lastIndexOf("/") + 1)}${target}`
-      : target;
+    const dest =
+      transfer.operation === "rename"
+        ? `${transfer.source.slice(0, transfer.source.lastIndexOf("/") + 1)}${target}`
+        : target;
     if (dest === transfer.source) {
       setTransferError(t("fileBrowser.transfer.sameDestination"));
       return;
@@ -171,10 +172,16 @@ export function PluginTree({
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: transfer.source, dest, operation: transfer.operation }),
+        body: JSON.stringify({
+          source: transfer.source,
+          dest,
+          operation: transfer.operation,
+        }),
       });
       if (!res.ok) {
-        setTransferError(await responseMessage(res, t("fileBrowser.transfer.error")));
+        setTransferError(
+          await responseMessage(res, t("fileBrowser.transfer.error")),
+        );
         return;
       }
       setTransfer(null);
@@ -200,7 +207,9 @@ export function PluginTree({
         }),
       });
       if (!res.ok) {
-        setError(await responseMessage(res, t("fileBrowser.errors.unzipArchive")));
+        setError(
+          await responseMessage(res, t("fileBrowser.errors.unzipArchive")),
+        );
         return;
       }
       refresh();
@@ -330,7 +339,9 @@ export function PluginTree({
         const isOpen = expanded.includes(entryPath);
         const editable =
           entry.type === "file" &&
-          /\.(ya?ml|json|conf|config|toml|txt|properties|cfg|ini|xml|lang|log|sk|js|lua|csv|md|secret)$/i.test(entry.name);
+          /\.(ya?ml|json|conf|config|toml|txt|properties|cfg|ini|xml|lang|log|sk|js|lua|csv|md|secret)$/i.test(
+            entry.name,
+          );
         const isDeleting = deleting === entryPath;
         return (
           <div key={`${entry.type}-${entry.name}`}>
@@ -394,7 +405,10 @@ export function PluginTree({
                 title={t("fileBrowser.buttons.download")}
                 aria-label={t("fileBrowser.buttons.download")}
               >
-                <a href={`${apiBase}/files/download?path=${encodeURIComponent(entryPath)}`} download>
+                <a
+                  href={`${apiBase}/files/download?path=${encodeURIComponent(entryPath)}`}
+                  download
+                >
                   <Download className="size-3.5" />
                 </a>
               </Button>
@@ -413,23 +427,43 @@ export function PluginTree({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onSelect={() => startTransfer("copy", entryPath, entry.name)}>
-                      <Copy />{t("fileBrowser.buttons.copy")}
+                    <DropdownMenuItem
+                      onSelect={() =>
+                        startTransfer("copy", entryPath, entry.name)
+                      }
+                    >
+                      <Copy />
+                      {t("fileBrowser.buttons.copy")}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => startTransfer("move", entryPath, entry.name)}>
-                      <FolderInput />{t("fileBrowser.buttons.move")}
+                    <DropdownMenuItem
+                      onSelect={() =>
+                        startTransfer("move", entryPath, entry.name)
+                      }
+                    >
+                      <FolderInput />
+                      {t("fileBrowser.buttons.move")}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => startTransfer("rename", entryPath, entry.name)}>
-                      <Pencil />{t("fileBrowser.buttons.rename")}
+                    <DropdownMenuItem
+                      onSelect={() =>
+                        startTransfer("rename", entryPath, entry.name)
+                      }
+                    >
+                      <Pencil />
+                      {t("fileBrowser.buttons.rename")}
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <a href={`${apiBase}/files/download?path=${encodeURIComponent(entryPath)}&archive=zip`} download>
-                        <Archive />{t("fileBrowser.buttons.downloadZip")}
+                      <a
+                        href={`${apiBase}/files/download?path=${encodeURIComponent(entryPath)}&archive=zip`}
+                        download
+                      >
+                        <Archive />
+                        {t("fileBrowser.buttons.downloadZip")}
                       </a>
                     </DropdownMenuItem>
                     {!isDir && /\.zip$/i.test(entry.name) ? (
                       <DropdownMenuItem onSelect={() => void unzip(entryPath)}>
-                        <ArchiveRestore />{t("fileBrowser.buttons.unzip")}
+                        <ArchiveRestore />
+                        {t("fileBrowser.buttons.unzip")}
                       </DropdownMenuItem>
                     ) : null}
                   </DropdownMenuContent>
@@ -469,21 +503,53 @@ export function PluginTree({
         );
       })}
       {transfer ? (
-        <Dialog open onOpenChange={(open) => { if (!open && !actionBusy) setTransfer(null); }}>
+        <Dialog
+          open
+          onOpenChange={(open) => {
+            if (!open && !actionBusy) setTransfer(null);
+          }}
+        >
           <DialogContent aria-describedby={undefined}>
             <DialogHeader>
-              <DialogTitle>{t(`fileBrowser.buttons.${transfer.operation}`)}</DialogTitle>
+              <DialogTitle>
+                {t(`fileBrowser.buttons.${transfer.operation}`)}
+              </DialogTitle>
             </DialogHeader>
-            <p className="break-all text-sm text-muted-foreground">{transfer.source}</p>
+            <p className="break-all text-sm text-muted-foreground">
+              {transfer.source}
+            </p>
             <Label>
-              {t(transfer.operation === "rename" ? "fileBrowser.transfer.newName" : "fileBrowser.transfer.destination")}
-              <Input value={destination} onChange={(event) => setDestination(event.target.value)} disabled={actionBusy} />
+              {t(
+                transfer.operation === "rename"
+                  ? "fileBrowser.transfer.newName"
+                  : "fileBrowser.transfer.destination",
+              )}
+              <Input
+                value={destination}
+                onChange={(event) => setDestination(event.target.value)}
+                disabled={actionBusy}
+              />
             </Label>
-            {transferError ? <p role="alert" className="text-sm text-destructive">{transferError}</p> : null}
+            {transferError ? (
+              <p role="alert" className="text-sm text-destructive">
+                {transferError}
+              </p>
+            ) : null}
             <DialogFooter>
-              <Button variant="outline" disabled={actionBusy} onClick={() => setTransfer(null)}>{t("fileBrowser.buttons.cancel")}</Button>
-              <Button disabled={actionBusy} onClick={() => void submitTransfer()}>
-                {actionBusy ? <LoaderCircle className="size-4 animate-spin" /> : null}
+              <Button
+                variant="outline"
+                disabled={actionBusy}
+                onClick={() => setTransfer(null)}
+              >
+                {t("fileBrowser.buttons.cancel")}
+              </Button>
+              <Button
+                disabled={actionBusy}
+                onClick={() => void submitTransfer()}
+              >
+                {actionBusy ? (
+                  <LoaderCircle className="size-4 animate-spin" />
+                ) : null}
                 {t(`fileBrowser.buttons.${transfer.operation}`)}
               </Button>
             </DialogFooter>
