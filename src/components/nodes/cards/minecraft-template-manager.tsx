@@ -9,6 +9,7 @@ import {
   FolderPlus,
   KeyRound,
   LoaderCircle,
+  PackagePlus,
   Play,
   Plus,
   RefreshCw,
@@ -157,8 +158,16 @@ function ResourceFiles({
   const [editor, setEditor] = useState<EditorTarget | null>(null);
   const [destination, setDestination] = useState("");
   const [newPath, setNewPath] = useState("");
+  const [sharedPlugins, setSharedPlugins] = useState<string[]>([]);
+  const [sharedPluginOptions, setSharedPluginOptions] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const toggleSharedPlugin = (name: string) =>
+    setSharedPlugins((current) =>
+      current.includes(name)
+        ? current.filter((entry) => entry !== name)
+        : [...current, name],
+    );
   useEffect(
     () =>
       subscribeUploadCompletion(uploadScope, () =>
@@ -166,6 +175,60 @@ function ResourceFiles({
       ),
     [uploadScope],
   );
+
+  useEffect(() => {
+    if (resource.kind !== "plugin-packs") return;
+    let active = true;
+    void fetch(`${apiBase}/files/list?path=plugins`, {
+      credentials: "include",
+      cache: "no-store",
+    })
+      .then(async (response) => {
+        if (!response.ok) return [];
+        return (await response.json()) as { name?: unknown; type?: unknown }[];
+      })
+      .then((entries) => {
+        if (active) {
+          setSharedPluginOptions(
+            entries
+              .filter(
+                (entry) =>
+                  typeof entry.name === "string" &&
+                  (entry.type === "file" || entry.type === "dir"),
+              )
+              .map((entry) => entry.name as string),
+          );
+        }
+      })
+      .catch(() => {
+        if (active) setError(t("sharedLibraryLoadError"));
+      });
+    return () => {
+      active = false;
+    };
+  }, [apiBase, resource.kind, t]);
+
+  const importSharedPlugins = async () => {
+    if (!sharedPlugins.length || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      await responseBody(
+        await fetch(`${apiBase}/resources/${resource.id}/shared-plugins`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ names: sharedPlugins }),
+        }),
+      );
+      setSharedPlugins([]);
+      setReload((current) => current + 1);
+    } catch (failure) {
+      setError(String(failure));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const upload = (files: FileList | null) => {
     for (const file of Array.from(files || [])) {
@@ -225,6 +288,45 @@ function ResourceFiles({
         <DialogHeader>
           <DialogTitle>{resource.name}</DialogTitle>
         </DialogHeader>
+        {resource.kind === "plugin-packs" ? (
+          <fieldset className="space-y-2 rounded-md border p-3">
+            <legend className="px-1 text-sm font-medium">
+              {t("sharedLibraryPlugins")}
+            </legend>
+            {sharedPluginOptions.length ? (
+              <div className="grid max-h-40 gap-2 overflow-y-auto sm:grid-cols-2">
+                {sharedPluginOptions.map((plugin) => (
+                  <Label key={plugin} className="flex min-w-0 items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={sharedPlugins.includes(plugin)}
+                      onChange={() => toggleSharedPlugin(plugin)}
+                    />
+                    <span className="min-w-0 break-all">{plugin}</span>
+                  </Label>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {t("sharedLibraryEmpty")}
+              </p>
+            )}
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={busy || !sharedPlugins.length}
+              onClick={() => void importSharedPlugins()}
+            >
+              {busy ? (
+                <LoaderCircle className="size-4 animate-spin" />
+              ) : (
+                <PackagePlus className="size-4" />
+              )}
+              {t("importSharedPlugins")}
+            </Button>
+          </fieldset>
+        ) : null}
         <label className="space-y-2 text-sm">
           <span>{t("destination")}</span>
           <Input
@@ -351,7 +453,6 @@ export default function MinecraftTemplateManager({
   const [baseId, setBaseId] = useState("");
   const [worldId, setWorldId] = useState("");
   const [pluginIds, setPluginIds] = useState<string[]>([]);
-  const [sharedPlugins, setSharedPlugins] = useState<string[]>([]);
   const [parentId, setParentId] = useState("");
   const [limit, setLimit] = useState(5);
   const [agreement, setAgreement] = useState(false);
@@ -475,7 +576,6 @@ export default function MinecraftTemplateManager({
             baseId,
             worldId,
             pluginIds,
-            sharedPlugins,
             parentId,
             maxInstances: limit,
           },
@@ -490,7 +590,6 @@ export default function MinecraftTemplateManager({
       setCreateOpen(false);
       setName("");
       setPluginIds([]);
-      setSharedPlugins([]);
       if (creatingKey) setToken(String(result.token));
       else if (view !== "templates") setFiles(result.resource as Resource);
     }
@@ -560,7 +659,6 @@ export default function MinecraftTemplateManager({
               onClick={() => {
                 setName("");
                 setPluginIds([]);
-                setSharedPlugins([]);
                 setCreateOpen(true);
               }}
             >
@@ -903,34 +1001,6 @@ export default function MinecraftTemplateManager({
                       {plugin.name}
                     </Label>
                   ))}
-                </fieldset>
-                <fieldset className="space-y-2">
-                  <legend className="mb-2 text-sm">
-                    {t("sharedLibraryPlugins")}
-                  </legend>
-                  {mandatoryChoices.length ? (
-                    mandatoryChoices.map((plugin) => (
-                      <Label
-                        key={plugin}
-                        className="flex min-w-0 items-center gap-2"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={sharedPlugins.includes(plugin)}
-                          onChange={() =>
-                            setSharedPlugins((current) =>
-                              toggle(current, plugin),
-                            )
-                          }
-                        />
-                        <span className="break-all">{plugin}</span>
-                      </Label>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      {t("sharedLibraryEmpty")}
-                    </p>
-                  )}
                 </fieldset>
                 <label className="block space-y-2 text-sm">
                   <span>{t("maxInstances")}</span>
