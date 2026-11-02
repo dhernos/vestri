@@ -1,4 +1,39 @@
 {
+  "NotificationsPage": {
+    "title": "Notifications",
+    "eventsTitle": "Events",
+    "settingsTitle": "Notification settings",
+    "deliveryTitle": "Additional delivery",
+    "unread": "{count, plural, =0 {No unread notifications} one {One unread notification} other {# unread notifications}}",
+    "unreadLabel": "Unread",
+    "empty": "No events yet.",
+    "loading": "Loading...",
+    "refresh": "Refresh",
+    "markRead": "Mark as read",
+    "markAllRead": "Mark all read",
+    "loadMore": "Older notifications",
+    "email": "Email",
+    "webhook": "Webhook",
+    "webhookUrl": "Webhook URL (HTTPS)",
+    "save": "Save",
+    "saved": "Settings saved.",
+    "loadError": "Notifications or settings could not be loaded.",
+    "saveError": "Could not save. Check the public HTTPS webhook URL and your verified email address.",
+    "updateError": "The notification could not be marked as read.",
+    "deliveryFailed": "Email or webhook delivery failed after multiple attempts.",
+    "events": {
+      "server_created": "Server created",
+      "server_deleted": "Server deleted",
+      "worker_unhealthy": "Worker unhealthy (> 1 minute)",
+      "server_down": "Server down (> 1 minute)"
+    },
+    "messages": {
+      "server_created": "Server {server} was created on {node}.",
+      "server_deleted": "Server {server} was deleted on {node}.",
+      "worker_unhealthy": "Worker {node} has not been healthy for more than one minute.",
+      "server_down": "Server {server} on {node} has been down for more than one minute."
+    }
+  },
   "Common": {
     "loading": "Loading...",
     "seconds": "seconds",
@@ -1747,6 +1782,30 @@
       "errors": {
         "loadConfig": "Failed to load config file.",
         "saveConfig": "Failed to save config file."
+      }
+    },
+    "secrets": {
+      "title": "Secret environment variables",
+      "description": "Secrets are passed to the server as environment variables. Values cannot be viewed after saving; to change a secret, delete and recreate it. Restart the server to apply changes.",
+      "loading": "Loading secrets...",
+      "empty": "No secrets configured.",
+      "hiddenValue": "Value hidden",
+      "fields": {
+        "key": "Name",
+        "keyPlaceholder": "TOKEN",
+        "value": "Value"
+      },
+      "buttons": {
+        "add": "Add secret",
+        "adding": "Adding...",
+        "delete": "Delete",
+        "deleting": "Deleting..."
+      },
+      "confirmDelete": "Delete secret {key}? The value cannot be recovered.",
+      "errors": {
+        "load": "Failed to load secrets.",
+        "create": "Failed to add secret.",
+        "delete": "Failed to delete secret."
       }
     },
     "access": {

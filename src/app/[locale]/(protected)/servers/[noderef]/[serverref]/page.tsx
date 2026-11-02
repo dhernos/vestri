@@ -16,6 +16,7 @@ import InteractiveConsoleCard from "@/components/servers/cards/interactive-conso
 import LogsCard from "@/components/servers/cards/logs-card";
 import ServerControlsCard from "@/components/servers/cards/controls-card";
 import SatisfactoryBlueprintsCard from "@/components/servers/cards/satisfactory-blueprints-card";
+import SecretsCard from "@/components/servers/cards/secrets-card";
 import VelocityCard from "@/components/servers/cards/velocity-card";
 import VelocityPluginManagerCard from "@/components/servers/cards/velocity-plugin-manager-card";
 import VelocityWhitelist from "@/components/servers/cards/velocity-whitelist";
@@ -811,6 +812,9 @@ export default function ServerControlsPage() {
           ) : (
             <FileBrowserRestrictedCard />
           )}
+          {server.permissions.canManage ? (
+            <SecretsCard key={basePath} basePath={basePath} />
+          ) : null}
         </>
       ) : null}
 

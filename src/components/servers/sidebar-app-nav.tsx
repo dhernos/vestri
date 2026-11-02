@@ -26,6 +26,7 @@ export function SidebarAppNav() {
   const tDashboard = useTranslations("DashboardPage");
   const tNodes = useTranslations("NodesPage");
   const tProfile = useTranslations("ProfilePage");
+  const tNotifications = useTranslations("NotificationsPage");
   const pathname = usePathname();
 
   const items: NavItem[] = [
@@ -37,7 +38,7 @@ export function SidebarAppNav() {
         isPathActive(path, "/dashboard") || isPathActive(path, "/servers"),
     },
     {
-      title: "Notifications",
+      title: tNotifications("title"),
       href: "/notifications",
       icon: Bell,
       activeWhen: (path) => isPathActive(path, "/notifications"),

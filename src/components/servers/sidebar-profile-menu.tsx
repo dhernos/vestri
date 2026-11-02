@@ -39,6 +39,7 @@ export function SidebarProfileMenu() {
   const router = useRouter();
   const tProfile = useTranslations("ProfilePage");
   const tActiveSessions = useTranslations("ActiveSessions");
+  const tNotifications = useTranslations("NotificationsPage");
 
   const userName = session?.user?.name?.trim() || "User";
   const userEmail = session?.user?.email || "";
@@ -81,7 +82,7 @@ export function SidebarProfileMenu() {
             <DropdownMenuItem asChild>
               <Link href="/notifications" className="flex items-center gap-2">
                 <Bell className="size-4" />
-                <span>Notifications</span>
+                <span>{tNotifications("title")}</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />

@@ -1,4 +1,39 @@
 {
+  "NotificationsPage": {
+    "title": "Nachrichten",
+    "eventsTitle": "Ereignisse",
+    "settingsTitle": "Benachrichtigungen",
+    "deliveryTitle": "Zusätzlicher Versand",
+    "unread": "{count, plural, =0 {Keine ungelesenen Nachrichten} one {Eine ungelesene Nachricht} other {# ungelesene Nachrichten}}",
+    "unreadLabel": "Ungelesen",
+    "empty": "Noch keine Ereignisse.",
+    "loading": "Wird geladen...",
+    "refresh": "Aktualisieren",
+    "markRead": "Als gelesen markieren",
+    "markAllRead": "Alle gelesen",
+    "loadMore": "Ältere Nachrichten",
+    "email": "E-Mail",
+    "webhook": "Webhook",
+    "webhookUrl": "Webhook-URL (HTTPS)",
+    "save": "Speichern",
+    "saved": "Einstellungen gespeichert.",
+    "loadError": "Nachrichten oder Einstellungen konnten nicht geladen werden.",
+    "saveError": "Speichern fehlgeschlagen. Prüfe die öffentliche HTTPS-Webhook-URL und deine verifizierte E-Mail-Adresse.",
+    "updateError": "Die Nachricht konnte nicht als gelesen markiert werden.",
+    "deliveryFailed": "E-Mail oder Webhook konnte nach mehreren Versuchen nicht zugestellt werden.",
+    "events": {
+      "server_created": "Server erstellt",
+      "server_deleted": "Server gelöscht",
+      "worker_unhealthy": "Worker nicht grün (> 1 Minute)",
+      "server_down": "Server down (> 1 Minute)"
+    },
+    "messages": {
+      "server_created": "Server {server} wurde auf {node} erstellt.",
+      "server_deleted": "Server {server} wurde auf {node} gelöscht.",
+      "worker_unhealthy": "Worker {node} ist seit mehr als einer Minute nicht mehr grün.",
+      "server_down": "Server {server} auf {node} ist seit mehr als einer Minute down."
+    }
+  },
   "Common": {
     "loading": "Lädt...",
     "seconds": "Sekunden",
@@ -1747,6 +1782,30 @@
       "errors": {
         "loadConfig": "Config-Datei konnte nicht geladen werden.",
         "saveConfig": "Config-Datei konnte nicht gespeichert werden."
+      }
+    },
+    "secrets": {
+      "title": "Geheime Umgebungsvariablen",
+      "description": "Secrets werden dem Server als Umgebungsvariablen übergeben. Werte können nach dem Speichern nicht mehr angezeigt werden; zum Ändern das Secret löschen und neu anlegen. Server neu starten, um Änderungen zu übernehmen.",
+      "loading": "Lade Secrets...",
+      "empty": "Keine Secrets konfiguriert.",
+      "hiddenValue": "Wert verborgen",
+      "fields": {
+        "key": "Name",
+        "keyPlaceholder": "TOKEN",
+        "value": "Wert"
+      },
+      "buttons": {
+        "add": "Secret hinzufügen",
+        "adding": "Füge hinzu...",
+        "delete": "Löschen",
+        "deleting": "Lösche..."
+      },
+      "confirmDelete": "Secret {key} löschen? Der Wert kann nicht wiederhergestellt werden.",
+      "errors": {
+        "load": "Secrets konnten nicht geladen werden.",
+        "create": "Secret konnte nicht hinzugefügt werden.",
+        "delete": "Secret konnte nicht gelöscht werden."
       }
     },
     "access": {

@@ -26,6 +26,7 @@ type LogsCardProps = {
 
 type HistoricalLogFile = {
   name: string;
+  path: string;
   size: number;
 };
 
@@ -102,6 +103,7 @@ export default function LogsCard({
           ? data.filter(
               (file) =>
                 typeof file?.name === "string" &&
+                typeof file?.path === "string" &&
                 typeof file?.size === "number",
             )
           : [];
@@ -110,9 +112,9 @@ export default function LogsCard({
         setLogFiles(files);
         setLogFilesError(null);
         setSelectedLogFile((current) =>
-          files.some((file) => file.name === current)
+          files.some((file) => file.path === current)
             ? current
-            : files[0]?.name || "",
+            : files[0]?.path || "",
         );
       })
       .catch((error: unknown) => {
@@ -138,7 +140,7 @@ export default function LogsCard({
     const controller = new AbortController();
     const fileName = selectedLogFile;
     const requestKey = historicalLogRequestKey;
-    const query = new URLSearchParams({ name: fileName });
+    const query = new URLSearchParams({ path: fileName });
     void fetch(`${basePath}/console/logs/file?${query}`, {
       credentials: "include",
       cache: "no-store",
@@ -292,8 +294,8 @@ export default function LogsCard({
                   : t("logs.files.empty")}
             </option>
             {logFiles.map((file) => (
-              <option key={file.name} value={file.name}>
-                {file.name}
+              <option key={file.path} value={file.path}>
+                {file.path}
               </option>
             ))}
           </select>
