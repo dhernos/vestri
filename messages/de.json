@@ -1676,6 +1676,8 @@
         "linkLabel": "Plugin-Projekt- oder direkter JAR-Link",
         "download": "Herunterladen",
         "loading": "Verknüpfte Plugins werden geladen",
+        "forceRefresh": "Erfasste Plugins erneut prüfen",
+        "refreshed": "Plugin-Update-Prüfungen aktualisiert.",
         "error": "Plugin-Aktion fehlgeschlagen.",
         "reloadAfterError": "Neu laden, um den aktuellen Verteilungsstatus zu prüfen.",
         "downloaded": "Ins Staging heruntergeladen.",

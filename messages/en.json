@@ -1676,6 +1676,8 @@
         "linkLabel": "Plugin project or direct JAR URL",
         "download": "Download",
         "loading": "Loading linked plugins",
+        "forceRefresh": "Force refresh tracked plugins",
+        "refreshed": "Plugin update checks refreshed.",
         "error": "Plugin operation failed.",
         "reloadAfterError": "Reload to check the latest deployment state.",
         "downloaded": "Downloaded to staging.",
