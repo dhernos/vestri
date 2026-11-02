@@ -5,7 +5,11 @@ import { Download, LoaderCircle, RefreshCw, Unlink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -174,7 +178,11 @@ export default function LinkedPaperPlugins({
               disabled={Boolean(busy) || loading}
               onClick={() => void forceRefresh()}
             >
-              <RefreshCw className={busy === "refresh" ? "size-4 animate-spin" : "size-4"} />
+              <RefreshCw
+                className={
+                  busy === "refresh" ? "size-4 animate-spin" : "size-4"
+                }
+              />
             </Button>
           </TooltipTrigger>
           <TooltipContent>{t("forceRefresh")}</TooltipContent>
@@ -250,11 +258,11 @@ export default function LinkedPaperPlugins({
                 >
                   {plugin.pending
                     ? t("pending")
-                      : pinned
+                    : pinned
                       ? t("pinned", { version: plugin.source.version ?? "" })
-                    : updateAvailable
-                      ? t("available", { filename: plugin.latest.filename })
-                      : t("current")}
+                      : updateAvailable
+                        ? t("available", { filename: plugin.latest.filename })
+                        : t("current")}
                 </p>
                 {plugin.checkError ? (
                   <p className="wrap-break-word text-xs text-destructive">
