@@ -40,6 +40,10 @@ type UseServerFilesParams = {
 
 const folderNavigationDelayMs = 180;
 const composeEnvironmentConfigFileID = "__compose-environment__";
+const isCompressedLogPath = (value: string) => {
+  const normalized = value.toLowerCase();
+  return normalized.startsWith("data/logs/") && normalized.endsWith(".log.gz");
+};
 
 const responseMessage = async (
   res: Response,
@@ -240,7 +244,7 @@ export const useServerFiles = ({
   };
 
   const saveFile = async () => {
-    if (!canManageFiles || !basePath || !filePath) {
+    if (!canManageFiles || !basePath || !filePath || isCompressedLogPath(filePath)) {
       return;
     }
     setFileSaving(true);
@@ -622,6 +626,7 @@ export const useServerFiles = ({
     browserDeletingPath,
     browserUnzippingPath,
     filePath,
+    fileReadOnly: isCompressedLogPath(filePath),
     fileContent,
     setFileContent,
     fileLoading,

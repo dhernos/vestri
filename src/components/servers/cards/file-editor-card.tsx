@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 type FileEditorCardProps = {
   filePath: string;
+  fileReadOnly: boolean;
   fileContent: string;
   fileLoading: boolean;
   fileSaving: boolean;
@@ -17,6 +18,7 @@ type FileEditorCardProps = {
 
 export default function FileEditorCard({
   filePath,
+  fileReadOnly,
   fileContent,
   fileLoading,
   fileSaving,
@@ -30,8 +32,15 @@ export default function FileEditorCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("fileEditor.title")}</CardTitle>
-        <CardDescription>{filePath || t("fileEditor.selectFromBrowser")}</CardDescription>
+        <CardTitle>
+          {t(fileReadOnly ? "fileViewer.title" : "fileEditor.title")}
+        </CardTitle>
+        <CardDescription>
+          {filePath || t("fileEditor.selectFromBrowser")}
+          {fileReadOnly ? (
+            <span className="mt-1 block">{t("fileViewer.compressedLog")}</span>
+          ) : null}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <textarea
@@ -39,11 +48,14 @@ export default function FileEditorCard({
           onChange={(event) => onFileContentChange(event.target.value)}
           className="min-h-64 w-full rounded-md border border-input bg-transparent p-2 text-xs"
           disabled={!filePath || fileLoading}
+          readOnly={fileReadOnly}
         />
         <div className="flex gap-2">
-          <Button onClick={onSaveFile} disabled={!filePath || fileSaving || fileLoading}>
-            {fileSaving ? t("fileEditor.buttons.saving") : t("fileEditor.buttons.saveFile")}
-          </Button>
+          {!fileReadOnly ? (
+            <Button onClick={onSaveFile} disabled={!filePath || fileSaving || fileLoading}>
+              {fileSaving ? t("fileEditor.buttons.saving") : t("fileEditor.buttons.saveFile")}
+            </Button>
+          ) : null}
           <Button variant="secondary" onClick={onReloadFile} disabled={!filePath || fileLoading}>
             {t("fileEditor.buttons.reload")}
           </Button>

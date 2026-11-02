@@ -1459,6 +1459,17 @@
         "connectStream": "Verbindung zum Live-Log-Stream konnte nicht aufgebaut werden.",
         "noReadableBody": "Der Live-Log-Stream hat keinen lesbaren Response-Body zurückgegeben.",
         "interrupted": "Der Live-Log-Stream wurde unterbrochen."
+      },
+      "files": {
+        "title": "Historische Server-Logs",
+        "refresh": "Logdateien aktualisieren",
+        "select": "Logdatei auswählen",
+        "loadingList": "Logdateien werden geladen...",
+        "loadingFile": "Logdatei wird geladen...",
+        "empty": "Keine Logdateien in data/logs gefunden.",
+        "selectHint": "Wähle eine Datei aus, um ihren Inhalt anzuzeigen.",
+        "loadListError": "Server-Logdateien konnten nicht geladen werden.",
+        "loadFileError": "Diese Logdatei konnte nicht geladen werden."
       }
     },
     "interactive": {
@@ -1708,6 +1719,10 @@
         "saveFile": "Datei konnte nicht gespeichert werden.",
         "onlyRegularTextFiles": "Nur reguläre Textdateien können geöffnet werden."
       }
+    },
+    "fileViewer": {
+      "title": "Datei-Viewer",
+      "compressedLog": "Zur Anzeige entpackt; die Originaldatei bleibt unverändert."
     },
     "configEditor": {
       "title": "Config-Editor",

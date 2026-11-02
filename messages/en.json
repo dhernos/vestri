@@ -1459,6 +1459,17 @@
         "connectStream": "Failed to connect to live log stream.",
         "noReadableBody": "Live log stream did not return a readable response body.",
         "interrupted": "Live log stream was interrupted."
+      },
+      "files": {
+        "title": "Historical server logs",
+        "refresh": "Refresh log files",
+        "select": "Select a log file",
+        "loadingList": "Loading log files...",
+        "loadingFile": "Loading log file...",
+        "empty": "No log files found in data/logs.",
+        "selectHint": "Select a file to view its contents.",
+        "loadListError": "Failed to load server log files.",
+        "loadFileError": "Failed to load this log file."
       }
     },
     "interactive": {
@@ -1708,6 +1719,10 @@
         "saveFile": "Failed to save file.",
         "onlyRegularTextFiles": "Only regular text files can be opened."
       }
+    },
+    "fileViewer": {
+      "title": "File viewer",
+      "compressedLog": "Decompressed for viewing; the original file is unchanged."
     },
     "configEditor": {
       "title": "Config Editor",

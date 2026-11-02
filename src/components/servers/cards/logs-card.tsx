@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { RefObject } from "react";
+import { RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +10,7 @@ import type { ConnectionStatus, ConsoleRefreshMode } from "@/components/servers/
 import { cn } from "@/lib/utils";
 
 type LogsCardProps = {
+  basePath: string;
   consoleRefreshMode: ConsoleRefreshMode;
   canReadConsole: boolean;
   consoleSnapshotLoading: boolean;
@@ -21,7 +24,30 @@ type LogsCardProps = {
   onClearOutput: () => void;
 };
 
+type HistoricalLogFile = {
+  name: string;
+  size: number;
+};
+
+type HistoricalLogContent = {
+  requestKey: string;
+  name: string;
+  content: string;
+};
+
+type HistoricalLogError = {
+  requestKey: string;
+  name: string;
+  message: string;
+};
+
+const responseText = async (response: Response, fallback: string) => {
+  const body = (await response.text().catch(() => "")).trim();
+  return body || fallback;
+};
+
 export default function LogsCard({
+  basePath,
   consoleRefreshMode,
   canReadConsole,
   consoleSnapshotLoading,
@@ -35,6 +61,115 @@ export default function LogsCard({
   onClearOutput,
 }: LogsCardProps) {
   const t = useTranslations("ServerPage");
+  const [logFiles, setLogFiles] = useState<HistoricalLogFile[]>([]);
+  const [selectedLogFile, setSelectedLogFile] = useState("");
+  const [logFilesReload, setLogFilesReload] = useState(0);
+  const [loadedLogFilesKey, setLoadedLogFilesKey] = useState("");
+  const [logFilesError, setLogFilesError] = useState<{
+    requestKey: string;
+    message: string;
+  } | null>(null);
+  const [historicalLog, setHistoricalLog] =
+    useState<HistoricalLogContent | null>(null);
+  const [historicalLogError, setHistoricalLogError] =
+    useState<HistoricalLogError | null>(null);
+  const logFilesRequestKey = `${basePath}:${logFilesReload}`;
+  const historicalLogRequestKey = `${basePath}:${logFilesReload}:${selectedLogFile}`;
+  const logFilesLoading =
+    Boolean(basePath && canReadConsole) &&
+    loadedLogFilesKey !== logFilesRequestKey;
+  const historicalLogLoading =
+    Boolean(selectedLogFile) &&
+    historicalLog?.requestKey !== historicalLogRequestKey &&
+    historicalLogError?.requestKey !== historicalLogRequestKey;
+
+  useEffect(() => {
+    if (!basePath || !canReadConsole) return;
+
+    const controller = new AbortController();
+    const requestKey = logFilesRequestKey;
+    void fetch(`${basePath}/console/logs/files`, {
+      credentials: "include",
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(await responseText(response, t("logs.files.loadListError")));
+        }
+        const data = (await response.json()) as HistoricalLogFile[];
+        return Array.isArray(data)
+          ? data.filter(
+              (file) =>
+                typeof file?.name === "string" &&
+                typeof file?.size === "number",
+            )
+          : [];
+      })
+      .then((files) => {
+        setLogFiles(files);
+        setLogFilesError(null);
+        setSelectedLogFile((current) =>
+          files.some((file) => file.name === current)
+            ? current
+            : files[0]?.name || "",
+        );
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        setLogFiles([]);
+        setSelectedLogFile("");
+        setLogFilesError({
+          requestKey,
+          message:
+            error instanceof Error ? error.message : t("logs.files.loadListError"),
+        });
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoadedLogFilesKey(requestKey);
+      });
+
+    return () => controller.abort();
+  }, [basePath, canReadConsole, logFilesReload, logFilesRequestKey, t]);
+
+  useEffect(() => {
+    if (!basePath || !canReadConsole || !selectedLogFile) return;
+
+    const controller = new AbortController();
+    const fileName = selectedLogFile;
+    const requestKey = historicalLogRequestKey;
+    const query = new URLSearchParams({ name: fileName });
+    void fetch(`${basePath}/console/logs/file?${query}`, {
+      credentials: "include",
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(await responseText(response, t("logs.files.loadFileError")));
+        }
+        return response.text();
+      })
+      .then((content) => {
+        setHistoricalLog({ requestKey, name: fileName, content });
+        setHistoricalLogError(null);
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        setHistoricalLogError(
+          {
+            requestKey,
+            name: fileName,
+            message:
+              error instanceof Error
+                ? error.message
+                : t("logs.files.loadFileError"),
+          },
+        );
+      });
+
+    return () => controller.abort();
+  }, [basePath, canReadConsole, logFilesReload, selectedLogFile, historicalLogRequestKey, t]);
 
   return (
     <Card>
@@ -126,6 +261,62 @@ export default function LogsCard({
               ? t("logs.placeholder.connectedWaiting")
               : t("logs.placeholder.waitingStream"))}
         </pre>
+          {canReadConsole ? (
+            <section className="space-y-3 border-t pt-4">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-sm font-medium">{t("logs.files.title")}</h3>
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              onClick={() => setLogFilesReload((value) => value + 1)}
+              disabled={!basePath || logFilesLoading}
+              aria-label={t("logs.files.refresh")}
+              title={t("logs.files.refresh")}
+            >
+              <RefreshCw className={cn(logFilesLoading && "animate-spin")} />
+            </Button>
+          </div>
+          <select
+            value={selectedLogFile}
+            onChange={(event) => setSelectedLogFile(event.target.value)}
+            disabled={!basePath || logFilesLoading || logFiles.length === 0}
+            aria-label={t("logs.files.select")}
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+          >
+            <option value="">
+              {logFilesLoading
+                ? t("logs.files.loadingList")
+                : logFiles.length > 0
+                  ? t("logs.files.select")
+                  : t("logs.files.empty")}
+            </option>
+            {logFiles.map((file) => (
+              <option key={file.name} value={file.name}>
+                {file.name}
+              </option>
+            ))}
+          </select>
+          {logFilesError?.requestKey === logFilesRequestKey ? (
+            <p role="alert" className="text-sm text-destructive">
+              {logFilesError.message}
+            </p>
+          ) : null}
+          {historicalLogError?.requestKey === historicalLogRequestKey ? (
+            <p role="alert" className="text-sm text-destructive">
+              {historicalLogError.message}
+            </p>
+          ) : null}
+          <pre className="max-h-80 min-h-32 overflow-auto whitespace-pre-wrap break-words rounded-md border bg-muted/40 p-3 font-mono text-xs">
+            {historicalLogLoading
+              ? t("logs.files.loadingFile")
+              : historicalLog?.requestKey === historicalLogRequestKey
+                ? historicalLog.content
+                :
+                (selectedLogFile ? "" : t("logs.files.selectHint"))}
+          </pre>
+            </section>
+          ) : null}
       </CardContent>
     </Card>
   );

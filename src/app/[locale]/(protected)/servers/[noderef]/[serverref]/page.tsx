@@ -340,6 +340,7 @@ export default function ServerControlsPage() {
     browserDeletingPath,
     browserUnzippingPath,
     filePath,
+    fileReadOnly,
     fileContent,
     setFileContent,
     fileLoading,
@@ -657,6 +658,7 @@ export default function ServerControlsPage() {
       {isConsoleSection ? (
         <>
           <LogsCard
+            basePath={basePath}
             consoleRefreshMode={consoleRefreshMode}
             canReadConsole={canReadConsole}
             consoleSnapshotLoading={consoleSnapshotLoading}
@@ -757,6 +759,7 @@ export default function ServerControlsPage() {
 
                   <FileEditorCard
                     filePath={filePath}
+                    fileReadOnly={fileReadOnly}
                     fileContent={fileContent}
                     fileLoading={fileLoading}
                     fileSaving={fileSaving}
