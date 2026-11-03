@@ -6,6 +6,11 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -90,6 +95,25 @@ export default function LinkedPaperPlugins({
     };
   }, [apiBase, t]);
 
+  const forceRefresh = async () => {
+    if (busy || loading) return;
+    setBusy("refresh");
+    setError("");
+    setNotice("");
+    try {
+      const response = await fetch(`${apiBase}/plugins?force=true`, {
+        credentials: "include",
+        cache: "no-store",
+      });
+      setPlugins(await pluginResponse(response));
+      setNotice(t("refreshed"));
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : t("error"));
+    } finally {
+      setBusy("");
+    }
+  };
+
   const mutate = async (
     action: "import" | "update" | "remove",
     plugin?: LinkedPlugin,
@@ -141,7 +165,29 @@ export default function LinkedPaperPlugins({
 
   return (
     <section className="min-w-0 space-y-3 border-b pb-4">
-      <h3 className="text-sm font-medium">{t("title")}</h3>
+      <div className="flex min-w-0 items-center justify-between gap-2">
+        <h3 className="min-w-0 text-sm font-medium">{t("title")}</h3>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              aria-label={t("forceRefresh")}
+              aria-busy={busy === "refresh"}
+              disabled={Boolean(busy) || loading}
+              onClick={() => void forceRefresh()}
+            >
+              <RefreshCw
+                className={
+                  busy === "refresh" ? "size-4 animate-spin" : "size-4"
+                }
+              />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t("forceRefresh")}</TooltipContent>
+        </Tooltip>
+      </div>
       <form
         className="flex min-w-0 flex-wrap gap-2"
         onSubmit={(event) => {
@@ -212,11 +258,11 @@ export default function LinkedPaperPlugins({
                 >
                   {plugin.pending
                     ? t("pending")
-                      : pinned
+                    : pinned
                       ? t("pinned", { version: plugin.source.version ?? "" })
-                    : updateAvailable
-                      ? t("available", { filename: plugin.latest.filename })
-                      : t("current")}
+                      : updateAvailable
+                        ? t("available", { filename: plugin.latest.filename })
+                        : t("current")}
                 </p>
                 {plugin.checkError ? (
                   <p className="wrap-break-word text-xs text-destructive">
