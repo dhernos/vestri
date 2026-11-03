@@ -4,6 +4,7 @@
     "eventsTitle": "Events",
     "settingsTitle": "Notification settings",
     "deliveryTitle": "Additional delivery",
+    "eventsHint": "All events always appear here. These switches only control email and webhook delivery.",
     "unread": "{count, plural, =0 {No unread notifications} one {One unread notification} other {# unread notifications}}",
     "unreadLabel": "Unread",
     "empty": "No events yet.",

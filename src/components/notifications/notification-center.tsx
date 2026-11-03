@@ -80,6 +80,7 @@ export default function NotificationCenter() {
   }
 
   const poll = useEffectEvent((signal: AbortSignal) => { void loadNotifications(false, signal); });
+  useEffect(() => { window.dispatchEvent(new Event("vestri:notifications-changed")); }, [unread]);
   useEffect(() => {
     const controller = new AbortController();
     queueMicrotask(() => { if (!controller.signal.aborted) poll(controller.signal); });
@@ -170,6 +171,7 @@ export default function NotificationCenter() {
         {settings && <form onSubmit={(event) => void saveSettings(event)} className="space-y-5">
           <fieldset disabled={saving} className="divide-y">
             <legend className="mb-1 text-xs font-medium uppercase text-muted-foreground">{t("eventsTitle")}</legend>
+            <p className="pb-2 text-xs text-muted-foreground">{t("eventsHint")}</p>
             {eventKinds.map((kind) => <SettingToggle key={kind} id={`notify-${kind}`} label={t(`events.${kind}`)} checked={settings.events[kind]} onChange={(checked) => updateSettings({ ...settings, events: { ...settings.events, [kind]: checked } })} />)}
           </fieldset>
           <fieldset disabled={saving} className="space-y-1 border-t pt-4">

@@ -4,6 +4,7 @@
     "eventsTitle": "Ereignisse",
     "settingsTitle": "Benachrichtigungen",
     "deliveryTitle": "Zusätzlicher Versand",
+    "eventsHint": "Alle Ereignisse erscheinen immer hier. Diese Schalter steuern nur den Versand per E-Mail und Webhook.",
     "unread": "{count, plural, =0 {Keine ungelesenen Nachrichten} one {Eine ungelesene Nachricht} other {# ungelesene Nachrichten}}",
     "unreadLabel": "Ungelesen",
     "empty": "Noch keine Ereignisse.",
