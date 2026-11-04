@@ -20,6 +20,7 @@ const {
   canManageServerDatabases,
   isServerWorkspaceSection,
   buildServerWorkspacePath,
+  normalizeServerWorkspaceSection,
 } = loadModule<typeof import("./navigation")>("./navigation.ts");
 
 test("database access requires server administration and Minecraft or Velocity", () => {
@@ -49,6 +50,12 @@ test("databases is a standalone workspace route", () => {
     buildServerWorkspacePath("node one", "server", "databases"),
     "/servers/node%20one/server/databases",
   );
+});
+
+test("player management replaces whitelist while keeping old workspace links usable", () => {
+  assert.equal(isServerWorkspaceSection("players"), true);
+  assert.equal(normalizeServerWorkspaceSection("whitelist"), "players");
+  assert.equal(buildServerWorkspacePath("node", "proxy", "players"), "/servers/node/proxy/players");
 });
 
 test("database display names require 1 to 48 non-whitespace characters", () => {
@@ -117,7 +124,7 @@ test("API errors support JSON, plain text, empty and unexpected bodies", async (
   }
 });
 
-test("English and German database translations have identical keys and placeholders", () => {
+test("English and German database and player translations have identical keys and placeholders", () => {
   const require = createRequire(import.meta.url);
   const english = require("../../../messages/en.json").ServerPage.databases;
   const german = require("../../../messages/de.json").ServerPage.databases;
@@ -140,6 +147,10 @@ test("English and German database translations have identical keys and placehold
     }
   };
   check(english, german);
+  check(
+    require("../../../messages/en.json").ServerPage.players,
+    require("../../../messages/de.json").ServerPage.players,
+  );
 });
 
 test("database component keeps credentials read-only and requires exact delete confirmation", () => {

@@ -5,7 +5,7 @@ export const serverWorkspaceSections = [
   "config",
   "filesystem",
   "group-files",
-  "whitelist",
+  "players",
   "console",
   "backups",
   "databases",
@@ -35,6 +35,9 @@ export const normalizeServerWorkspaceSection = (
 ): ServerWorkspaceSection => {
   if (!value) {
     return "dashboard";
+  }
+  if (value === "whitelist") {
+    return "players";
   }
   return isServerWorkspaceSection(value) ? value : "dashboard";
 };

@@ -149,11 +149,11 @@ export default function NotificationCenter() {
         {error && <p role="alert" className="mb-3 text-sm text-destructive">{error}</p>}
         {loading ? <p role="status" className="flex items-center gap-2 py-6 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />{t("loading")}</p> : null}
         {!loading && !error && notifications.length === 0 ? <div className="flex items-center gap-3 border-y py-8 text-sm text-muted-foreground"><Bell className="size-5" />{t("empty")}</div> : null}
-        <ul className="divide-y border-y empty:border-0">
+        <ul aria-label={t("eventsTitle")} className="h-96 overflow-y-auto overscroll-contain divide-y border-y pr-1 empty:border-0">
           {notifications.map((item) => (
-            <li key={item.id} className={`flex min-w-0 items-start gap-3 px-2 py-4 ${item.readAt ? "" : "bg-muted/40"}`}>
+            <li key={item.id} className={`flex min-w-0 items-start gap-2 px-2 py-2 ${item.readAt ? "" : "bg-muted/40"}`}>
               <span className={`mt-2 size-2 shrink-0 rounded-full ${item.readAt ? "bg-transparent" : "bg-primary"}`} aria-label={item.readAt ? undefined : t("unreadLabel")} />
-              <div className="min-w-0 flex-1 space-y-1">
+              <div className="min-w-0 flex-1 space-y-0.5">
                 <p className="wrap-break-word text-sm font-medium">{t(`messages.${item.kind}`, { server: item.serverName, node: item.nodeName })}</p>
                 <time dateTime={item.createdAt} className="block text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleString(locale)}</time>
                 {item.deliveryFailed && <p className="text-xs text-destructive">{t("deliveryFailed")}</p>}

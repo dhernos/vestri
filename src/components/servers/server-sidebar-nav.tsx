@@ -237,32 +237,18 @@ export function ServerSidebarNav({
 
                         {server.kind === "velocity" &&
                         server.permissions.canManage ? (
-                          <SidebarMenuSubItem key={`${server.id}-whitelist`}>
+                          <SidebarMenuSubItem key={`${server.id}-players`}>
                             <SidebarMenuSubButton
                               asChild
                               isActive={
-                                isActiveServer && activeSection === "whitelist"
+                                isActiveServer && activeSection === "players"
                               }
                             >
-                              {backends.length > 0 ? (
-                                <Link
-                                  href={buildServerWorkspacePath(
-                                    nodeRef,
-                                    server.id,
-                                    "whitelist",
-                                  )}
-                                >
-                                  <span>{tServer("whitelist.title")}</span>
-                                </Link>
-                              ) : (
-                                <span
-                                  aria-disabled="true"
-                                  title={tServer("whitelist.unavailable")}
-                                  className="pointer-events-none opacity-50"
-                                >
-                                  {tServer("whitelist.title")}
-                                </span>
-                              )}
+                              <Link
+                                href={buildServerWorkspacePath(nodeRef, server.id, "players")}
+                              >
+                                <span>{tServer("players.title")}</span>
+                              </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
                         ) : null}
