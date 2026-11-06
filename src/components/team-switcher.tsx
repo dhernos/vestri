@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { ChevronsUpDown, Plus } from "lucide-react"
-import Image from "next/image"
-import { Link } from "@/i18n/navigation"
+import * as React from "react";
+import { ChevronsUpDown, Plus } from "lucide-react";
+import Image from "next/image";
+import { Link } from "@/i18n/navigation";
 
 import {
   DropdownMenu,
@@ -12,32 +12,32 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 
 type TeamSwitcherOption = {
-  id?: string
-  name: string
-  logo?: React.ElementType
-  logoSrc?: string
-  logoAlt?: string
-  plan: string
-}
+  id?: string;
+  name: string;
+  logo?: React.ElementType;
+  logoSrc?: string;
+  logoAlt?: string;
+  plan: string;
+};
 
 type TeamSwitcherProps = {
-  teams: TeamSwitcherOption[]
-  activeTeamId?: string
-  onTeamChange?: (team: TeamSwitcherOption) => void
-  label?: string
-  addLabel?: string
-  addHref?: string
-}
+  teams: TeamSwitcherOption[];
+  activeTeamId?: string;
+  onTeamChange?: (team: TeamSwitcherOption) => void;
+  label?: string;
+  addLabel?: string;
+  addHref?: string;
+};
 
 export function TeamSwitcher({
   teams,
@@ -47,22 +47,22 @@ export function TeamSwitcher({
   addLabel = "Add team",
   addHref,
 }: TeamSwitcherProps) {
-  const { isMobile } = useSidebar()
-  const [activeTeam, setActiveTeam] = React.useState<TeamSwitcherOption | undefined>(
-    teams[0]
-  )
+  const { isMobile } = useSidebar();
+  const [activeTeam, setActiveTeam] = React.useState<
+    TeamSwitcherOption | undefined
+  >(teams[0]);
 
   React.useEffect(() => {
     if (teams.length === 0) {
-      setActiveTeam(undefined)
-      return
+      setActiveTeam(undefined);
+      return;
     }
 
     if (activeTeamId) {
-      const matchedTeam = teams.find((team) => team.id === activeTeamId)
+      const matchedTeam = teams.find((team) => team.id === activeTeamId);
       if (matchedTeam) {
-        setActiveTeam(matchedTeam)
-        return
+        setActiveTeam(matchedTeam);
+        return;
       }
     }
 
@@ -72,29 +72,29 @@ export function TeamSwitcher({
         teams.some(
           (team) =>
             (team.id && current.id && team.id === current.id) ||
-            (!team.id && !current.id && team.name === current.name)
+            (!team.id && !current.id && team.name === current.name),
         )
       ) {
-        return current
+        return current;
       }
-      return teams[0]
-    })
-  }, [activeTeamId, teams])
+      return teams[0];
+    });
+  }, [activeTeamId, teams]);
 
   if (!activeTeam) {
-    return null
+    return null;
   }
 
   const handleTeamSelection = (team: TeamSwitcherOption) => {
-    setActiveTeam(team)
-    onTeamChange?.(team)
-  }
+    setActiveTeam(team);
+    onTeamChange?.(team);
+  };
 
   const renderTeamLogo = (
     team: TeamSwitcherOption,
     imageClassName: string,
     iconClassName: string,
-    imageSize: number
+    imageSize: number,
   ) => {
     if (team.logoSrc) {
       return (
@@ -103,20 +103,23 @@ export function TeamSwitcher({
           alt={team.logoAlt || `${team.name} logo`}
           width={imageSize}
           height={imageSize}
-          className={cn("object-contain dark:invert dark:brightness-125", imageClassName)}
+          className={cn(
+            "object-contain dark:invert dark:brightness-125",
+            imageClassName,
+          )}
         />
-      )
+      );
     }
     if (team.logo) {
-      const Logo = team.logo
-      return <Logo className={iconClassName} />
+      const Logo = team.logo;
+      return <Logo className={iconClassName} />;
     }
     return (
       <span className="text-[10px] font-semibold uppercase tracking-wide text-sidebar-primary">
         {team.name.slice(0, 1)}
       </span>
-    )
-  }
+    );
+  };
 
   return (
     <SidebarMenu>
@@ -132,7 +135,7 @@ export function TeamSwitcher({
                   "flex aspect-square size-8 items-center justify-center rounded-lg",
                   activeTeam.logoSrc
                     ? "border border-sidebar-border bg-card shadow-xs"
-                    : "bg-sidebar-primary text-sidebar-primary-foreground"
+                    : "bg-sidebar-primary text-sidebar-primary-foreground",
                 )}
               >
                 {renderTeamLogo(activeTeam, "size-5", "size-4", 20)}
@@ -172,7 +175,9 @@ export function TeamSwitcher({
                   <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                     <Plus className="size-4" />
                   </div>
-                  <div className="font-medium text-muted-foreground">{addLabel}</div>
+                  <div className="font-medium text-muted-foreground">
+                    {addLabel}
+                  </div>
                 </Link>
               </DropdownMenuItem>
             ) : (
@@ -180,12 +185,14 @@ export function TeamSwitcher({
                 <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                   <Plus className="size-4" />
                 </div>
-                <div className="font-medium text-muted-foreground">{addLabel}</div>
+                <div className="font-medium text-muted-foreground">
+                  {addLabel}
+                </div>
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
-  )
+  );
 }

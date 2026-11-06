@@ -35,10 +35,7 @@ export default function NotificationsPage() {
   };
 
   return (
-    <ServerWorkspaceShell
-      currentNodeRef=""
-      pageTitle={t("title")}
-    >
+    <ServerWorkspaceShell currentNodeRef="" pageTitle={t("title")}>
       <div className="container mx-auto space-y-6 p-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">{t("title")}</h1>

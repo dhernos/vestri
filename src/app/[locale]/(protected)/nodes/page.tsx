@@ -79,16 +79,11 @@ export default function NodesPage() {
   };
 
   return (
-    <ServerWorkspaceShell
-      currentNodeRef=""
-      pageTitle={t("title")}
-    >
+    <ServerWorkspaceShell currentNodeRef="" pageTitle={t("title")}>
       <div className="container mx-auto space-y-6 p-6">
         <div>
           <h1 className="text-3xl font-bold">{t("title")}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t("description")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("description")}</p>
         </div>
 
         <CreateNodeCard

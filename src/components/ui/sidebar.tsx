@@ -221,7 +221,9 @@ function Sidebar({
             <SheetTitle>Sidebar</SheetTitle>
             <SheetDescription>Displays the mobile sidebar.</SheetDescription>
           </SheetHeader>
-          <div className="flex h-full w-full flex-col [&>[data-slot=sidebar-header]]:pr-12">{children}</div>
+          <div className="flex h-full w-full flex-col [&>[data-slot=sidebar-header]]:pr-12">
+            {children}
+          </div>
         </SheetContent>
       </Sheet>
     );
