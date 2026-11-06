@@ -7,16 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTranslations } from "next-intl";
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
-import SessionTTL from "@/components/profile_page/SessionTTL";
 import ToggleLanguage from "@/components/language-toggle";
 import ThemeToggle from "@/components/theme-toggle";
-
-interface SessionInfo {
-  expires: string;
-  loginTime: string;
-  role: string;
-  ttlInSeconds: number;
-}
 
 export default function Home() {
   const { data: session, status, logout } = useAuth();
@@ -24,8 +16,6 @@ export default function Home() {
   const tCommon = useTranslations("Common");
   const tProfile = useTranslations("ProfilePage");
   const { push } = useToast();
-  const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
-  const [loadingSessionInfo, setLoadingSessionInfo] = useState(false);
   const [showLoading, setShowLoading] = useState(false);
 
   useEffect(() => {
@@ -41,25 +31,6 @@ export default function Home() {
     }
     setShowLoading(false);
   }, [status]);
-
-  const fetchSessionDetails = async () => {
-    setLoadingSessionInfo(true);
-    try {
-      const response = await fetch("/api/sessions/current", {
-        credentials: "include",
-      });
-      if (!response.ok) {
-        throw new Error("Failed to retrieve session details.");
-      }
-      const data = await response.json();
-      setSessionInfo(data);
-    } catch (err) {
-      console.error(err);
-      push({ variant: "error", description: t("errors.sessionDetails") });
-    } finally {
-      setLoadingSessionInfo(false);
-    }
-  };
 
   if (status === "loading" && showLoading) {
     return <p className="p-8 text-center">{tCommon("loading")}</p>;
@@ -146,33 +117,6 @@ export default function Home() {
                 <Button asChild variant="outline" className="w-full">
                   <Link href="/how-to">{t("cta.howTo")}</Link>
                 </Button>
-
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={fetchSessionDetails}
-                  disabled={loadingSessionInfo}
-                >
-                  {loadingSessionInfo
-                    ? t("session.detailsLoading")
-                    : t("session.detailsCta")}
-                </Button>
-
-                {sessionInfo ? (
-                  <div className="rounded-xl border bg-background/60 p-4 text-sm">
-                    <p>
-                      <span className="font-semibold">{t("session.loginTime")}</span>{" "}
-                      {new Date(sessionInfo.loginTime).toLocaleString()}
-                    </p>
-                    <p className="mt-1">
-                      <span className="font-semibold">{t("session.expiresAt")}</span>{" "}
-                      {new Date(sessionInfo.expires).toLocaleString()}
-                    </p>
-                    <div className="mt-2">
-                      <SessionTTL ttlInSeconds={sessionInfo.ttlInSeconds ?? 0} />
-                    </div>
-                  </div>
-                ) : null}
 
                 <Button
                   variant="destructive"

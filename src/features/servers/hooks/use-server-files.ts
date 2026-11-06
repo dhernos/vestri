@@ -18,7 +18,17 @@ import {
   sortEntries,
 } from "@/features/servers/file-utils";
 import type { TranslateFn } from "@/features/servers/i18n";
-import type { ConfigRow, GameServerConfigFile, WorkerListEntry } from "@/features/servers/types";
+import type {
+  ConfigRow,
+  GameServerConfigFile,
+  WorkerListEntry,
+} from "@/features/servers/types";
+import {
+  hasActiveUpload,
+  startUpload,
+  subscribeUploadCompletion,
+  useUploads,
+} from "@/features/uploads/upload-store";
 
 type UseServerFilesParams = {
   basePath: string;
@@ -30,8 +40,15 @@ type UseServerFilesParams = {
 
 const folderNavigationDelayMs = 180;
 const composeEnvironmentConfigFileID = "__compose-environment__";
+const isCompressedLogPath = (value: string) => {
+  const normalized = value.toLowerCase();
+  return normalized.startsWith("data/logs/") && normalized.endsWith(".log.gz");
+};
 
-const responseMessage = async (res: Response, fallback: string): Promise<string> => {
+const responseMessage = async (
+  res: Response,
+  fallback: string,
+): Promise<string> => {
   const raw = (await res.text().catch(() => "")).trim();
   if (!raw) {
     return fallback;
@@ -64,7 +81,8 @@ export const useServerFiles = ({
   const [browserActionError, setBrowserActionError] = useState("");
   const [browserUploadFile, setBrowserUploadFile] = useState<File | null>(null);
   const [browserUploadInputKey, setBrowserUploadInputKey] = useState(0);
-  const [browserUploading, setBrowserUploading] = useState(false);
+  const uploadScope = `${basePath}/files/upload`;
+  const browserUploading = hasActiveUpload(useUploads(uploadScope));
   const [browserDownloadingPath, setBrowserDownloadingPath] = useState("");
   const [browserDeletingPath, setBrowserDeletingPath] = useState("");
   const [browserUnzippingPath, setBrowserUnzippingPath] = useState("");
@@ -84,7 +102,9 @@ export const useServerFiles = ({
   const [configError, setConfigError] = useState("");
 
   const folderNavigationLockedRef = useRef(false);
-  const folderNavigationUnlockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const folderNavigationUnlockTimerRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
 
   const configFilesForEditor = useMemo(() => {
     const out = [...configFiles];
@@ -103,7 +123,7 @@ export const useServerFiles = ({
 
   const selectedConfigFile = useMemo(
     () => configFilesForEditor.find((cfg) => cfg.id === selectedConfigFileId),
-    [configFilesForEditor, selectedConfigFileId]
+    [configFilesForEditor, selectedConfigFileId],
   );
 
   useEffect(() => {
@@ -134,12 +154,18 @@ export const useServerFiles = ({
     setBrowserLoading(true);
     setBrowserError("");
     try {
-      const res = await fetch(`${basePath}/files/list?path=${encodeURIComponent(browserPath)}`, {
-        credentials: "include",
-        cache: "no-store",
-      });
+      const res = await fetch(
+        `${basePath}/files/list?path=${encodeURIComponent(browserPath)}`,
+        {
+          credentials: "include",
+          cache: "no-store",
+        },
+      );
       if (!res.ok) {
-        const message = await responseMessage(res, t("fileBrowser.errors.loadDirectory"));
+        const message = await responseMessage(
+          res,
+          t("fileBrowser.errors.loadDirectory"),
+        );
         setBrowserEntries([]);
         setBrowserError(message);
         return;
@@ -191,12 +217,18 @@ export const useServerFiles = ({
     setFileLoading(true);
     setFileError("");
     try {
-      const res = await fetch(`${basePath}/files/read?path=${encodeURIComponent(cleanPath)}`, {
-        credentials: "include",
-        cache: "no-store",
-      });
+      const res = await fetch(
+        `${basePath}/files/read?path=${encodeURIComponent(cleanPath)}`,
+        {
+          credentials: "include",
+          cache: "no-store",
+        },
+      );
       if (!res.ok) {
-        const message = await responseMessage(res, t("fileEditor.errors.loadFile"));
+        const message = await responseMessage(
+          res,
+          t("fileEditor.errors.loadFile"),
+        );
         setFileContent("");
         setFileError(message);
         return;
@@ -212,7 +244,7 @@ export const useServerFiles = ({
   };
 
   const saveFile = async () => {
-    if (!canManageFiles || !basePath || !filePath) {
+    if (!canManageFiles || !basePath || !filePath || isCompressedLogPath(filePath)) {
       return;
     }
     setFileSaving(true);
@@ -228,7 +260,10 @@ export const useServerFiles = ({
         }),
       });
       if (!res.ok) {
-        const message = await responseMessage(res, t("fileEditor.errors.saveFile"));
+        const message = await responseMessage(
+          res,
+          t("fileEditor.errors.saveFile"),
+        );
         setFileError(message);
         return;
       }
@@ -242,7 +277,7 @@ export const useServerFiles = ({
 
   const downloadBrowserPath = async (
     relativePath: string,
-    entryType: WorkerListEntry["type"]
+    entryType: WorkerListEntry["type"],
   ) => {
     if (!canManageFiles || !basePath) {
       return;
@@ -253,16 +288,23 @@ export const useServerFiles = ({
     }
 
     const fallbackBase = cleanPath.split("/").pop() || "download";
-    const fallbackName = entryType === "dir" ? `${fallbackBase}.zip` : fallbackBase;
+    const fallbackName =
+      entryType === "dir" ? `${fallbackBase}.zip` : fallbackBase;
 
     setBrowserDownloadingPath(cleanPath);
     setBrowserActionError("");
     try {
-      const res = await fetch(`${basePath}/files/download?path=${encodeURIComponent(cleanPath)}`, {
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${basePath}/files/download?path=${encodeURIComponent(cleanPath)}`,
+        {
+          credentials: "include",
+        },
+      );
       if (!res.ok) {
-        const message = await responseMessage(res, t("fileBrowser.errors.downloadPath"));
+        const message = await responseMessage(
+          res,
+          t("fileBrowser.errors.downloadPath"),
+        );
         setBrowserActionError(message);
         return;
       }
@@ -273,7 +315,7 @@ export const useServerFiles = ({
       anchor.href = objectUrl;
       anchor.download = downloadNameFromResponse(
         res.headers.get("Content-Disposition"),
-        fallbackName
+        fallbackName,
       );
       document.body.appendChild(anchor);
       anchor.click();
@@ -286,50 +328,51 @@ export const useServerFiles = ({
     }
   };
 
-  const uploadFileToCurrentFolder = async () => {
+  const uploadFileToCurrentFolder = () => {
     if (!canManageFiles || !basePath || !browserUploadFile) {
       return;
     }
 
     const uploadPath = normalizeRelativePath(
-      browserPath ? `${browserPath}/${browserUploadFile.name}` : browserUploadFile.name
+      browserPath
+        ? `${browserPath}/${browserUploadFile.name}`
+        : browserUploadFile.name,
     );
     if (!uploadPath) {
       setBrowserActionError(t("fileBrowser.errors.invalidUploadPath"));
       return;
     }
 
-    const formData = new FormData();
-    formData.append("path", uploadPath);
-    formData.append("file", browserUploadFile);
-
-    setBrowserUploading(true);
     setBrowserActionError("");
-    try {
-      const res = await fetch(`${basePath}/files/upload`, {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      });
-      if (!res.ok) {
-        const message = await responseMessage(res, t("fileBrowser.errors.uploadFile"));
-        setBrowserActionError(message);
-        return;
-      }
-
-      setBrowserUploadFile(null);
-      setBrowserUploadInputKey((prev) => prev + 1);
-      await loadBrowserEntries();
-    } catch {
-      setBrowserActionError(t("fileBrowser.errors.uploadFile"));
-    } finally {
-      setBrowserUploading(false);
-    }
+    startUpload({
+      scope: uploadScope,
+      url: uploadScope,
+      file: browserUploadFile,
+      fields: { path: uploadPath },
+      fallbackError: t("fileBrowser.errors.uploadFile"),
+    });
+    setBrowserUploadFile(null);
+    setBrowserUploadInputKey((prev) => prev + 1);
   };
+
+  const loadBrowserEntriesRef = useRef(loadBrowserEntries);
+  useEffect(() => {
+    loadBrowserEntriesRef.current = loadBrowserEntries;
+  }, [loadBrowserEntries]);
+
+  useEffect(
+    () =>
+      subscribeUploadCompletion(uploadScope, (job) => {
+        if (job.status === "done") {
+          void loadBrowserEntriesRef.current();
+        }
+      }),
+    [uploadScope],
+  );
 
   const deleteBrowserPath = async (
     relativePath: string,
-    entryType: WorkerListEntry["type"]
+    entryType: WorkerListEntry["type"],
   ) => {
     if (!canManageFiles || !basePath) {
       return;
@@ -340,8 +383,12 @@ export const useServerFiles = ({
     }
 
     const label =
-      entryType === "dir" ? t("fileBrowser.labels.folder") : t("fileBrowser.labels.file");
-    const confirmed = window.confirm(t("fileBrowser.confirmDeletePath", { label, path: cleanPath }));
+      entryType === "dir"
+        ? t("fileBrowser.labels.folder")
+        : t("fileBrowser.labels.file");
+    const confirmed = window.confirm(
+      t("fileBrowser.confirmDeletePath", { label, path: cleanPath }),
+    );
     if (!confirmed) {
       return;
     }
@@ -359,7 +406,10 @@ export const useServerFiles = ({
         }),
       });
       if (!res.ok) {
-        const message = await responseMessage(res, t("fileBrowser.errors.deletePath"));
+        const message = await responseMessage(
+          res,
+          t("fileBrowser.errors.deletePath"),
+        );
         setBrowserActionError(message);
         return;
       }
@@ -399,7 +449,10 @@ export const useServerFiles = ({
         }),
       });
       if (!res.ok) {
-        const message = await responseMessage(res, t("fileBrowser.errors.unzipArchive"));
+        const message = await responseMessage(
+          res,
+          t("fileBrowser.errors.unzipArchive"),
+        );
         setBrowserActionError(message);
         return;
       }
@@ -424,12 +477,18 @@ export const useServerFiles = ({
       setConfigLoading(true);
       setConfigError("");
       try {
-        const res = await fetch(`${basePath}/files/read?path=${encodeURIComponent(selectedConfigFile.path)}`, {
-          credentials: "include",
-          cache: "no-store",
-        });
+        const res = await fetch(
+          `${basePath}/files/read?path=${encodeURIComponent(selectedConfigFile.path)}`,
+          {
+            credentials: "include",
+            cache: "no-store",
+          },
+        );
         if (!res.ok) {
-          const message = await responseMessage(res, t("configEditor.errors.loadConfig"));
+          const message = await responseMessage(
+            res,
+            t("configEditor.errors.loadConfig"),
+          );
           setConfigContent("");
           setConfigRows([]);
           setConfigError(message);
@@ -447,7 +506,10 @@ export const useServerFiles = ({
           return;
         }
 
-        const keyValue = shouldUseKeyValueEditor(selectedConfigFile.format, normalized);
+        const keyValue = shouldUseKeyValueEditor(
+          selectedConfigFile.format,
+          normalized,
+        );
         setUseKeyValueEditor(keyValue);
         setConfigRows(keyValue ? parseConfigRows(normalized) : []);
       } catch {
@@ -486,7 +548,10 @@ export const useServerFiles = ({
         }),
       });
       if (!res.ok) {
-        const message = await responseMessage(res, t("configEditor.errors.saveConfig"));
+        const message = await responseMessage(
+          res,
+          t("configEditor.errors.saveConfig"),
+        );
         setConfigError(message);
         return;
       }
@@ -505,7 +570,7 @@ export const useServerFiles = ({
 
   const updateConfigRow = (id: string, patch: Partial<ConfigRow>) => {
     setConfigRows((prev) =>
-      prev.map((row) => (row.id === id ? { ...row, ...patch } : row))
+      prev.map((row) => (row.id === id ? { ...row, ...patch } : row)),
     );
   };
 
@@ -531,7 +596,22 @@ export const useServerFiles = ({
     setFileError(t("fileEditor.errors.onlyRegularTextFiles"));
   };
 
+  const onEntryTransferred = (
+    source: string,
+    dest: string,
+    operation: "copy" | "move" | "rename",
+  ) => {
+    if (operation === "copy") return;
+    const cleanDestination = normalizeRelativePath(dest);
+    setFilePath((current) =>
+      current === source || current.startsWith(`${source}/`)
+        ? `${cleanDestination}${current.slice(source.length)}`
+        : current,
+    );
+  };
+
   return {
+    onEntryTransferred,
     browserPath,
     setBrowserPath,
     browserEntries,
@@ -546,6 +626,7 @@ export const useServerFiles = ({
     browserDeletingPath,
     browserUnzippingPath,
     filePath,
+    fileReadOnly: isCompressedLogPath(filePath),
     fileContent,
     setFileContent,
     fileLoading,

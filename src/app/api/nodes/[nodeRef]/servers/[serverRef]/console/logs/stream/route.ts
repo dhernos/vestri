@@ -144,10 +144,8 @@ export async function GET(
   }
 
   const responseHeaders = new Headers();
-  const contentType = getSingleHeaderValue(upstream.headers["content-type"]);
-  if (contentType) {
-    responseHeaders.set("Content-Type", contentType);
-  }
+  responseHeaders.set("Content-Type", "text/plain; charset=utf-8");
+  responseHeaders.set("X-Content-Type-Options", "nosniff");
   responseHeaders.set(
     "Cache-Control",
     getSingleHeaderValue(upstream.headers["cache-control"]) ||

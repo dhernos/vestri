@@ -30,11 +30,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <ServerWorkspaceShell
-      currentNodeRef=""
-      showServerNavigation={false}
-      pageTitle={t("profilePageHeader")}
-    >
+    <ServerWorkspaceShell currentNodeRef="" pageTitle={t("profilePageHeader")}>
       <div className="container mx-auto p-4">
         <h1 className="text-3xl font-bold mb-6">
           <span className="flex items-center justify-between">

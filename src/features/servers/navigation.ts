@@ -1,10 +1,26 @@
+import type { GameServerListItem } from "@/features/servers/types";
+
 export const serverWorkspaceSections = [
   "dashboard",
   "config",
   "filesystem",
   "group-files",
+  "players",
   "console",
+  "backups",
+  "databases",
+  "map",
 ] as const;
+
+export const canManageServerDatabases = (server: GameServerListItem) =>
+  server.permissions.canManage &&
+  (server.game?.toLowerCase() === "minecraft" || server.kind === "velocity");
+
+export const canViewServerMap = (server: GameServerListItem) =>
+  server.permissions.canView &&
+  server.game?.toLowerCase() === "minecraft" &&
+  server.kind !== "velocity" &&
+  ["PAPER", "PURPUR"].includes(server.softwareVersion?.trim().toUpperCase() || "");
 
 export type ServerWorkspaceSection = (typeof serverWorkspaceSections)[number];
 
@@ -19,6 +35,9 @@ export const normalizeServerWorkspaceSection = (
 ): ServerWorkspaceSection => {
   if (!value) {
     return "dashboard";
+  }
+  if (value === "whitelist") {
+    return "players";
   }
   return isServerWorkspaceSection(value) ? value : "dashboard";
 };

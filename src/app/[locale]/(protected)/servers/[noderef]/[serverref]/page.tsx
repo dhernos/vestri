@@ -1,10 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import AccessCard from "@/components/servers/cards/access-card";
+import BackupsCard from "@/components/servers/cards/backups-card";
+import DatabasesSection from "@/components/servers/cards/databases-section";
+import ServerMap from "@/components/servers/cards/server-map";
 import ConfigEditorCard from "@/components/servers/cards/config-editor-card";
 import FileBrowserCard from "@/components/servers/cards/file-browser-card";
 import FileBrowserRestrictedCard from "@/components/servers/cards/file-browser-restricted-card";
@@ -12,8 +15,11 @@ import FileEditorCard from "@/components/servers/cards/file-editor-card";
 import InteractiveConsoleCard from "@/components/servers/cards/interactive-console-card";
 import LogsCard from "@/components/servers/cards/logs-card";
 import ServerControlsCard from "@/components/servers/cards/controls-card";
+import SatisfactoryBlueprintsCard from "@/components/servers/cards/satisfactory-blueprints-card";
+import SecretsCard from "@/components/servers/cards/secrets-card";
 import VelocityCard from "@/components/servers/cards/velocity-card";
-import VelocityGroupApplyCard from "@/components/servers/cards/velocity-group-apply-card";
+import VelocityPluginManagerCard from "@/components/servers/cards/velocity-plugin-manager-card";
+import PlayerManagement from "@/components/servers/cards/player-management";
 import ServerStatusBlob from "@/components/servers/status-blob";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,11 +34,16 @@ import { useServerAccess } from "@/features/servers/hooks/use-server-access";
 import { useServerConsole } from "@/features/servers/hooks/use-server-console";
 import { useServerFiles } from "@/features/servers/hooks/use-server-files";
 import { useVelocityBackends } from "@/features/servers/hooks/use-velocity-backends";
-import { normalizeServerWorkspaceSection } from "@/features/servers/navigation";
-import type {
-  GameServerDetails,
-  ServerStatus,
-} from "@/features/servers/types";
+import {
+  canManageServerDatabases,
+  canViewServerMap,
+  normalizeServerWorkspaceSection,
+} from "@/features/servers/navigation";
+import {
+  setPendingStackAction,
+  usePendingStackAction,
+} from "@/features/servers/stack-action-store";
+import type { GameServerDetails, ServerStatus } from "@/features/servers/types";
 import styles from "./page.module.css";
 
 export default function ServerControlsPage() {
@@ -41,7 +52,8 @@ export default function ServerControlsPage() {
   const pathname = usePathname();
   const params = useParams<{ noderef: string; serverref: string }>();
   const nodeRef = typeof params?.noderef === "string" ? params.noderef : "";
-  const serverRef = typeof params?.serverref === "string" ? params.serverref : "";
+  const serverRef =
+    typeof params?.serverref === "string" ? params.serverref : "";
   const activeSection = useMemo(() => {
     const segments = pathname.split("/").filter(Boolean);
     return normalizeServerWorkspaceSection(segments.at(-1));
@@ -49,14 +61,15 @@ export default function ServerControlsPage() {
   const isDashboardSection = activeSection === "dashboard";
   const isConfigSection = activeSection === "config";
   const isGroupFilesSection = activeSection === "group-files";
-  const isFilesystemSection = activeSection === "filesystem" || isGroupFilesSection;
+  const isFilesystemSection =
+    activeSection === "filesystem" || isGroupFilesSection;
   const isConsoleSection = activeSection === "console";
+  const isBackupsSection = activeSection === "backups";
 
   const [server, setServer] = useState<GameServerDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [stackActionLoading, setStackActionLoading] = useState<"" | "start" | "stop">("");
   const [stackError, setStackError] = useState("");
   const [imageRepulling, setImageRepulling] = useState(false);
   const [imageRepullError, setImageRepullError] = useState("");
@@ -69,17 +82,24 @@ export default function ServerControlsPage() {
     }
     return `/api/nodes/${encodeURIComponent(nodeRef)}/servers/${encodeURIComponent(serverRef)}`;
   }, [nodeRef, serverRef]);
-  const fileApiBasePath = isGroupFilesSection ? `${basePath}/group-files` : basePath;
+  const stackActionLoading = usePendingStackAction(basePath);
+  const fileApiBasePath = isGroupFilesSection
+    ? `${basePath}/group-files`
+    : basePath;
   const serverId = server?.id || "";
   const isServerUp = server?.status === "up";
   const canReadConsole = Boolean(server?.permissions.canReadConsole);
   const canUseInteractiveConsole = Boolean(server?.permissions.canManage);
   const canManageFiles = Boolean(server?.permissions.canManageFiles);
   const isVelocityServer = server?.kind === "velocity";
-  const statusLabel = useCallback((status: ServerStatus) => t(`status.${status}`), [t]);
+  const statusLabel = useCallback(
+    (status: ServerStatus) => t(`status.${status}`),
+    [t],
+  );
   const invitePermissionLabel = useCallback(
-    (permission: "admin" | "operator" | "viewer") => t(`access.roles.${permission}`),
-    [t]
+    (permission: "admin" | "operator" | "viewer") =>
+      t(`access.roles.${permission}`),
+    [t],
   );
   const notifyServersChanged = useCallback(
     (detail?: {
@@ -98,62 +118,99 @@ export default function ServerControlsPage() {
             nodeRef,
             ...detail,
           },
-        })
+        }),
       );
     },
-    [nodeRef]
+    [nodeRef],
   );
 
-  const wait = useCallback((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)), []);
+  const wait = useCallback(
+    (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
+    [],
+  );
 
-  const refreshServerStatus = useCallback(async (): Promise<ServerStatus | null> => {
-    if (!basePath) {
-      return null;
-    }
-    try {
-      const res = await fetch(`${basePath}/status`, {
-        credentials: "include",
-        cache: "no-store",
-      });
-      const data = (await res.json().catch(() => ({}))) as {
-        status?: ServerStatus;
-        output?: string;
-        error?: string;
-      };
-      if (!res.ok) {
+  const refreshServerStatus =
+    useCallback(async (): Promise<ServerStatus | null> => {
+      if (!basePath) {
         return null;
       }
-      const nextStatus = data.status || "unknown";
-      setServer((prev) =>
-        prev
-          ? {
-              ...prev,
-              status: nextStatus,
-              statusOutput: data.output || "",
-              statusError: data.error || "",
-            }
-          : prev
-      );
-      return nextStatus;
-    } catch {
-      return null;
-    }
-  }, [basePath]);
+      try {
+        const res = await fetch(`${basePath}/status`, {
+          credentials: "include",
+          cache: "no-store",
+        });
+        const data = (await res.json().catch(() => ({}))) as {
+          status?: ServerStatus;
+          output?: string;
+          error?: string;
+        };
+        if (!res.ok) {
+          return null;
+        }
+        const nextStatus = data.status || "unknown";
+        setServer((prev) =>
+          prev
+            ? {
+                ...prev,
+                status: nextStatus,
+                statusOutput: data.output || "",
+                statusError: data.error || "",
+              }
+            : prev,
+        );
+        return nextStatus;
+      } catch {
+        return null;
+      }
+    }, [basePath]);
 
   const pollServerStatusUntil = useCallback(
     async (expected: ServerStatus) => {
       let latest = await refreshServerStatus();
-      for (let attempt = 0; attempt < 5; attempt += 1) {
+      for (let attempt = 0; attempt < 10; attempt += 1) {
         if (latest === expected) {
           break;
         }
-        await wait(700);
+        await wait(1000);
         latest = await refreshServerStatus();
       }
       return latest;
     },
-    [refreshServerStatus, wait]
+    [refreshServerStatus, wait],
   );
+
+  const lastStatusRef = useRef<ServerStatus | undefined>(undefined);
+  useEffect(() => {
+    lastStatusRef.current = server?.status;
+  }, [server?.status]);
+
+  useEffect(() => {
+    if (!basePath || !serverId || stackActionLoading) {
+      return;
+    }
+    const tick = async () => {
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+      const before = lastStatusRef.current;
+      const next = await refreshServerStatus();
+      if (next && next !== before) {
+        notifyServersChanged({
+          changeType: "status",
+          serverRef: serverId,
+          status: next,
+        });
+      }
+    };
+    const timer = window.setInterval(() => void tick(), 10000);
+    return () => window.clearInterval(timer);
+  }, [
+    basePath,
+    notifyServersChanged,
+    refreshServerStatus,
+    serverId,
+    stackActionLoading,
+  ]);
 
   const loadServer = useCallback(async () => {
     if (!nodeRef) {
@@ -225,7 +282,7 @@ export default function ServerControlsPage() {
               statusOutput: detail.statusOutput ?? prev.statusOutput,
               statusError: detail.statusError ?? prev.statusError,
             }
-          : prev
+          : prev,
       );
     };
 
@@ -237,7 +294,9 @@ export default function ServerControlsPage() {
 
   const {
     velocityTemplateId,
+    velocityTemplates,
     velocityBackendName,
+    velocityCurseForgeUrl,
     velocitySoftwareField,
     velocitySoftwareOptions,
     velocityBackendSoftwareVersion,
@@ -253,6 +312,8 @@ export default function ServerControlsPage() {
     velocityAgreementOpen,
     selectedVelocityAgreement,
     setVelocityBackendName,
+    setVelocityTemplateId,
+    setVelocityCurseForgeUrl,
     setVelocityBackendSoftwareVersion,
     setVelocityBackendGameVersion,
     setVelocityAgreementOpen,
@@ -280,6 +341,7 @@ export default function ServerControlsPage() {
     browserDeletingPath,
     browserUnzippingPath,
     filePath,
+    fileReadOnly,
     fileContent,
     setFileContent,
     fileLoading,
@@ -313,6 +375,7 @@ export default function ServerControlsPage() {
     formatBytes,
     isZipArchiveName,
     markInvalidFileSelection,
+    onEntryTransferred,
   } = useServerFiles({
     basePath: fileApiBasePath,
     canManageFiles: canManageFiles && (isFilesystemSection || isConfigSection),
@@ -377,7 +440,7 @@ export default function ServerControlsPage() {
     if (action === "stop") {
       stopExecSession();
     }
-    setStackActionLoading(action);
+    setPendingStackAction(basePath, action);
     setStackError("");
     try {
       const res = await fetch(`${basePath}/${action}`, {
@@ -385,7 +448,23 @@ export default function ServerControlsPage() {
         credentials: "include",
       });
       if (!res.ok) {
-        setStackError(t(`controls.errors.${action}`));
+        const failure = (await res.json().catch(() => ({}))) as {
+          output?: string;
+        };
+        const detail = failure.output?.trim().slice(-300);
+        setStackError(
+          detail
+            ? `${t(`controls.errors.${action}`)} ${detail}`
+            : t(`controls.errors.${action}`),
+        );
+        const failedStatus = await refreshServerStatus();
+        if (failedStatus) {
+          notifyServersChanged({
+            changeType: "status",
+            serverRef: server.id,
+            status: failedStatus,
+          });
+        }
         return;
       }
       const expectedStatus: ServerStatus = action === "start" ? "up" : "down";
@@ -402,7 +481,7 @@ export default function ServerControlsPage() {
     } catch {
       setStackError(t(`controls.errors.${action}`));
     } finally {
-      setStackActionLoading("");
+      setPendingStackAction(basePath, "");
     }
   };
 
@@ -448,7 +527,9 @@ export default function ServerControlsPage() {
     if (!server || !basePath || serverDeleting) {
       return;
     }
-    const confirmed = window.confirm(t("controls.confirmDelete", { name: server.name }));
+    const confirmed = window.confirm(
+      t("controls.confirmDelete", { name: server.name }),
+    );
     if (!confirmed) {
       return;
     }
@@ -489,12 +570,17 @@ export default function ServerControlsPage() {
     <div className="container mx-auto space-y-6 p-6">
       <div className="space-y-2">
         <h1 className="flex items-center gap-3 text-3xl font-bold">
-          <ServerStatusBlob status={server.status} size="lg" label={statusLabel(server.status)} />
+          <ServerStatusBlob
+            status={server.status}
+            size="lg"
+            label={statusLabel(server.status)}
+          />
           <span>{server.name}</span>
         </h1>
         <p className="text-sm text-muted-foreground">
-          {t("header.templateLabel")}: {server.templateName || server.templateId} |{" "}
-          {t("header.stackLabel")}: {server.stackName}
+          {t("header.templateLabel")}:{" "}
+          {server.templateName || server.templateId} | {t("header.stackLabel")}:{" "}
+          {server.stackName}
         </p>
       </div>
 
@@ -532,7 +618,9 @@ export default function ServerControlsPage() {
             <VelocityCard
               nodeRef={nodeRef}
               velocityTemplateId={velocityTemplateId}
+              velocityTemplates={velocityTemplates}
               velocityBackendName={velocityBackendName}
+              velocityCurseForgeUrl={velocityCurseForgeUrl}
               velocitySoftwareField={velocitySoftwareField}
               velocitySoftwareOptions={velocitySoftwareOptions}
               velocityBackendSoftwareVersion={velocityBackendSoftwareVersion}
@@ -546,6 +634,8 @@ export default function ServerControlsPage() {
               agreementRequired={agreementRequired}
               velocityBackends={velocityBackends}
               onBackendNameChange={setVelocityBackendName}
+              onTemplateChange={setVelocityTemplateId}
+              onCurseForgeUrlChange={setVelocityCurseForgeUrl}
               onBackendSoftwareVersionChange={setVelocityBackendSoftwareVersion}
               onBackendGameVersionChange={setVelocityBackendGameVersion}
               onCreateVelocityBackend={() => {
@@ -560,9 +650,16 @@ export default function ServerControlsPage() {
         </>
       ) : null}
 
+      {activeSection === "players" &&
+      isVelocityServer &&
+      server.permissions.canManage ? (
+        <PlayerManagement key={basePath} basePath={basePath} />
+      ) : null}
+
       {isConsoleSection ? (
         <>
           <LogsCard
+            basePath={basePath}
             consoleRefreshMode={consoleRefreshMode}
             canReadConsole={canReadConsole}
             consoleSnapshotLoading={consoleSnapshotLoading}
@@ -600,72 +697,89 @@ export default function ServerControlsPage() {
         <>
           {server.permissions.canManageFiles ? (
             <>
-              {isGroupFilesSection && isVelocityServer ? (
-                <VelocityGroupApplyCard
-                  basePath={basePath}
-                  backends={velocityBackends}
-                  applyingLabel={t("groupFiles.apply.applying")}
-                />
-              ) : null}
-              <div className="grid gap-6 lg:grid-cols-2">
-              <FileBrowserCard
-                browserPath={browserPath}
-                browserLoading={browserLoading}
-                browserUploadInputKey={browserUploadInputKey}
-                browserUploadFile={browserUploadFile}
-                browserUploading={browserUploading}
-                browserError={browserError}
-                browserActionError={browserActionError}
-                browserEntries={browserEntries}
-                browserDownloadingPath={browserDownloadingPath}
-                browserDeletingPath={browserDeletingPath}
-                browserUnzippingPath={browserUnzippingPath}
-                groupFiles={isGroupFilesSection}
-                folderCreateBasePath={isGroupFilesSection ? basePath : undefined}
-                folderNavigationLockedRef={folderNavigationLockedRef}
-                normalizeRelativePath={normalizeRelativePath}
-                formatBytes={formatBytes}
-                isZipArchiveName={isZipArchiveName}
-                onRefresh={() => {
-                  void loadBrowserEntries();
-                }}
-                onGoUp={() => setBrowserPath(parentRelativePath(browserPath))}
-                onGoRoot={() => setBrowserPath("")}
-                onSelectUploadFile={setBrowserUploadFile}
-                onUploadToCurrentFolder={() => {
-                  void uploadFileToCurrentFolder();
-                }}
-                onNavigateDirectory={setBrowserPath}
-                onOpenFile={(relativePath) => {
-                  void openFile(relativePath);
-                }}
-                onInvalidFileSelection={markInvalidFileSelection}
-                onDownload={(relativePath, entryType) => {
-                  void downloadBrowserPath(relativePath, entryType);
-                }}
-                onUnzip={(relativePath) => {
-                  void unzipArchiveInCurrentFolder(relativePath);
-                }}
-                onDelete={(relativePath, entryType) => {
-                  void deleteBrowserPath(relativePath, entryType);
-                }}
-              />
+              {isGroupFilesSection ? (
+                isVelocityServer && server ? (
+                  <VelocityPluginManagerCard
+                    nodeRef={nodeRef}
+                    basePath={basePath}
+                    server={server}
+                    backends={velocityBackends}
+                  />
+                ) : null
+              ) : (
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <FileBrowserCard
+                    fileActionsBasePath={fileApiBasePath}
+                    onEntryTransferred={onEntryTransferred}
+                    browserPath={browserPath}
+                    browserLoading={browserLoading}
+                    browserUploadInputKey={browserUploadInputKey}
+                    browserUploadFile={browserUploadFile}
+                    browserUploading={browserUploading}
+                    uploadScope={`${fileApiBasePath}/files/upload`}
+                    browserError={browserError}
+                    browserActionError={browserActionError}
+                    browserEntries={browserEntries}
+                    browserDownloadingPath={browserDownloadingPath}
+                    browserDeletingPath={browserDeletingPath}
+                    browserUnzippingPath={browserUnzippingPath}
+                    groupFiles={isGroupFilesSection}
+                    folderCreateBasePath={
+                      isGroupFilesSection ? fileApiBasePath : undefined
+                    }
+                    folderNavigationLockedRef={folderNavigationLockedRef}
+                    normalizeRelativePath={normalizeRelativePath}
+                    formatBytes={formatBytes}
+                    isZipArchiveName={isZipArchiveName}
+                    onRefresh={() => {
+                      void loadBrowserEntries();
+                    }}
+                    onGoUp={() =>
+                      setBrowserPath(parentRelativePath(browserPath))
+                    }
+                    onGoRoot={() => setBrowserPath("")}
+                    onSelectUploadFile={setBrowserUploadFile}
+                    onUploadToCurrentFolder={() => {
+                      void uploadFileToCurrentFolder();
+                    }}
+                    onNavigateDirectory={setBrowserPath}
+                    onOpenFile={(relativePath) => {
+                      void openFile(relativePath);
+                    }}
+                    onInvalidFileSelection={markInvalidFileSelection}
+                    onDownload={(relativePath, entryType) => {
+                      void downloadBrowserPath(relativePath, entryType);
+                    }}
+                    onUnzip={(relativePath) => {
+                      void unzipArchiveInCurrentFolder(relativePath);
+                    }}
+                    onDelete={(relativePath, entryType) => {
+                      void deleteBrowserPath(relativePath, entryType);
+                    }}
+                  />
 
-              <FileEditorCard
-                filePath={filePath}
-                fileContent={fileContent}
-                fileLoading={fileLoading}
-                fileSaving={fileSaving}
-                fileError={fileError}
-                onFileContentChange={setFileContent}
-                onSaveFile={() => {
-                  void saveFile();
-                }}
-                onReloadFile={() => {
-                  void openFile(filePath);
-                }}
-              />
-              </div>
+                  <FileEditorCard
+                    filePath={filePath}
+                    fileReadOnly={fileReadOnly}
+                    fileContent={fileContent}
+                    fileLoading={fileLoading}
+                    fileSaving={fileSaving}
+                    fileError={fileError}
+                    onFileContentChange={setFileContent}
+                    onSaveFile={() => {
+                      void saveFile();
+                    }}
+                    onReloadFile={() => {
+                      void openFile(filePath);
+                    }}
+                  />
+                </div>
+              )}
+              {server.game?.toLowerCase() === "satisfactory" ? (
+                <div className="mt-6">
+                  <SatisfactoryBlueprintsCard basePath={basePath} />
+                </div>
+              ) : null}
             </>
           ) : (
             <FileBrowserRestrictedCard />
@@ -698,7 +812,43 @@ export default function ServerControlsPage() {
           ) : (
             <FileBrowserRestrictedCard />
           )}
+          {server.permissions.canManage ? (
+            <SecretsCard key={basePath} basePath={basePath} />
+          ) : null}
         </>
+      ) : null}
+
+      {isBackupsSection ? (
+        server.permissions.canManage ? (
+          <BackupsCard
+            basePath={basePath}
+            onServerStateChange={() => {
+              void refreshServerStatus();
+            }}
+          />
+        ) : (
+          <FileBrowserRestrictedCard />
+        )
+      ) : null}
+
+      {activeSection === "databases" ? (
+        canManageServerDatabases(server) ? (
+          <DatabasesSection key={basePath} basePath={basePath} />
+        ) : (
+          <p role="alert" className="text-sm text-muted-foreground">
+            {t("databases.restricted")}
+          </p>
+        )
+      ) : null}
+
+      {activeSection === "map" ? (
+        canViewServerMap(server) ? (
+          <ServerMap key={basePath} basePath={basePath} />
+        ) : (
+          <p role="alert" className="text-sm text-muted-foreground">
+            {t("map.restricted")}
+          </p>
+        )
       ) : null}
 
       {isDashboardSection && server.permissions.canManage ? (
@@ -729,7 +879,10 @@ export default function ServerControlsPage() {
       ) : null}
 
       {isDashboardSection ? (
-        <Dialog open={velocityAgreementOpen} onOpenChange={setVelocityAgreementOpen}>
+        <Dialog
+          open={velocityAgreementOpen}
+          onOpenChange={setVelocityAgreementOpen}
+        >
           <DialogContent showCloseButton={false}>
             <DialogHeader>
               <DialogTitle>
@@ -747,7 +900,8 @@ export default function ServerControlsPage() {
                 rel="noreferrer noopener"
                 className="text-sm text-primary underline"
               >
-                {selectedVelocityAgreement.linkText || selectedVelocityAgreement.linkUrl}
+                {selectedVelocityAgreement.linkText ||
+                  selectedVelocityAgreement.linkUrl}
               </a>
             ) : null}
             <DialogFooter>

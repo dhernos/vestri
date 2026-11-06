@@ -21,9 +21,14 @@ import {
 import { cn } from "@/lib/utils";
 import {
   buildServerWorkspacePath,
+  canManageServerDatabases,
+  canViewServerMap,
   type ServerWorkspaceSection,
 } from "@/features/servers/navigation";
-import type { GameServerListItem, ServerStatus } from "@/features/servers/types";
+import type {
+  GameServerListItem,
+  ServerStatus,
+} from "@/features/servers/types";
 
 type ServerSidebarNavProps = {
   nodeRef: string;
@@ -79,6 +84,18 @@ export function ServerSidebarNav({
     {
       section: "console",
       title: tServer("logs.title"),
+    },
+    {
+      section: "backups",
+      title: tServer("backups.title"),
+    },
+    {
+      section: "databases",
+      title: tServer("databases.title"),
+    },
+    {
+      section: "map",
+      title: tServer("map.title"),
     },
   ];
 
@@ -161,36 +178,48 @@ export function ServerSidebarNav({
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                       <SidebarMenuSub>
-                        {sectionItems.map((sectionItem) => (
-                          <SidebarMenuSubItem
-                            key={`${server.id}-${sectionItem.section}`}
-                          >
-                            <SidebarMenuSubButton
-                              asChild
-                              isActive={
-                                isActiveServer &&
-                                activeSection === sectionItem.section
-                              }
+                        {sectionItems
+                          .filter(
+                            (sectionItem) =>
+                              (sectionItem.section !== "backups" ||
+                                server.permissions.canManage) &&
+                              (sectionItem.section !== "databases" ||
+                                canManageServerDatabases(server)) &&
+                              (sectionItem.section !== "map" ||
+                                canViewServerMap(server)),
+                          )
+                          .map((sectionItem) => (
+                            <SidebarMenuSubItem
+                              key={`${server.id}-${sectionItem.section}`}
                             >
-                              <Link
-                                href={buildServerWorkspacePath(
-                                  nodeRef,
-                                  server.id,
-                                  sectionItem.section,
-                                )}
+                              <SidebarMenuSubButton
+                                asChild
+                                isActive={
+                                  isActiveServer &&
+                                  activeSection === sectionItem.section
+                                }
                               >
-                                <span>{sectionItem.title}</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
+                                <Link
+                                  href={buildServerWorkspacePath(
+                                    nodeRef,
+                                    server.id,
+                                    sectionItem.section,
+                                  )}
+                                >
+                                  <span>{sectionItem.title}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
 
-                        {server.kind === "velocity" && server.permissions.canManageFiles ? (
+                        {server.kind === "velocity" &&
+                        server.permissions.canManageFiles ? (
                           <SidebarMenuSubItem key={`${server.id}-group-files`}>
                             <SidebarMenuSubButton
                               asChild
                               isActive={
-                                isActiveServer && activeSection === "group-files"
+                                isActiveServer &&
+                                activeSection === "group-files"
                               }
                             >
                               <Link
@@ -206,6 +235,24 @@ export function ServerSidebarNav({
                           </SidebarMenuSubItem>
                         ) : null}
 
+                        {server.kind === "velocity" &&
+                        server.permissions.canManage ? (
+                          <SidebarMenuSubItem key={`${server.id}-players`}>
+                            <SidebarMenuSubButton
+                              asChild
+                              isActive={
+                                isActiveServer && activeSection === "players"
+                              }
+                            >
+                              <Link
+                                href={buildServerWorkspacePath(nodeRef, server.id, "players")}
+                              >
+                                <span>{tServer("players.title")}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ) : null}
+
                         {backends.length > 0 ? (
                           <li className="mt-1 px-2 py-1 text-[11px] uppercase tracking-wide text-sidebar-foreground/60 group-data-[collapsible=icon]:hidden">
                             {tServer("velocity.title")}
@@ -213,7 +260,8 @@ export function ServerSidebarNav({
                         ) : null}
 
                         {backends.map((backend) => {
-                          const isActiveBackend = backend.id === activeServerRef;
+                          const isActiveBackend =
+                            backend.id === activeServerRef;
                           return (
                             <Collapsible
                               key={backend.id}
@@ -240,29 +288,40 @@ export function ServerSidebarNav({
                                 </CollapsibleTrigger>
                                 <CollapsibleContent>
                                   <ul className="ml-2 mt-1 flex min-w-0 flex-col gap-1 border-l border-sidebar-border px-2 py-0.5 group-data-[collapsible=icon]:hidden">
-                                    {sectionItems.map((sectionItem) => (
-                                      <li key={`${backend.id}-${sectionItem.section}`}>
-                                        <SidebarMenuSubButton
-                                          asChild
-                                          size="sm"
-                                          isActive={
-                                            isActiveBackend &&
-                                            activeSection === sectionItem.section
-                                          }
-                                          className="cursor-pointer"
+                                    {sectionItems
+                                      .filter(
+                                        (sectionItem) =>
+                                          (sectionItem.section !== "databases" ||
+                                            canManageServerDatabases(backend)) &&
+                                          (sectionItem.section !== "map" ||
+                                            canViewServerMap(backend)),
+                                      )
+                                      .map((sectionItem) => (
+                                        <li
+                                          key={`${backend.id}-${sectionItem.section}`}
                                         >
-                                          <Link
-                                            href={buildServerWorkspacePath(
-                                              nodeRef,
-                                              backend.id,
-                                              sectionItem.section,
-                                            )}
+                                          <SidebarMenuSubButton
+                                            asChild
+                                            size="sm"
+                                            isActive={
+                                              isActiveBackend &&
+                                              activeSection ===
+                                                sectionItem.section
+                                            }
+                                            className="cursor-pointer"
                                           >
-                                            <span>{sectionItem.title}</span>
-                                          </Link>
-                                        </SidebarMenuSubButton>
-                                      </li>
-                                    ))}
+                                            <Link
+                                              href={buildServerWorkspacePath(
+                                                nodeRef,
+                                                backend.id,
+                                                sectionItem.section,
+                                              )}
+                                            >
+                                              <span>{sectionItem.title}</span>
+                                            </Link>
+                                          </SidebarMenuSubButton>
+                                        </li>
+                                      ))}
                                   </ul>
                                 </CollapsibleContent>
                               </li>
@@ -284,7 +343,10 @@ export function ServerSidebarNav({
               tooltip={tGameServer("buttons.createServer")}
               className="justify-center font-semibold"
             >
-              <Link href={createServerHref} aria-label={tGameServer("buttons.createServer")}>
+              <Link
+                href={createServerHref}
+                aria-label={tGameServer("buttons.createServer")}
+              >
                 <span className="w-full text-center">+</span>
               </Link>
             </SidebarMenuButton>

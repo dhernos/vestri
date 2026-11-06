@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
+import NotificationCenter from "@/components/notifications/notification-center";
 import IncomingInvitesCard from "@/components/nodes/cards/incoming-invites-card";
 import { ServerWorkspaceShell } from "@/components/servers/server-workspace-shell";
 import { acceptIncomingNodeInvite } from "@/features/nodes/api";
 import { useIncomingNodeInvites } from "@/features/nodes/hooks/use-incoming-node-invites";
 
 export default function NotificationsPage() {
+  const t = useTranslations("NotificationsPage");
   const {
     invites: incomingInvites,
     loading,
@@ -32,19 +35,13 @@ export default function NotificationsPage() {
   };
 
   return (
-    <ServerWorkspaceShell
-      currentNodeRef=""
-      showServerNavigation={false}
-      pageTitle="Notifications"
-    >
+    <ServerWorkspaceShell currentNodeRef="" pageTitle={t("title")}>
       <div className="container mx-auto space-y-6 p-6">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Notifications</h1>
-          <p className="text-sm text-muted-foreground">
-            Node invites and system events.
-          </p>
+          <h1 className="text-3xl font-bold">{t("title")}</h1>
         </div>
 
+        <NotificationCenter />
         <IncomingInvitesCard
           loading={loading}
           invites={incomingInvites}

@@ -7,6 +7,7 @@ const goOrigin = safeOrigin(GO_API_URL);
 const nextConfig: NextConfig = {
   output: "standalone",
   experimental: {
+    agentUpgrade: "security",
     // Avoid 10MB truncation in Next rewrite proxy for large file uploads.
     proxyClientMaxBodySize: "1gb",
     // Default proxy timeout is 30s; large uploads can exceed this.

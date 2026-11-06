@@ -6,11 +6,16 @@ import { useParams } from "next/navigation";
 import HealthBlob from "@/components/nodes/health";
 import NodeAccessCard from "@/components/nodes/cards/node-access-card";
 import NodeInfoCard from "@/components/nodes/cards/node-info-card";
+import SatisfactoryBlueprintLibraryCard from "@/components/nodes/cards/satisfactory-blueprint-library-card";
+import MinecraftPluginLibrary from "@/components/nodes/cards/minecraft-plugin-library";
+import MinecraftTemplateManager from "@/components/nodes/cards/minecraft-template-manager";
 import { ServerWorkspaceShell } from "@/components/servers/server-workspace-shell";
 import { deleteNodeById, fetchNodeDetails } from "@/features/nodes/api";
 import type { WorkerNode } from "@/features/nodes/types";
 import { Link, useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 export default function NodeDetailsPage() {
   const t = useTranslations("NodeDetailsPage");
@@ -30,23 +35,26 @@ export default function NodeDetailsPage() {
     return node.accessRole === "owner";
   }, [node]);
 
-  const loadNode = useCallback(async (ref: string) => {
-    setLoading(true);
-    setError("");
-    try {
-      const result = await fetchNodeDetails(ref);
-      if (!result.ok) {
-        setError(result.message || t("errors.loadNode"));
+  const loadNode = useCallback(
+    async (ref: string) => {
+      setLoading(true);
+      setError("");
+      try {
+        const result = await fetchNodeDetails(ref);
+        if (!result.ok) {
+          setError(result.message || t("errors.loadNode"));
+          setLoading(false);
+          return;
+        }
+        setNode(result.data);
+      } catch {
+        setError(t("errors.loadNode"));
+      } finally {
         setLoading(false);
-        return;
       }
-      setNode(result.data);
-    } catch {
-      setError(t("errors.loadNode"));
-    } finally {
-      setLoading(false);
-    }
-  }, [t]);
+    },
+    [t],
+  );
 
   useEffect(() => {
     if (!nodeRef) {
@@ -60,9 +68,7 @@ export default function NodeDetailsPage() {
 
   const deleteNode = async () => {
     if (!node || deletingNode) return;
-    const confirmed = window.confirm(
-      t("delete.confirm", { name: node.name })
-    );
+    const confirmed = window.confirm(t("delete.confirm", { name: node.name }));
     if (!confirmed) {
       return;
     }
@@ -87,7 +93,6 @@ export default function NodeDetailsPage() {
     return (
       <ServerWorkspaceShell
         currentNodeRef={nodeRef}
-        showServerNavigation={false}
         pageTitle={tNodes("title")}
       >
         <p className="p-6">{t("loading")}</p>
@@ -99,7 +104,6 @@ export default function NodeDetailsPage() {
     return (
       <ServerWorkspaceShell
         currentNodeRef={nodeRef}
-        showServerNavigation={false}
         pageTitle={tNodes("title")}
       >
         <div className="container mx-auto space-y-4 p-6">
@@ -113,11 +117,7 @@ export default function NodeDetailsPage() {
   }
 
   return (
-    <ServerWorkspaceShell
-      currentNodeRef={nodeRef}
-      showServerNavigation={false}
-      pageTitle={tNodes("title")}
-    >
+    <ServerWorkspaceShell currentNodeRef={nodeRef} pageTitle={tNodes("title")}>
       <div className="container mx-auto space-y-6 p-6">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -138,6 +138,22 @@ export default function NodeDetailsPage() {
         />
 
         <NodeAccessCard />
+
+        {node.accessRole === "owner" || node.accessRole === "admin" ? (
+          <>
+            <Card className="min-w-0" aria-labelledby="node-minecraft-title">
+              <CardHeader>
+                <CardTitle id="node-minecraft-title">Minecraft</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <MinecraftTemplateManager key={node.id} nodeRef={node.id} />
+                <Separator />
+                <MinecraftPluginLibrary nodeRef={node.id} />
+              </CardContent>
+            </Card>
+            <SatisfactoryBlueprintLibraryCard nodeRef={node.id} />
+          </>
+        ) : null}
 
         <div className="flex gap-2">
           <Button asChild variant="secondary">

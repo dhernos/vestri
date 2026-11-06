@@ -1,7 +1,66 @@
 {
+  "NotificationsPage": {
+    "title": "Notifications",
+    "eventsTitle": "Events",
+    "settingsTitle": "Notification settings",
+    "deliveryTitle": "Additional delivery",
+    "eventsHint": "All events always appear here. These switches only control email and webhook delivery.",
+    "unread": "{count, plural, =0 {No unread notifications} one {One unread notification} other {# unread notifications}}",
+    "unreadLabel": "Unread",
+    "empty": "No events yet.",
+    "loading": "Loading...",
+    "refresh": "Refresh",
+    "delete": "Delete notification",
+    "deleteAll": "Delete all",
+    "loadMore": "Older notifications",
+    "email": "Email",
+    "webhook": "Webhook",
+    "webhookUrl": "Webhook URL (HTTPS)",
+    "save": "Save",
+    "saved": "Settings saved.",
+    "loadError": "Notifications or settings could not be loaded.",
+    "saveError": "Could not save. Check the public HTTPS webhook URL and your verified email address.",
+    "updateError": "The notification could not be deleted.",
+    "deliveryFailed": "Email or webhook delivery failed after multiple attempts.",
+    "events": {
+      "server_created": "Server created",
+      "server_deleted": "Server deleted",
+      "worker_unhealthy": "Worker unhealthy (> 1 minute)",
+      "server_down": "Server down (> 1 minute)",
+      "worker_recovered": "Worker recovered",
+      "server_recovered": "Server recovered",
+      "server_invited": "Server invitation",
+      "server_access_granted": "Server access granted",
+      "server_role_changed": "Server role changed",
+      "server_access_removed": "Server access removed"
+    },
+    "roles": {
+      "viewer": "Viewer",
+      "operator": "Operator",
+      "admin": "Administrator"
+    },
+    "messages": {
+      "server_created": "Server {server} was created on {node}.",
+      "server_deleted": "Server {server} was deleted on {node}.",
+      "worker_unhealthy": "Worker {node} has not been healthy for more than one minute.",
+      "server_down": "Server {server} on {node} has been down for more than one minute.",
+      "worker_recovered": "Worker {node} is healthy again after a reported outage.",
+      "server_recovered": "Server {server} on {node} is running again after a reported outage.",
+      "server_invited": "{actor} invited you to server {server} with role {role}.",
+      "server_access_granted": "{actor} granted you access to server {server} with role {role}.",
+      "server_role_changed": "{actor} changed your role on server {server} to {role}.",
+      "server_access_removed": "{actor} removed your access to server {server} (previous role: {role})."
+    }
+  },
   "Common": {
     "loading": "Loading...",
     "seconds": "seconds",
+    "fileInput": {
+      "chooseFile": "Choose file",
+      "chooseFiles": "Choose files",
+      "noFileSelected": "No file selected",
+      "filesSelected": "{count} files selected"
+    },
     "time": {
       "daysUnit": "d",
       "hoursUnit": "h",
@@ -505,11 +564,6 @@
     "session": {
       "loggedInAs": "Logged in as",
       "roleLabel": "Role: {role}",
-      "detailsTitle": "Session details",
-      "detailsCta": "Show session details",
-      "detailsLoading": "Loading...",
-      "loginTime": "Login Time:",
-      "expiresAt": "Expires At:",
       "signOut": "Sign out"
     },
     "cta": {
@@ -521,8 +575,7 @@
       "howTo": "How-to"
     },
     "errors": {
-      "invalidSession": "Your session has expired or is invalid. Please log in again.",
-      "sessionDetails": "Could not load session details."
+      "invalidSession": "Your session has expired or is invalid. Please log in again."
     }
   },
   "HowToPage": {
@@ -975,6 +1028,74 @@
     "access": {
       "title": "Access Management",
       "description": "Invites and guest permissions are managed per game server. Open a game server and use its controls page to manage access."
+    },
+    "minecraftTemplates": {
+      "title": "Minecraft Game Templates",
+      "bases": "Base servers",
+      "worlds": "Worlds",
+      "plugin-packs": "Game plugins",
+      "templates": "Game templates",
+      "instances": "Instances",
+      "keys": "API keys",
+      "create": "Create",
+      "refresh": "Refresh",
+      "empty": "No entries.",
+      "name": "Name",
+      "software": "Server software",
+      "version": "Minecraft version",
+      "mandatoryPlugins": "Mandatory plugins and configurations",
+      "eula": "I accept the Minecraft EULA",
+      "base": "Base server",
+      "world": "World",
+      "randomWorld": "Random seed",
+      "proxy": "Velocity proxy",
+      "maxInstances": "Maximum concurrent instances",
+      "sharedLibraryPlugins": "Shared library",
+      "sharedLibraryEmpty": "No plugins found in the shared library.",
+      "sharedLibraryLoadError": "Could not load shared library plugins.",
+      "importSharedPlugins": "Import selected plugins",
+      "keyDays": "Key lifetime (days)",
+      "files": "Files",
+      "folder": "Folder upload",
+      "destination": "Upload destination",
+      "newPath": "New file or folder path",
+      "newFile": "Create text file",
+      "newFolder": "Create folder",
+      "spawn": "Spawn instance",
+      "delete": "Delete",
+      "revoke": "Revoke key",
+      "revoked": "Revoked",
+      "copy": "Copy API key",
+      "dismiss": "Dismiss",
+      "confirmDelete": "Permanently delete {name} and its files?",
+      "confirmRevoke": "Revoke API key {name}? Existing instances are kept."
+    },
+    "minecraft": {
+      "title": "Minecraft Plugin Library",
+      "files": "Plugin files",
+      "folder": "Configuration folder",
+      "refresh": "Refresh library"
+    },
+    "blueprints": {
+      "title": "Satisfactory Blueprint Library",
+      "description": "Blueprint files shared by Satisfactory servers on this node.",
+      "upload": "Upload .sbp or .sbpcfg",
+      "sourceUrl": "Blueprint page or direct download URL",
+      "approvedSources": "HTTPS imports are restricted to satisfactoryblueprints.com and satisfactory-calculator.com; verified file redirects are allowed.",
+      "import": "Import URL",
+      "importing": "Importing...",
+      "refresh": "Refresh library",
+      "empty": "No blueprints uploaded for this node yet.",
+      "download": "Download {name}",
+      "delete": "Delete {name}",
+      "confirmDelete": "Delete {name} from this node's shared library?",
+      "working": "Updating {name}...",
+      "errors": {
+        "load": "Failed to load the node blueprint library.",
+        "upload": "Failed to upload blueprint.",
+        "import": "Could not import that URL. Use a blueprint detail page or direct blueprint download from an approved site.",
+        "delete": "Failed to delete blueprint."
+      }
     }
   },
   "DashboardPage": {
@@ -1186,6 +1307,11 @@
       "serverType": "Server type",
       "gameVersion": "Game version"
     },
+    "curseForge": {
+      "urlLabel": "CurseForge modpack or server file URL",
+      "urlPlaceholder": "https://www.curseforge.com/minecraft/modpacks/pack-name",
+      "help": "Paste the modpack page URL to install the latest version. To pin a version, open Files, expand the version you want, select View Full Page, then find Server Files at the bottom. Right-click its download button and copy the link."
+    },
     "empty": {
       "templates": "No templates available",
       "servers": "No game servers yet."
@@ -1225,6 +1351,64 @@
     }
   },
   "ServerPage": {
+    "map": {
+      "title": "Map",
+      "frameTitle": "BlueMap Minecraft map",
+      "description": "Explore your world with BlueMap through Vestri. No additional public port or port forwarding is required.",
+      "setup": "Install the BlueMap plugin on this Paper/Purpur server and start it once. Keep BlueMap's integrated webserver enabled. Initial map rendering may take a while.",
+      "loading": "Connecting to BlueMap...",
+      "reload": "Reload map",
+      "unavailable": "BlueMap is unavailable. Check the plugin configuration and server logs.",
+      "restricted": "Maps are only available for Paper/Purpur Minecraft servers."
+    },
+    "databases": {
+      "title": "Databases",
+      "restricted": "Databases are only available to administrators of Minecraft and Velocity servers.",
+      "networkNotice": "Connections are available only inside the server's Docker network. No public port is exposed. Creating a database does not require a game server restart.",
+      "credentialsNotice": "Database names, usernames and passwords are generated automatically. Keep these administrator-only credentials private. Plugin configurations are not changed automatically.",
+      "name": "Display name (max. 48 characters)",
+      "engine": "Engine",
+      "create": "Create database",
+      "creating": "Creating...",
+      "refresh": "Refresh databases",
+      "loading": "Loading databases...",
+      "empty": "No databases yet.",
+      "noTemplates": "No database engines are available.",
+      "start": "Start database",
+      "stop": "Stop database",
+      "delete": "Delete database",
+      "host": "Host",
+      "port": "Port",
+      "database": "Database",
+      "username": "Username",
+      "password": "Password",
+      "jdbc": "JDBC URL",
+      "copy": "Copy {field}",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "deleteTitle": "Delete database?",
+      "deleteDescription": "Permanently delete {name} and its data? This cannot be undone. Enter its exact display name to confirm. Stopping a database instead keeps its data.",
+      "confirmName": "Confirm display name",
+      "cancel": "Cancel",
+      "states": {
+        "running": "Running",
+        "stopped": "Stopped",
+        "starting": "Starting",
+        "unknown": "Unknown"
+      },
+      "errors": {
+        "load": "Could not load databases.",
+        "mutate": "The database operation failed.",
+        "copy": "Could not copy to the clipboard."
+      },
+      "notices": {
+        "create": "Database created.",
+        "start": "Database start requested.",
+        "stop": "Database stop requested. Its data is retained.",
+        "delete": "Database and its data deleted.",
+        "copied": "Copied to clipboard."
+      }
+    },
     "loading": "Loading...",
     "errors": {
       "notFound": "Server not found.",
@@ -1272,7 +1456,9 @@
         "identifier": "Identifier",
         "identifierPlaceholder": "backend-1",
         "serverType": "Server type",
-        "gameVersion": "Game version"
+        "gameVersion": "Game version",
+        "curseForgeUrl": "CurseForge modpack or server file URL",
+        "curseForgeUrlPlaceholder": "https://www.curseforge.com/minecraft/modpacks/pack-name"
       },
       "buttons": {
         "create": "Create backend server",
@@ -1300,7 +1486,7 @@
       }
     },
     "logs": {
-      "title": "Console Logs (Read-Only)",
+      "title": "Console / Logs",
       "description": "Switch between manual refresh and automatic live updates.",
       "buttons": {
         "autoUpdate": "Auto update",
@@ -1326,6 +1512,17 @@
         "connectStream": "Failed to connect to live log stream.",
         "noReadableBody": "Live log stream did not return a readable response body.",
         "interrupted": "Live log stream was interrupted."
+      },
+      "files": {
+        "title": "Historical server logs",
+        "refresh": "Refresh log files",
+        "select": "Select a log file",
+        "loadingList": "Loading log files...",
+        "loadingFile": "Loading log file...",
+        "empty": "No log files found in data/logs.",
+        "selectHint": "Select a file to view its contents.",
+        "loadListError": "Failed to load server log files.",
+        "loadFileError": "Failed to load this log file."
       }
     },
     "interactive": {
@@ -1369,7 +1566,21 @@
         "other": "OTHER"
       },
       "confirmDeletePath": "Delete {label} \"{path}\"?",
+      "transfer": {
+        "newName": "New name",
+        "destination": "Destination path (relative to root, including name)",
+        "working": "Working...",
+        "error": "File operation failed.",
+        "invalidDestination": "Enter a valid destination without parent-directory segments.",
+        "sameDestination": "Choose a different name or destination."
+      },
       "buttons": {
+        "actions": "File actions",
+        "actionsFor": "Actions for {name}",
+        "copy": "Copy",
+        "move": "Move",
+        "rename": "Rename",
+        "cancel": "Cancel",
         "loading": "Loading...",
         "refresh": "Refresh",
         "upOneLevel": "Up one level",
@@ -1378,6 +1589,7 @@
         "uploadToCurrentFolder": "Upload to current folder",
         "downloading": "Downloading...",
         "download": "Download",
+        "downloadZip": "Download ZIP",
         "unzipping": "Unzipping...",
         "unzip": "Unzip",
         "deleting": "Deleting...",
@@ -1392,9 +1604,180 @@
         "unzipArchive": "Failed to unzip archive."
       }
     },
+    "uploads": {
+      "processing": "Upload received, transferring to the node...",
+      "done": "Upload complete.",
+      "cancel": "Cancel upload",
+      "dismiss": "Dismiss"
+    },
+    "backups": {
+      "title": "Backups",
+      "description": "Archives are created from the server data folder. A running server is stopped briefly while the archive is written and started again afterwards.",
+      "listTitle": "Available backups",
+      "retentionDescription": "Keep every archive for the configured daily period, then one archive per week for the weekly period.",
+      "loading": "Loading backups...",
+      "empty": "No backups are available.",
+      "fields": {
+        "enabled": "Enable automatic backups",
+        "interval": "Run every (days)",
+        "time": "Worker local time",
+        "dailyRetention": "Keep all backups (days)",
+        "weeklyRetention": "Keep weekly backups (weeks)"
+      },
+      "buttons": {
+        "save": "Save schedule",
+        "create": "Create backup now",
+        "upload": "Upload ZIP",
+        "refresh": "Refresh backups",
+        "download": "Download",
+        "restore": "Restore",
+        "delete": "Delete"
+      },
+      "confirmRestore": "Restore {name}? The server will be stopped and its entire data folder replaced. It will remain stopped after the restore.",
+      "confirmDelete": "Delete backup {name}?",
+      "messages": {
+        "saved": "Backup schedule saved.",
+        "created": "Backup created.",
+        "uploaded": "Backup uploaded.",
+        "restored": "Backup restored. The server remains stopped."
+      },
+      "errors": {
+        "load": "Failed to load backups.",
+        "workerNotUpdated": "A running Vestri service returned 404 for the backup endpoint. Update/redeploy the backend and Worker, then try again.",
+        "save": "Failed to save backup schedule.",
+        "create": "Failed to create backup.",
+        "upload": "Failed to upload ZIP. Check that it is a valid archive.",
+        "download": "Failed to download backup.",
+        "restore": "Failed to restore backup.",
+        "delete": "Failed to delete backup."
+      }
+    },
+    "satisfactoryBlueprints": {
+      "title": "Satisfactory Blueprints",
+      "description": "Blueprints uploaded to this node's shared library.",
+      "stagingNote": "Install copies the blueprint into saved/blueprints/<SessionName>, using the active Satisfactory game session. This may require a server restart for the changes to take affect.",
+      "createSessionFirst": "Create or load a game in Satisfactory's in-game Server Manager, then wait for its first autosave before installing blueprints.",
+      "openLibrary": "Open shared upload library",
+      "refresh": "Refresh blueprints",
+      "empty": "No blueprints are available yet.",
+      "install": "Install",
+      "installing": "Installing...",
+      "installed": "Installed",
+      "working": "Updating {name}...",
+      "errors": {
+        "load": "Failed to load blueprints.",
+        "install": "Failed to install blueprint into this server."
+      }
+    },
+    "players": {
+      "title": "Player Management",
+      "known": "Known players",
+      "whitelist": "Whitelist",
+      "bans": "Bans",
+      "attempts": "Login attempts",
+      "username": "Minecraft username",
+      "refresh": "Refresh players",
+      "loading": "Loading players...",
+      "unavailable": "No player journal available from the proxy plugin.",
+      "stale": "Proxy plugin offline or player journal outdated.",
+      "policyError": "Proxy access policy is invalid or unavailable. New logins are currently denied.",
+      "legacyMigration": "Existing subserver whitelist detected. A subserver restart is required after migration.",
+      "migrate": "Migrate whitelist",
+      "migrated": "Proxy policy saved and existing whitelist migrated. Subserver restart pending.",
+      "empty": "No entries.",
+      "count": "{count, plural, one {# entry} other {# entries}}",
+      "saved": "Proxy policy saved.",
+      "updated": "Journal updated: {time}",
+      "whitelistEnabled": "Proxy whitelist enabled",
+      "whitelistAdd": "Whitelist player",
+      "whitelistRemove": "Remove from whitelist",
+      "whitelisted": "Whitelisted",
+      "banned": "Banned",
+      "ban": "Ban player",
+      "unban": "Unban player",
+      "ipBan": "Ban IP",
+      "ipUnban": "Unban IP",
+      "ipBans": "IP bans",
+      "ip": "IP address",
+      "player": "Player / UUID",
+      "lastLogin": "Last successful login / IP",
+      "lastAttempt": "Last attempt / IP",
+      "time": "Time",
+      "outcome": "Result / reason",
+      "actions": "Actions",
+      "search": "Search name, UUID or IP",
+      "unknown": "Not available",
+      "uuidUnavailable": "UUID not authenticated",
+      "all": "All results",
+      "success": "Successful",
+      "denied": "Denied",
+      "failed": "Failed",
+      "page": "Page {current} of {total}",
+      "previous": "Previous page",
+      "next": "Next page",
+      "confirmTitle": "Restrict proxy access?",
+      "confirm": "Apply this access restriction to {target}? Existing connections may be disconnected.",
+      "allPlayers": "all players outside the whitelist",
+      "cancel": "Cancel",
+      "apply": "Apply restriction",
+      "errors": {
+        "load": "Failed to load players.",
+        "save": "Failed to save player policy."
+      }
+    },
     "groupFiles": {
       "title": "Plugin Staging",
-      "currentFolder": "Velocity source folder: data/vestri-plugin-staging{path}",
+      "linked": {
+        "title": "Linked Paper plugins",
+        "placeholder": "Modrinth or Hangar project URL, or Hangar CDN JAR link",
+        "linkLabel": "Plugin project or direct JAR URL",
+        "download": "Download",
+        "loading": "Loading linked plugins",
+        "forceRefresh": "Force refresh tracked plugins",
+        "refreshed": "Plugin update checks refreshed.",
+        "error": "Plugin operation failed.",
+        "reloadAfterError": "Reload to check the latest deployment state.",
+        "downloaded": "Downloaded to staging.",
+        "updated": "Staging and existing compatible installations updated. Restart affected servers to load the new release.",
+        "removed": "Tracking stopped. Plugin files were kept.",
+        "current": "Up to date",
+        "pinned": "Pinned version {version}",
+        "available": "Update available: {filename}",
+        "pending": "Deployment incomplete",
+        "checked": "Last checked: {date}",
+        "checkFailed": "Update check failed: {error}",
+        "retry": "Retry update",
+        "update": "Update installed",
+        "stopTracking": "Stop tracking",
+        "confirmTitle": "Update existing plugin installations?",
+        "confirmUpdate": "Replace {plugin} in staging and only on compatible servers where a tracked JAR is already present. Servers without the plugin are left unchanged. Previous tracked JARs are removed; configuration folders are kept. Restart affected servers afterward.",
+        "confirmRemove": "Stop tracking {plugin}? Files in staging and on subservers will not be deleted.",
+        "confirmButton": "Update installed",
+        "cancel": "Cancel"
+      },
+      "currentFolder": "Node Minecraft library{path}",
+      "manager": {
+        "staging": {
+          "title": "Node plugin library",
+          "description": "Shared plugins and configurations for this node.",
+          "dropHint": "Choose files or drop them onto this card to upload.",
+          "upload": "Upload",
+          "uploading": "Uploading...",
+          "empty": "No staged plugins."
+        },
+        "servers": {
+          "title": "Subservers",
+          "description": "Drag a staged plugin onto a subserver to copy it into its plugins folder. Existing files are overwritten.",
+          "dropHere": "Drop to copy",
+          "applyAll": "Copy all staged",
+          "emptyPlugins": "No plugins found."
+        },
+        "copied": "Copied to {server}.",
+        "edit": "Edit",
+        "editorTitle": "Edit file",
+        "expand": "Expand",
+        "collapse": "Collapse"
+      },
       "apply": {
         "title": "Apply staged plugins",
         "description": "Select the subservers to update. Matching files are overwritten; other plugin files are kept.",
@@ -1431,6 +1814,10 @@
         "onlyRegularTextFiles": "Only regular text files can be opened."
       }
     },
+    "fileViewer": {
+      "title": "File viewer",
+      "compressedLog": "Decompressed for viewing; the original file is unchanged."
+    },
     "configEditor": {
       "title": "Config Editor",
       "description": "Existing keys are read-only; values are editable.",
@@ -1454,6 +1841,30 @@
       "errors": {
         "loadConfig": "Failed to load config file.",
         "saveConfig": "Failed to save config file."
+      }
+    },
+    "secrets": {
+      "title": "Secret environment variables",
+      "description": "Secrets are passed to the server as environment variables. Values cannot be viewed after saving; to change a secret, delete and recreate it. Restart the server to apply changes.",
+      "loading": "Loading secrets...",
+      "empty": "No secrets configured.",
+      "hiddenValue": "Value hidden",
+      "fields": {
+        "key": "Name",
+        "keyPlaceholder": "TOKEN",
+        "value": "Value"
+      },
+      "buttons": {
+        "add": "Add secret",
+        "adding": "Adding...",
+        "delete": "Delete",
+        "deleting": "Deleting..."
+      },
+      "confirmDelete": "Delete secret {key}? The value cannot be recovered.",
+      "errors": {
+        "load": "Failed to load secrets.",
+        "create": "Failed to add secret.",
+        "delete": "Failed to delete secret."
       }
     },
     "access": {
