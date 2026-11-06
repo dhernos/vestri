@@ -93,7 +93,6 @@ export default function NodeDetailsPage() {
     return (
       <ServerWorkspaceShell
         currentNodeRef={nodeRef}
-        showServerNavigation={false}
         pageTitle={tNodes("title")}
       >
         <p className="p-6">{t("loading")}</p>
@@ -105,7 +104,6 @@ export default function NodeDetailsPage() {
     return (
       <ServerWorkspaceShell
         currentNodeRef={nodeRef}
-        showServerNavigation={false}
         pageTitle={tNodes("title")}
       >
         <div className="container mx-auto space-y-4 p-6">
@@ -121,7 +119,6 @@ export default function NodeDetailsPage() {
   return (
     <ServerWorkspaceShell
       currentNodeRef={nodeRef}
-      showServerNavigation={false}
       pageTitle={tNodes("title")}
     >
       <div className="container mx-auto space-y-6 p-6">

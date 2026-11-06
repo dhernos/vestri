@@ -37,7 +37,6 @@ export default function NotificationsPage() {
   return (
     <ServerWorkspaceShell
       currentNodeRef=""
-      showServerNavigation={false}
       pageTitle={t("title")}
     >
       <div className="container mx-auto space-y-6 p-6">

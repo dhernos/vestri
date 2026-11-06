@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import { RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ConnectionStatus, ConsoleRefreshMode } from "@/components/servers/cards/types";
 import { cn } from "@/lib/utils";
+import { sortHistoricalLogFiles, selectHistoricalLogFile, type HistoricalLogFile } from "@/features/servers/historical-log-files";
 
 type LogsCardProps = {
   basePath: string;
@@ -22,12 +23,6 @@ type LogsCardProps = {
   onSetRefreshMode: (mode: ConsoleRefreshMode) => void;
   onRefreshNow: () => void;
   onClearOutput: () => void;
-};
-
-type HistoricalLogFile = {
-  name: string;
-  path: string;
-  size: number;
 };
 
 type HistoricalLogContent = {
@@ -64,6 +59,7 @@ export default function LogsCard({
   const t = useTranslations("ServerPage");
   const [logFiles, setLogFiles] = useState<HistoricalLogFile[]>([]);
   const [selectedLogFile, setSelectedLogFile] = useState("");
+  const loadedLogBasePath = useRef("");
   const [logFilesReload, setLogFilesReload] = useState(0);
   const [loadedLogFilesKey, setLoadedLogFilesKey] = useState("");
   const [logFilesError, setLogFilesError] = useState<{
@@ -109,12 +105,14 @@ export default function LogsCard({
           : [];
       })
       .then((files) => {
-        setLogFiles(files);
+        if (controller.signal.aborted) return;
+        const sortedFiles = sortHistoricalLogFiles(files);
+        const sameServer = loadedLogBasePath.current === basePath;
+        loadedLogBasePath.current = basePath;
+        setLogFiles(sortedFiles);
         setLogFilesError(null);
         setSelectedLogFile((current) =>
-          files.some((file) => file.path === current)
-            ? current
-            : files[0]?.path || "",
+          selectHistoricalLogFile(sortedFiles, sameServer ? current : ""),
         );
       })
       .catch((error: unknown) => {
@@ -174,7 +172,7 @@ export default function LogsCard({
   }, [basePath, canReadConsole, logFilesReload, selectedLogFile, historicalLogRequestKey, t]);
 
   return (
-    <Card>
+    <Card className="min-w-0">
       <CardHeader>
         <CardTitle>{t("logs.title")}</CardTitle>
         <CardDescription>{t("logs.description")}</CardDescription>
@@ -250,7 +248,7 @@ export default function LogsCard({
         {consoleError ? <p className="text-sm text-destructive">{consoleError}</p> : null}
         <pre
           ref={consoleOutputRef}
-          className="max-h-80 overflow-auto whitespace-pre-wrap rounded-md border bg-muted/40 p-3 text-xs"
+          className="max-h-80 min-w-0 overflow-auto whitespace-pre-wrap break-all rounded-md border bg-muted/40 p-3 text-xs"
         >
           {consoleOutput ||
             (consoleSnapshotLoading
@@ -284,7 +282,7 @@ export default function LogsCard({
             onChange={(event) => setSelectedLogFile(event.target.value)}
             disabled={!basePath || logFilesLoading || logFiles.length === 0}
             aria-label={t("logs.files.select")}
-            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+            className="h-10 w-full min-w-0 max-w-full truncate rounded-md border border-input bg-background px-3 text-sm"
           >
             <option value="">
               {logFilesLoading
@@ -309,7 +307,7 @@ export default function LogsCard({
               {historicalLogError.message}
             </p>
           ) : null}
-          <pre className="max-h-80 min-h-32 overflow-auto whitespace-pre-wrap break-words rounded-md border bg-muted/40 p-3 font-mono text-xs">
+          <pre className="max-h-80 min-h-32 min-w-0 overflow-auto whitespace-pre-wrap break-all rounded-md border bg-muted/40 p-3 font-mono text-xs">
             {historicalLogLoading
               ? t("logs.files.loadingFile")
               : historicalLog?.requestKey === historicalLogRequestKey

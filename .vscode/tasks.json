@@ -1,0 +1,19 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Frontend Release Preview",
+			"type": "shell",
+			"command": "pushd /home/luis/code/vestri/vestri && ./node_modules/.bin/next dev --hostname 127.0.0.1 --port 3016",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Frontend Release Checks",
+			"type": "shell",
+			"command": "pushd /home/luis/code/vestri/vestri && npm run typecheck && npm run lint && node --test src/features/servers/*.test.ts src/components/notifications/api.test.ts",
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}

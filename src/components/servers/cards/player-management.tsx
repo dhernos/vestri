@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { Ban, ChevronLeft, ChevronRight, History, LoaderCircle, Network, Plus, RefreshCw, Search, ShieldCheck, ShieldOff, Undo2, Users } from "lucide-react";
+import { Ban, ChevronLeft, ChevronRight, History, LoaderCircle, Network, Plus, RefreshCw, Search, ShieldCheck, ShieldOff, Slash, Undo2, Users } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,13 @@ type Mutation = {
   enabled?: boolean;
 };
 const PAGE_SIZE = 25;
+
+function IPBanIcon() {
+  return <span aria-hidden="true" className="relative inline-flex size-4 shrink-0 text-destructive">
+    <Network className="size-4" />
+    <Slash className="absolute inset-0 size-4" strokeWidth={3} />
+  </span>;
+}
 
 export default function PlayerManagement({ basePath }: { basePath: string }) {
   const t = useTranslations("ServerPage.players");
@@ -196,7 +203,7 @@ export default function PlayerManagement({ basePath }: { basePath: string }) {
         <form className="flex flex-wrap items-end gap-3" onSubmit={(event) => {
           event.preventDefault(); requestMutation({ action: view === "whitelist" ? "whitelist-add" : "ban", username: username.trim() });
         }}>
-          <div className="min-w-0 flex-1 space-y-2 sm:max-w-sm">
+          <div className="min-w-0 basis-full space-y-2 sm:flex-1 sm:basis-auto sm:max-w-sm">
             <Label htmlFor={`${inputId}-name`}>{t("username")}</Label>
             <Input id={`${inputId}-name`} value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="off"
               autoCapitalize="none" spellCheck={false} required minLength={3} maxLength={16} pattern="[A-Za-z0-9_]{3,16}" disabled={disabled} />
@@ -208,7 +215,7 @@ export default function PlayerManagement({ basePath }: { basePath: string }) {
       ) : null}
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="relative min-w-0 flex-1 sm:max-w-sm">
+        <div className="relative min-w-0 basis-full sm:flex-1 sm:basis-auto sm:max-w-sm">
           <Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-muted-foreground" />
           <Input className="pl-9" aria-label={t("search")} placeholder={t("search")} value={search}
             onChange={(event) => { setSearch(event.target.value); setPage(0); }} />
@@ -222,8 +229,8 @@ export default function PlayerManagement({ basePath }: { basePath: string }) {
         <span className="text-xs text-muted-foreground">{t("count", { count })}</span>
       </div>
 
-      <div className="overflow-x-auto border-y">
-        <table className="w-full text-left text-sm">
+      <div className="min-w-0 max-w-full overflow-x-auto overscroll-x-contain border-y" role="region" aria-label={t(view)} tabIndex={0}>
+        <table className="w-full min-w-[32rem] text-left text-sm">
           <thead className="border-b bg-muted/40 text-xs text-muted-foreground">
             <tr>
               <th className="p-3 font-medium">{t("player")}</th>
@@ -242,7 +249,7 @@ export default function PlayerManagement({ basePath }: { basePath: string }) {
                 <td className="p-3 align-top"><div className="flex justify-end gap-1">
                   {entry.uuid ? playerActions({ name: entry.name, uuid: entry.uuid }) : null}
                   <Button variant="ghost" size="icon" disabled={disabled} title={t("ipBan")} aria-label={t("ipBan")}
-                    onClick={() => requestMutation({ action: "ip-ban", ip: entry.ip })}><Network /></Button>
+                    onClick={() => requestMutation({ action: "ip-ban", ip: entry.ip })}><IPBanIcon /></Button>
                 </div></td>
               </tr>
             )) : filteredPlayers.slice(offset, offset + PAGE_SIZE).map((entry) => {
@@ -260,7 +267,7 @@ export default function PlayerManagement({ basePath }: { basePath: string }) {
                 </> : null}
                 <td className="p-3 align-top"><div className="flex justify-end gap-1">{playerActions(entry)}
                   {view === "known" && known.lastIP ? <Button variant="ghost" size="icon" disabled={disabled} title={t("ipBan")} aria-label={t("ipBan")}
-                    onClick={() => requestMutation({ action: "ip-ban", ip: known.lastIP })}><Network /></Button> : null}
+                    onClick={() => requestMutation({ action: "ip-ban", ip: known.lastIP })}><IPBanIcon /></Button> : null}
                 </div></td>
               </tr>;
             })}
@@ -277,9 +284,9 @@ export default function PlayerManagement({ basePath }: { basePath: string }) {
       {view === "bans" ? <div className="space-y-4 border-t pt-4">
         <h3 className="text-base font-semibold">{t("ipBans")}</h3>
         <form className="flex flex-wrap items-end gap-3" onSubmit={(event) => { event.preventDefault(); requestMutation({ action: "ip-ban", ip: ip.trim() }); }}>
-          <div className="min-w-0 flex-1 space-y-2 sm:max-w-sm"><Label htmlFor={`${inputId}-ip`}>{t("ip")}</Label>
+          <div className="min-w-0 basis-full space-y-2 sm:flex-1 sm:basis-auto sm:max-w-sm"><Label htmlFor={`${inputId}-ip`}>{t("ip")}</Label>
             <Input id={`${inputId}-ip`} value={ip} onChange={(event) => setIP(event.target.value)} required maxLength={45} autoComplete="off" disabled={disabled} /></div>
-          <Button type="submit" disabled={disabled || !ip.trim()}><Network />{t("ipBan")}</Button>
+          <Button type="submit" variant="outline" disabled={disabled || !ip.trim()}><IPBanIcon />{t("ipBan")}</Button>
         </form>
         <ul className="divide-y border-y">
           {(data?.policy.ipBans ?? []).filter((value) => matches(value)).map((address) => <li key={address} className="flex min-w-0 items-center justify-between gap-3 py-2">
@@ -293,7 +300,7 @@ export default function PlayerManagement({ basePath }: { basePath: string }) {
 
       <Dialog open={confirmation !== null} onOpenChange={(open) => { if (!open && !busy) setConfirmation(null); }}>
         <DialogContent><DialogHeader><DialogTitle>{t("confirmTitle")}</DialogTitle>
-          <DialogDescription>{t("confirm", { target: confirmation?.username || confirmation?.ip || t("allPlayers") })}</DialogDescription>
+          <DialogDescription className="[overflow-wrap:anywhere]">{t("confirm", { target: confirmation?.username || confirmation?.ip || t("allPlayers") })}</DialogDescription>
         </DialogHeader><DialogFooter>
           <Button variant="outline" disabled={busy} onClick={() => setConfirmation(null)}>{t("cancel")}</Button>
           <Button variant="destructive" disabled={busy} onClick={() => { if (confirmation) void mutate(confirmation); }}>

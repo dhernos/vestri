@@ -1,29 +1,20 @@
 "use client";
 
-import { useEffect, useEffectEvent, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Bell, Check, CheckCheck, ChevronDown, Loader2, RefreshCw, Save } from "lucide-react";
+import { Bell, ChevronDown, Loader2, RefreshCw, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { deleteNotifications } from "@/components/notifications/api";
+import { eventKinds, notificationMessageValues, type EventKind, type Notification } from "@/components/notifications/events";
 
-const eventKinds = ["server_created", "server_deleted", "worker_unhealthy", "server_down"] as const;
-type EventKind = (typeof eventKinds)[number];
 type Settings = {
   events: Record<EventKind, boolean>;
   emailEnabled: boolean;
   webhookEnabled: boolean;
   webhookUrl: string;
   locale: string;
-};
-type Notification = {
-  id: string;
-  kind: EventKind;
-  nodeName: string;
-  serverName: string;
-  createdAt: string;
-  readAt: string | null;
-  deliveryFailed: boolean;
 };
 type NotificationsPayload = { notifications: Notification[]; unread: number; hasMore: boolean };
 
@@ -55,15 +46,17 @@ export default function NotificationCenter() {
   const [error, setError] = useState("");
   const [settingsError, setSettingsError] = useState("");
   const [saved, setSaved] = useState(false);
+  const deletionRevision = useRef(0);
 
   async function loadNotifications(older = false, signal?: AbortSignal) {
+    const revision = deletionRevision.current;
     const last = notifications.at(-1);
     const query = older && last ? `?before=${encodeURIComponent(last.createdAt)}&beforeId=${encodeURIComponent(last.id)}` : "";
     try {
       const response = await fetch(`/api/notifications${query}`, { cache: "no-store", signal });
       if (!response.ok) throw new Error("load");
       const data = await response.json() as NotificationsPayload;
-      if (signal?.aborted) return;
+      if (signal?.aborted || revision !== deletionRevision.current) return;
       setNotifications((previous) => {
         const incoming = new Set(data.notifications.map((item) => item.id));
         if (older) return [...previous.filter((item) => !incoming.has(item.id)), ...data.notifications];
@@ -73,7 +66,7 @@ export default function NotificationCenter() {
       if (older || notifications.length <= 50) setHasMore(data.hasMore);
       setError("");
     } catch {
-      if (!signal?.aborted) setError(t("loadError"));
+      if (!signal?.aborted && revision === deletionRevision.current) setError(t("loadError"));
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
@@ -123,12 +116,16 @@ export default function NotificationCenter() {
     } catch { setSettingsError(t("saveError")); } finally { setSaving(false); }
   }
 
-  async function markRead(id?: string) {
+  async function removeNotifications(id?: string) {
+    if (busy) return;
     setBusy(true);
     try {
-      const response = await fetch(id ? `/api/notifications/${encodeURIComponent(id)}/read` : "/api/notifications/read", { method: "POST" });
-      if (!response.ok) throw new Error("read");
-      setNotifications((previous) => previous.map((item) => !id || item.id === id ? { ...item, readAt: new Date().toISOString() } : item));
+      await deleteNotifications(id);
+      deletionRevision.current += 1;
+      setNotifications((previous) => id ? previous.filter((item) => item.id !== id) : []);
+      setUnread((previous) => id ? Math.max(0, previous - Number(notifications.some((item) => item.id === id && !item.readAt))) : 0);
+      if (!id) setHasMore(false);
+      setError("");
       await loadNotifications();
     } catch { setError(t("updateError")); } finally { setBusy(false); }
   }
@@ -143,22 +140,22 @@ export default function NotificationCenter() {
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" title={t("refresh")} aria-label={t("refresh")} disabled={busy || loading} onClick={() => { setBusy(true); void loadNotifications().finally(() => setBusy(false)); }}><RefreshCw className="size-4" /></Button>
-            <Button variant="outline" size="sm" disabled={busy || unread === 0} onClick={() => void markRead()}><CheckCheck className="size-4" />{t("markAllRead")}</Button>
+            <Button variant="outline" size="sm" className="text-destructive" disabled={busy || loading || notifications.length === 0} onClick={() => void removeNotifications()}><Trash2 className="size-4" />{t("deleteAll")}</Button>
           </div>
         </div>
         {error && <p role="alert" className="mb-3 text-sm text-destructive">{error}</p>}
         {loading ? <p role="status" className="flex items-center gap-2 py-6 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />{t("loading")}</p> : null}
         {!loading && !error && notifications.length === 0 ? <div className="flex items-center gap-3 border-y py-8 text-sm text-muted-foreground"><Bell className="size-5" />{t("empty")}</div> : null}
-        <ul aria-label={t("eventsTitle")} className="h-96 overflow-y-auto overscroll-contain divide-y border-y pr-1 empty:border-0">
+        <ul aria-label={t("eventsTitle")} className="max-h-[60svh] overflow-y-auto overscroll-contain divide-y border-y pr-1 empty:border-0 sm:max-h-96">
           {notifications.map((item) => (
             <li key={item.id} className={`flex min-w-0 items-start gap-2 px-2 py-2 ${item.readAt ? "" : "bg-muted/40"}`}>
               <span className={`mt-2 size-2 shrink-0 rounded-full ${item.readAt ? "bg-transparent" : "bg-primary"}`} aria-label={item.readAt ? undefined : t("unreadLabel")} />
               <div className="min-w-0 flex-1 space-y-0.5">
-                <p className="wrap-break-word text-sm font-medium">{t(`messages.${item.kind}`, { server: item.serverName, node: item.nodeName })}</p>
+                <p className="text-sm font-medium [overflow-wrap:anywhere]">{t(`messages.${item.kind}`, notificationMessageValues(item, t))}</p>
                 <time dateTime={item.createdAt} className="block text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleString(locale)}</time>
                 {item.deliveryFailed && <p className="text-xs text-destructive">{t("deliveryFailed")}</p>}
               </div>
-              {!item.readAt && <Button variant="ghost" size="icon" className="shrink-0" title={t("markRead")} aria-label={t("markRead")} disabled={busy} onClick={() => void markRead(item.id)}><Check className="size-4" /></Button>}
+              <Button variant="ghost" size="icon" className="shrink-0 text-destructive" title={t("delete")} aria-label={t("delete")} disabled={busy} onClick={() => void removeNotifications(item.id)}><Trash2 className="size-4" /></Button>
             </li>
           ))}
         </ul>
@@ -172,7 +169,7 @@ export default function NotificationCenter() {
           <fieldset disabled={saving} className="divide-y">
             <legend className="mb-1 text-xs font-medium uppercase text-muted-foreground">{t("eventsTitle")}</legend>
             <p className="pb-2 text-xs text-muted-foreground">{t("eventsHint")}</p>
-            {eventKinds.map((kind) => <SettingToggle key={kind} id={`notify-${kind}`} label={t(`events.${kind}`)} checked={settings.events[kind]} onChange={(checked) => updateSettings({ ...settings, events: { ...settings.events, [kind]: checked } })} />)}
+            {eventKinds.map((kind) => <SettingToggle key={kind} id={`notify-${kind}`} label={t(`events.${kind}`)} checked={settings.events[kind] ?? false} onChange={(checked) => updateSettings({ ...settings, events: { ...settings.events, [kind]: checked } })} />)}
           </fieldset>
           <fieldset disabled={saving} className="space-y-1 border-t pt-4">
             <legend className="text-xs font-medium uppercase text-muted-foreground">{t("deliveryTitle")}</legend>

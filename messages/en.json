@@ -10,8 +10,8 @@
     "empty": "No events yet.",
     "loading": "Loading...",
     "refresh": "Refresh",
-    "markRead": "Mark as read",
-    "markAllRead": "Mark all read",
+    "delete": "Delete notification",
+    "deleteAll": "Delete all",
     "loadMore": "Older notifications",
     "email": "Email",
     "webhook": "Webhook",
@@ -20,19 +20,36 @@
     "saved": "Settings saved.",
     "loadError": "Notifications or settings could not be loaded.",
     "saveError": "Could not save. Check the public HTTPS webhook URL and your verified email address.",
-    "updateError": "The notification could not be marked as read.",
+    "updateError": "The notification could not be deleted.",
     "deliveryFailed": "Email or webhook delivery failed after multiple attempts.",
     "events": {
       "server_created": "Server created",
       "server_deleted": "Server deleted",
       "worker_unhealthy": "Worker unhealthy (> 1 minute)",
-      "server_down": "Server down (> 1 minute)"
+      "server_down": "Server down (> 1 minute)",
+      "worker_recovered": "Worker recovered",
+      "server_recovered": "Server recovered",
+      "server_invited": "Server invitation",
+      "server_access_granted": "Server access granted",
+      "server_role_changed": "Server role changed",
+      "server_access_removed": "Server access removed"
+    },
+    "roles": {
+      "viewer": "Viewer",
+      "operator": "Operator",
+      "admin": "Administrator"
     },
     "messages": {
       "server_created": "Server {server} was created on {node}.",
       "server_deleted": "Server {server} was deleted on {node}.",
       "worker_unhealthy": "Worker {node} has not been healthy for more than one minute.",
-      "server_down": "Server {server} on {node} has been down for more than one minute."
+      "server_down": "Server {server} on {node} has been down for more than one minute.",
+      "worker_recovered": "Worker {node} is healthy again after a reported outage.",
+      "server_recovered": "Server {server} on {node} is running again after a reported outage.",
+      "server_invited": "{actor} invited you to server {server} with role {role}.",
+      "server_access_granted": "{actor} granted you access to server {server} with role {role}.",
+      "server_role_changed": "{actor} changed your role on server {server} to {role}.",
+      "server_access_removed": "{actor} removed your access to server {server} (previous role: {role})."
     }
   },
   "Common": {

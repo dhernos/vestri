@@ -21,6 +21,7 @@ import {
   SidebarProvider,
   SidebarRail,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { useNodesList } from "@/features/nodes/hooks/use-nodes-list";
 import {
@@ -56,6 +57,16 @@ type ServersCacheEntry = {
 
 const serverListCacheByNode = new Map<string, ServersCacheEntry>();
 const serverListCacheMaxAgeMs = 15_000;
+
+function MobileSidebarDismissal() {
+  const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setOpenMobile(false));
+    return () => cancelAnimationFrame(frame);
+  }, [pathname, setOpenMobile]);
+  return null;
+}
 
 export function ServerWorkspaceShell({
   children,
@@ -545,6 +556,7 @@ export function ServerWorkspaceShell({
 
   return (
     <SidebarProvider>
+      <MobileSidebarDismissal />
       <Sidebar collapsible="icon">
         <SidebarHeader>
           {showNodeSwitcher ? (
@@ -583,15 +595,15 @@ export function ServerWorkspaceShell({
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-          <div className="flex min-w-0 items-center gap-2 px-4">
+          <div className="flex min-w-0 flex-1 items-center gap-2 px-2 sm:px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator
               orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
+              className="hidden data-[orientation=vertical]:h-4 sm:block sm:mr-2"
             />
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{headerTitle}</p>
               <p className="truncate text-xs text-muted-foreground">
                 {headerNodeLabel}
@@ -602,9 +614,9 @@ export function ServerWorkspaceShell({
             </div>
             <Separator
               orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
+              className="hidden data-[orientation=vertical]:h-4 sm:block sm:mr-2"
             />
-            <div>
+            <div className="shrink-0">
               {showServerStatus && activeServer ? (
                 <Button
                   type="button"
@@ -623,12 +635,12 @@ export function ServerWorkspaceShell({
               ) : null}
             </div>
           </div>
-          <div className="ml-auto flex items-center gap-2 px-4">
+          <div className="ml-auto flex shrink-0 items-center gap-1 px-2 sm:gap-2 sm:px-4">
             <ThemeToggle />
             <ToggleLanguage compact />
           </div>
         </header>
-        <div className="flex flex-1 flex-col">{children}</div>
+        <div className="flex min-w-0 flex-1 flex-col">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );

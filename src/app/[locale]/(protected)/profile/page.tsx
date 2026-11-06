@@ -32,7 +32,6 @@ export default function ProfilePage() {
   return (
     <ServerWorkspaceShell
       currentNodeRef=""
-      showServerNavigation={false}
       pageTitle={t("profilePageHeader")}
     >
       <div className="container mx-auto p-4">

@@ -10,8 +10,8 @@
     "empty": "Noch keine Ereignisse.",
     "loading": "Wird geladen...",
     "refresh": "Aktualisieren",
-    "markRead": "Als gelesen markieren",
-    "markAllRead": "Alle gelesen",
+    "delete": "Benachrichtigung löschen",
+    "deleteAll": "Alle löschen",
     "loadMore": "Ältere Nachrichten",
     "email": "E-Mail",
     "webhook": "Webhook",
@@ -20,19 +20,36 @@
     "saved": "Einstellungen gespeichert.",
     "loadError": "Nachrichten oder Einstellungen konnten nicht geladen werden.",
     "saveError": "Speichern fehlgeschlagen. Prüfe die öffentliche HTTPS-Webhook-URL und deine verifizierte E-Mail-Adresse.",
-    "updateError": "Die Nachricht konnte nicht als gelesen markiert werden.",
+    "updateError": "Die Benachrichtigung konnte nicht gelöscht werden.",
     "deliveryFailed": "E-Mail oder Webhook konnte nach mehreren Versuchen nicht zugestellt werden.",
     "events": {
       "server_created": "Server erstellt",
       "server_deleted": "Server gelöscht",
       "worker_unhealthy": "Worker nicht grün (> 1 Minute)",
-      "server_down": "Server down (> 1 Minute)"
+      "server_down": "Server down (> 1 Minute)",
+      "worker_recovered": "Worker wieder gesund",
+      "server_recovered": "Server wieder online",
+      "server_invited": "Servereinladung",
+      "server_access_granted": "Serverzugriff gewährt",
+      "server_role_changed": "Serverrolle geändert",
+      "server_access_removed": "Serverzugriff entfernt"
+    },
+    "roles": {
+      "viewer": "Betrachter",
+      "operator": "Bediener",
+      "admin": "Administrator"
     },
     "messages": {
       "server_created": "Server {server} wurde auf {node} erstellt.",
       "server_deleted": "Server {server} wurde auf {node} gelöscht.",
       "worker_unhealthy": "Worker {node} ist seit mehr als einer Minute nicht mehr grün.",
-      "server_down": "Server {server} auf {node} ist seit mehr als einer Minute down."
+      "server_down": "Server {server} auf {node} ist seit mehr als einer Minute down.",
+      "worker_recovered": "Worker {node} ist nach einer gemeldeten Störung wieder gesund.",
+      "server_recovered": "Server {server} auf {node} läuft nach einem gemeldeten Ausfall wieder.",
+      "server_invited": "{actor} hat dich zum Server {server} mit der Rolle {role} eingeladen.",
+      "server_access_granted": "{actor} hat dir Zugriff auf Server {server} mit der Rolle {role} gewährt.",
+      "server_role_changed": "{actor} hat deine Rolle auf Server {server} auf {role} geändert.",
+      "server_access_removed": "{actor} hat deinen Zugriff auf Server {server} entfernt (bisherige Rolle: {role})."
     }
   },
   "Common": {
