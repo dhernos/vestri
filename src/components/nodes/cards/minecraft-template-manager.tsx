@@ -126,7 +126,7 @@ function Choice({
   label: string;
   value: string;
   onChange: (value: string) => void;
-  options: { id: string; name: string }[];
+  options: { id: string; name: string; disabled?: boolean }[];
   empty?: string;
 }) {
   return (
@@ -144,7 +144,11 @@ function Choice({
             {empty || label}
           </SelectItem>
           {options.map((option) => (
-            <SelectItem key={option.id} value={option.id}>
+            <SelectItem
+              key={option.id}
+              value={option.id}
+              disabled={option.disabled}
+            >
               {option.name}
             </SelectItem>
           ))}
@@ -169,6 +173,7 @@ function MinigameSettings({
 }) {
   const t = useTranslations("NodeDetailsPage.minecraftTemplates.minigame");
   const pluginLobby = draft.lobbyMode === "plugin";
+  const permanent = draft.instanceMode === "permanent";
   const hasTeams = draft.teams.split(",").some((team) => team.trim());
   const staleTeamActions =
     !hasTeams &&
@@ -194,6 +199,21 @@ function MinigameSettings({
   return (
     <div className="min-w-0 space-y-4 border-t pt-4">
       <Choice
+        label={t("instanceMode")}
+        value={draft.instanceMode ?? "temporary"}
+        onChange={(instanceMode) =>
+          onChange({
+            ...draft,
+            instanceMode: instanceMode as MinigameDraft["instanceMode"],
+            ...(instanceMode === "permanent" ? { lobbyMode: "plugin" } : {}),
+          })
+        }
+        options={[
+          { id: "temporary", name: t("temporary") },
+          { id: "permanent", name: t("permanent") },
+        ]}
+      />
+      <Choice
         label={t("lobbyMode")}
         value={draft.lobbyMode ?? "vestri"}
         onChange={(lobbyMode) =>
@@ -203,7 +223,7 @@ function MinigameSettings({
           })
         }
         options={[
-          { id: "vestri", name: t("vestriLobby") },
+          { id: "vestri", name: t("vestriLobby"), disabled: permanent },
           { id: "plugin", name: t("pluginLobby") },
         ]}
       />
@@ -226,7 +246,19 @@ function MinigameSettings({
           )
           .map((field) => (
             <label key={field.key} className="min-w-0 space-y-2 text-sm">
-              <span>{t(field.key)}</span>
+              <span
+                title={
+                  field.key === "readyServers" && permanent
+                    ? t("minimumRunningServersHint")
+                    : undefined
+                }
+              >
+                {t(
+                  field.key === "readyServers" && permanent
+                    ? "minimumRunningServers"
+                    : field.key,
+                )}
+              </span>
               <Input
                 type="number"
                 inputMode="numeric"
@@ -381,7 +413,8 @@ function MinigameSettings({
           </Button>
         </fieldset>
       ) : null}
-      <fieldset className="min-w-0 space-y-4 border-t pt-3">
+      {!permanent ? (
+        <fieldset className="min-w-0 space-y-4 border-t pt-3">
         <legend className="px-1 text-sm font-medium">{t("end")}</legend>
         <label className="block space-y-2 text-sm">
           <span>{t("logPattern")}</span>
@@ -419,7 +452,8 @@ function MinigameSettings({
           />
         </label>
         <p className="text-sm text-muted-foreground">{t("endOutcome")}</p>
-      </fieldset>
+        </fieldset>
+      ) : null}
     </div>
   );
 }
@@ -427,7 +461,9 @@ function MinigameSettings({
 function MinigameSummary({ spec }: { spec: MinigameSpec }) {
   const t = useTranslations("NodeDetailsPage.minecraftTemplates.minigame");
   const pluginLobby = spec.lobbyMode === "plugin";
+  const permanent = spec.instanceMode === "permanent";
   const fields = [
+    [t("instanceMode"), t(permanent ? "permanent" : "temporary")],
     [t("lobbyMode"), t(pluginLobby ? "pluginLobby" : "vestriLobby")],
     [t("teams"), spec.teams.length ? spec.teams.join(", ") : t("noTeams")],
     ...(spec.teams.length ? [[t("teamSize"), spec.teamSize]] : []),
@@ -435,13 +471,17 @@ function MinigameSummary({ spec }: { spec: MinigameSpec }) {
       t(pluginLobby ? "maxPlayers" : "players"),
       pluginLobby ? spec.maxPlayers : `${spec.minPlayers} - ${spec.maxPlayers}`,
     ],
-    [t("readyServers"), spec.readyServers],
+    [t(permanent ? "minimumRunningServers" : "readyServers"), spec.readyServers],
     [t("readyTrigger"), t(spec.lifecycle.ready.trigger)],
     [t("joinTimeout"), spec.joinTimeout],
-    [t("logPattern"), spec.lifecycle.end.logPattern || t("notSet")],
-    [t("whenEmpty"), t(spec.lifecycle.end.whenEmpty ? "enabled" : "disabled")],
-    ...(spec.lifecycle.end.whenEmpty
-      ? [[t("emptyGrace"), spec.lifecycle.end.emptyGrace]]
+    ...(!permanent
+      ? [
+          [t("logPattern"), spec.lifecycle.end.logPattern || t("notSet")],
+          [t("whenEmpty"), t(spec.lifecycle.end.whenEmpty ? "enabled" : "disabled")],
+          ...(spec.lifecycle.end.whenEmpty
+            ? [[t("emptyGrace"), spec.lifecycle.end.emptyGrace]]
+            : []),
+        ]
       : []),
   ];
   return (
@@ -477,7 +517,9 @@ function MinigameSummary({ spec }: { spec: MinigameSpec }) {
           </ol>
         </div>
       ) : null}
-      <p className="mt-2 text-muted-foreground">{t("endOutcome")}</p>
+      {!permanent ? (
+        <p className="mt-2 text-muted-foreground">{t("endOutcome")}</p>
+      ) : null}
     </details>
   );
 }
@@ -1235,7 +1277,7 @@ export default function MinecraftTemplateManager({
           aria-describedby={undefined}
         >
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="pr-8">
               {t("create")} · {t(view)}
             </DialogTitle>
           </DialogHeader>

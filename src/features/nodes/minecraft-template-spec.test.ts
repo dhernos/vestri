@@ -47,6 +47,7 @@ test("minigames serialize the complete contract and ordered repetition scopes", 
       mode: "minigames",
       minigame: {
         lobbyMode: "vestri",
+        instanceMode: "temporary",
         teams: ["red", "blue"],
         teamSize: 2,
         minPlayers: 2,
@@ -330,10 +331,11 @@ test("both locales include matching minigame labels and validation messages", ()
     assert.equal("immediateIfZero" in catalog.minigame, false);
     for (const key of ["mode", "playerMode", "minigameMode"])
       assert.equal(typeof catalog[key], "string");
-    for (const key of ["lobbyMode", "vestriLobby", "pluginLobby", "noTeams"])
+    for (const key of ["lobbyMode", "vestriLobby", "pluginLobby", "noTeams", "instanceMode", "temporary", "permanent", "minimumRunningServers", "minimumRunningServersHint"])
       assert.equal(typeof catalog.minigame[key], "string");
     for (const key of [
       "maxInstances",
+      "instanceMode",
       "numbers",
       "players",
       "teams",
@@ -499,4 +501,88 @@ test("removing and restoring teams surfaces stale scopes without mutating action
   assert.ok("spec" in buildMinigame({ ...draft, lobbyMode: "plugin" }));
   assert.ok("spec" in buildMinigame({ ...draft, teams: "red,blue" }));
   assert.equal(draft.actions[0].forEach, "team");
+});
+
+test("legacy lifetime defaults to temporary for FFA and plugin lobbies", () => {
+  for (const lobbyMode of [undefined, "vestri", "plugin"] as const) {
+    const result = buildMinigame({ lobbyMode, instanceMode: undefined });
+    assert.ok("spec" in result);
+    assert.equal(result.spec.minigame?.instanceMode, "temporary");
+    assert.equal(result.spec.minigame?.lifecycle.end.deleteServer, true);
+    assert.equal(result.spec.minigame?.lifecycle.end.whenEmpty, true);
+  }
+});
+
+test("permanent instances require an explicit plugin lobby", () => {
+  for (const lobbyMode of [undefined, "vestri"] as const)
+    assert.deepEqual(buildMinigame({ instanceMode: "permanent", lobbyMode }), {
+      error: "instanceMode",
+    });
+  assert.deepEqual(
+    buildMinigame({ instanceMode: "invalid" as Settings.MinigameDraft["instanceMode"] }),
+    { error: "instanceMode" },
+  );
+});
+
+test("permanent FFA ignores all hidden termination settings and supports on-demand instances", () => {
+  const result = buildMinigame({
+    instanceMode: "permanent",
+    lobbyMode: "plugin",
+    minPlayers: "invalid",
+    teamSize: "invalid",
+    actions: [{ command: "/bad {team}" }],
+    logPattern: "bad\n" + "a".repeat(513),
+    whenEmpty: false,
+    emptyGrace: "invalid",
+    readyServers: "0",
+  });
+  assert.ok("spec" in result);
+  assert.equal(result.spec.minigame?.instanceMode, "permanent");
+  assert.equal(result.spec.minigame?.readyServers, 0);
+  assert.deepEqual(result.spec.minigame?.lifecycle.end, {
+    whenEmpty: false,
+    emptyGrace: "10s",
+    returnPlayersTo: "lobby",
+    deleteServer: false,
+  });
+  assert.deepEqual(result.spec.minigame?.lifecycle.onAllJoined, []);
+});
+
+test("permanent player, team, minimum running server and timeout constraints remain", () => {
+  for (const [patch, error] of [
+    [{ maxPlayers: "0" }, "numbers"],
+    [{ maxPlayers: "101" }, "numbers"],
+    [{ maxPlayers: "1.5" }, "numbers"],
+    [{ teams: "red", teamSize: "0" }, "numbers"],
+    [{ teams: "red" }, "capacity"],
+    [{ teams: "red,red" }, "teams"],
+    [{ readyServers: "6" }, "readyServers"],
+    [{ readyServers: "-1" }, "readyServers"],
+    [{ readyServers: "1.5" }, "readyServers"],
+    [{ joinTimeout: "601" }, "duration"],
+  ] as const)
+    assert.deepEqual(buildMinigame({ lobbyMode: "plugin", instanceMode: "permanent", ...patch }), { error });
+  assert.ok("spec" in buildMinigame({ lobbyMode: "plugin", instanceMode: "permanent", teams: "red,blue", readyServers: "5" }));
+});
+
+test("lifetime switching retains hidden draft settings and restores temporary payloads", () => {
+  const draft = {
+    ...newMinigameDraft(),
+    lobbyMode: "plugin" as const,
+    logPattern: " Finished ",
+    whenEmpty: true,
+    emptyGrace: "42",
+    minPlayers: "7",
+    actions: [{ command: " setup " }],
+  };
+  const before = structuredClone(draft);
+  const temporary = buildMinigame(draft);
+  const permanent = buildMinigame({ ...draft, instanceMode: "permanent" });
+  assert.ok("spec" in permanent);
+  assert.equal(permanent.spec.minigame?.lifecycle.end.whenEmpty, false);
+  assert.deepEqual(draft, before);
+  assert.deepEqual(buildMinigame({ ...draft, instanceMode: "temporary" }), temporary);
+  assert.deepEqual(buildMinigame({ ...draft, emptyGrace: "invalid" }), { error: "duration" });
+  assert.deepEqual(buildMinigame({ ...draft, whenEmpty: false, logPattern: "" }), { error: "end" });
+  assert.deepEqual(buildTemplateSettings("player", "5", { ...draft, instanceMode: "permanent", lobbyMode: "vestri", readyServers: "invalid" }), { spec: { maxInstances: 5 } });
 });

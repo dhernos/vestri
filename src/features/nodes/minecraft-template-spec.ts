@@ -2,6 +2,7 @@ export type TemplateMode = "player" | "minigames";
 export type SetupAction = { command: string; forEach?: "team" | "player" };
 export type MinigameSpec = {
   lobbyMode?: "vestri" | "plugin";
+  instanceMode?: "temporary" | "permanent";
   teams: string[];
   teamSize?: number;
   minPlayers: number;
@@ -16,12 +17,13 @@ export type MinigameSpec = {
       whenEmpty: boolean;
       emptyGrace: string;
       returnPlayersTo: "lobby";
-      deleteServer: true;
+      deleteServer: boolean;
     };
   };
 };
 export type MinigameDraft = {
   lobbyMode?: "vestri" | "plugin";
+  instanceMode?: "temporary" | "permanent";
   teams: string;
   teamSize: string;
   minPlayers: string;
@@ -36,6 +38,7 @@ export type MinigameDraft = {
 };
 export type TemplateValidationError =
   | "maxInstances"
+  | "instanceMode"
   | "numbers"
   | "players"
   | "teams"
@@ -49,6 +52,7 @@ export type TemplateValidationError =
 export function newMinigameDraft(): MinigameDraft {
   return {
     lobbyMode: "vestri",
+    instanceMode: "temporary",
     teams: "",
     teamSize: "1",
     minPlayers: "2",
@@ -126,6 +130,13 @@ export function buildTemplateSettings(
   if (mode === "player") return { spec: { maxInstances } };
 
   const lobbyMode = draft.lobbyMode ?? "vestri";
+  const instanceMode = draft.instanceMode ?? "temporary";
+  const permanent = instanceMode === "permanent";
+  if (
+    !["temporary", "permanent"].includes(instanceMode) ||
+    (permanent && lobbyMode !== "plugin")
+  )
+    return { error: "instanceMode" };
   const teams = draft.teams
     .split(",")
     .map((team) => team.trim())
@@ -154,7 +165,7 @@ export function buildTemplateSettings(
   if (readyServers === undefined || readyServers > maxInstances)
     return { error: "readyServers" };
   const joinTimeout = integer(draft.joinTimeout, 1);
-  const emptyGrace = integer(draft.emptyGrace, 1);
+  const emptyGrace = permanent ? 10 : integer(draft.emptyGrace, 1);
   if (
     joinTimeout === undefined ||
     emptyGrace === undefined ||
@@ -176,11 +187,12 @@ export function buildTemplateSettings(
     actions.some((action) => !validSetupAction(action))
   )
     return { error: "actions" };
-  const logPattern = draft.logPattern.trim();
+  const logPattern = permanent ? "" : draft.logPattern.trim();
   if (
-    new TextEncoder().encode(logPattern).length > 512 ||
-    hasControlCharacters(draft.logPattern) ||
-    (!logPattern && !draft.whenEmpty)
+    !permanent &&
+    (new TextEncoder().encode(logPattern).length > 512 ||
+      hasControlCharacters(draft.logPattern) ||
+      (!logPattern && !draft.whenEmpty))
   )
     return { error: "end" };
 
@@ -190,6 +202,7 @@ export function buildTemplateSettings(
       mode: "minigames",
       minigame: {
         lobbyMode,
+        instanceMode,
         teams,
         ...(teams.length ? { teamSize } : {}),
         minPlayers,
@@ -204,10 +217,10 @@ export function buildTemplateSettings(
           })),
           end: {
             ...(logPattern ? { logPattern } : {}),
-            whenEmpty: draft.whenEmpty,
+            whenEmpty: permanent ? false : draft.whenEmpty,
             emptyGrace: `${emptyGrace}s`,
             returnPlayersTo: "lobby",
-            deleteServer: true,
+            deleteServer: !permanent,
           },
         },
       },
