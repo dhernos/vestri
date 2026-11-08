@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 
 type PluginRelease = { version: string; filename: string };
+type PluginTemplate = { id: string; name: string; platform: string; version: string };
 type LinkedPlugin = {
   id: string;
   source: { provider: string; project: string; version?: string };
@@ -28,9 +29,10 @@ type LinkedPlugin = {
   checkedAt: string;
   checkError?: string;
   pending: boolean;
+  targetRefs?: string[];
 };
 
-async function pluginResponse(response: Response): Promise<LinkedPlugin[]> {
+async function pluginResponse(response: Response): Promise<{ plugins: LinkedPlugin[]; templates?: PluginTemplate[]; servers?: PluginTemplate[] }> {
   if (!response.ok) {
     const raw = await response.text();
     try {
@@ -41,8 +43,7 @@ async function pluginResponse(response: Response): Promise<LinkedPlugin[]> {
       throw error;
     }
   }
-  const data = (await response.json()) as { plugins: LinkedPlugin[] };
-  return data.plugins;
+  return response.json();
 }
 
 export default function LinkedPaperPlugins({
@@ -56,6 +57,10 @@ export default function LinkedPaperPlugins({
 }) {
   const t = useTranslations("ServerPage.groupFiles.linked");
   const [plugins, setPlugins] = useState<LinkedPlugin[]>([]);
+  const [templates, setTemplates] = useState<PluginTemplate[]>([]);
+  const [servers, setServers] = useState<PluginTemplate[]>([]);
+  const [serverIds, setServerIds] = useState<string[]>([]);
+  const [templateIds, setTemplateIds] = useState<string[]>([]);
   const [url, setURL] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState("");
@@ -77,7 +82,9 @@ export default function LinkedPaperPlugins({
         });
         const loaded = await pluginResponse(response);
         if (!controller.signal.aborted) {
-          setPlugins(loaded);
+          setPlugins(loaded.plugins);
+          setTemplates(loaded.templates ?? []);
+          setServers(loaded.servers ?? []);
           setError("");
         }
       } catch (failure) {
@@ -105,7 +112,10 @@ export default function LinkedPaperPlugins({
         credentials: "include",
         cache: "no-store",
       });
-      setPlugins(await pluginResponse(response));
+      const loaded = await pluginResponse(response);
+      setPlugins(loaded.plugins);
+      setTemplates(loaded.templates ?? []);
+      setServers(loaded.servers ?? []);
       setNotice(t("refreshed"));
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : t("error"));
@@ -130,11 +140,12 @@ export default function LinkedPaperPlugins({
           credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(
-            action === "import" ? { url } : { id: plugin?.id },
+            action === "import" ? { url } : { id: plugin?.id, ...(action === "update" ? { templateIds, serverIds } : {}) },
           ),
         },
       );
-      setPlugins(await pluginResponse(response));
+      const loaded = await pluginResponse(response);
+      setPlugins(loaded.plugins);
       setConfirmation(null);
       if (action === "import") setURL("");
       setNotice(
@@ -153,7 +164,10 @@ export default function LinkedPaperPlugins({
           credentials: "include",
           cache: "no-store",
         });
-        setPlugins(await pluginResponse(response));
+        const loaded = await pluginResponse(response);
+        setPlugins(loaded.plugins);
+        setTemplates(loaded.templates ?? []);
+        setServers(loaded.servers ?? []);
       } catch {
         setNotice(t("reloadAfterError"));
       }
@@ -162,6 +176,10 @@ export default function LinkedPaperPlugins({
       onChange();
     }
   };
+
+  const selectableServers = servers.filter((server) =>
+    !confirmation?.plugin.targetRefs || confirmation.plugin.targetRefs.includes(server.id),
+  );
 
   return (
     <section className="min-w-0 space-y-3 border-b pb-4">
@@ -280,7 +298,11 @@ export default function LinkedPaperPlugins({
                   size="sm"
                   variant="outline"
                   disabled={Boolean(busy)}
-                  onClick={() => setConfirmation({ plugin, action: "update" })}
+                  onClick={() => {
+                    setTemplateIds([]);
+                    setServerIds([]);
+                    setConfirmation({ plugin, action: "update" });
+                  }}
                 >
                   {busy === plugin.id ? (
                     <LoaderCircle className="animate-spin" />
@@ -310,7 +332,7 @@ export default function LinkedPaperPlugins({
           if (!open && !busy) setConfirmation(null);
         }}
       >
-        <DialogContent>
+        <DialogContent className="max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {t(
@@ -328,6 +350,73 @@ export default function LinkedPaperPlugins({
               )}
             </DialogDescription>
           </DialogHeader>
+          {confirmation?.action === "update" ? (
+            <fieldset disabled={Boolean(busy)} className="min-w-0 space-y-3">
+              <legend className="mb-2 text-sm font-medium">{t("servers")}</legend>
+              {selectableServers.length ? (
+                <>
+                  <label className="flex min-w-0 items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="shrink-0"
+                      checked={serverIds.length === selectableServers.length}
+                      onChange={(event) => setServerIds(event.target.checked ? selectableServers.map((server) => server.id) : [])}
+                    />
+                    <span className="min-w-0 wrap-break-word">{t("selectAllServers")}</span>
+                  </label>
+                  <div className="max-h-40 space-y-2 overflow-y-auto">
+                    {selectableServers.map((server) => (
+                      <label key={server.id} className="flex min-w-0 items-start gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          className="mt-1 shrink-0"
+                          checked={serverIds.includes(server.id)}
+                          onChange={(event) => setServerIds((selected) => event.target.checked ? [...selected, server.id] : selected.filter((id) => id !== server.id))}
+                        />
+                        <span className="min-w-0 wrap-break-word">
+                          {server.name}
+                          <span className="block text-xs text-muted-foreground">{server.platform} {server.version}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </>
+              ) : <p className="text-sm text-muted-foreground">{t("noServers")}</p>}
+            </fieldset>
+          ) : null}
+          {confirmation?.action === "update" ? (
+            <fieldset disabled={Boolean(busy)} className="min-w-0 space-y-3">
+              <legend className="mb-2 text-sm font-medium">{t("templates")}</legend>
+              {templates.length ? (
+                <>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={templateIds.length === templates.length}
+                      onChange={(event) => setTemplateIds(event.target.checked ? templates.map((template) => template.id) : [])}
+                    />
+                    {t("selectAllTemplates")}
+                  </label>
+                  <div className="max-h-60 space-y-2 overflow-y-auto">
+                    {templates.map((template) => (
+                      <label key={template.id} className="flex min-w-0 items-start gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          className="mt-1 shrink-0"
+                          checked={templateIds.includes(template.id)}
+                          onChange={(event) => setTemplateIds((selected) => event.target.checked ? [...selected, template.id] : selected.filter((id) => id !== template.id))}
+                        />
+                        <span className="min-w-0 wrap-break-word">
+                          {template.name}
+                          <span className="block text-xs text-muted-foreground">{template.platform} {template.version}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </>
+              ) : <p className="text-sm text-muted-foreground">{t("noTemplates")}</p>}
+            </fieldset>
+          ) : null}
           <DialogFooter>
             <Button
               variant="outline"
