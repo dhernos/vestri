@@ -168,6 +168,11 @@ function MinigameSettings({
   onChange: (draft: MinigameFormDraft) => void;
 }) {
   const t = useTranslations("NodeDetailsPage.minecraftTemplates.minigame");
+  const pluginLobby = draft.lobbyMode === "plugin";
+  const hasTeams = draft.teams.split(",").some((team) => team.trim());
+  const staleTeamActions = !hasTeams && draft.actions.some(
+    (action) => action.forEach === "team" || action.command.includes("{team}"),
+  );
   const numericFields = [
     { key: "teamSize", min: 1, max: 100 },
     { key: "minPlayers", min: 1, max: 100 },
@@ -185,10 +190,20 @@ function MinigameSettings({
 
   return (
     <div className="min-w-0 space-y-4 border-t pt-4">
+      <Choice
+        label={t("lobbyMode")}
+        value={draft.lobbyMode ?? "vestri"}
+        onChange={(lobbyMode) =>
+          onChange({ ...draft, lobbyMode: lobbyMode as MinigameDraft["lobbyMode"] })
+        }
+        options={[
+          { id: "vestri", name: t("vestriLobby") },
+          { id: "plugin", name: t("pluginLobby") },
+        ]}
+      />
       <label className="block space-y-2 text-sm">
         <span>{t("teams")}</span>
         <Input
-          required
           value={draft.teams}
           placeholder={t("teamsPlaceholder")}
           onChange={(event) =>
@@ -197,7 +212,10 @@ function MinigameSettings({
         />
       </label>
       <div className="grid min-w-0 gap-4 sm:grid-cols-2">
-        {numericFields.map((field) => (
+        {numericFields.filter((field) =>
+          (field.key !== "teamSize" || hasTeams) &&
+          (field.key !== "minPlayers" || !pluginLobby),
+        ).map((field) => (
           <label key={field.key} className="min-w-0 space-y-2 text-sm">
             <span>{t(field.key)}</span>
             <Input
@@ -229,8 +247,11 @@ function MinigameSettings({
           ]}
         />
       </div>
-      <fieldset className="min-w-0 space-y-3 border-t pt-3">
+      {!pluginLobby ? <fieldset className="min-w-0 space-y-3 border-t pt-3">
         <legend className="px-1 text-sm font-medium">{t("actions")}</legend>
+        {staleTeamActions ? (
+          <p role="alert" className="text-sm text-destructive">{t("errors.teamActions")}</p>
+        ) : null}
         <ol className="min-w-0 divide-y">
           {draft.actions.map((action, index) => (
             <li key={action.id} className="min-w-0 space-y-2 py-3 first:pt-0">
@@ -319,7 +340,7 @@ function MinigameSettings({
                   { id: "once", name: t("once") },
                   { id: "team", name: t("perTeam") },
                   { id: "player", name: t("perPlayer") },
-                ]}
+                ].filter((option) => option.id !== "team" || hasTeams || action.forEach === "team")}
               />
             </li>
           ))}
@@ -341,7 +362,7 @@ function MinigameSettings({
           <Plus />
           {t("addAction")}
         </Button>
-      </fieldset>
+      </fieldset> : null}
       <fieldset className="min-w-0 space-y-4 border-t pt-3">
         <legend className="px-1 text-sm font-medium">{t("end")}</legend>
         <label className="block space-y-2 text-sm">
@@ -387,10 +408,12 @@ function MinigameSettings({
 
 function MinigameSummary({ spec }: { spec: MinigameSpec }) {
   const t = useTranslations("NodeDetailsPage.minecraftTemplates.minigame");
+  const pluginLobby = spec.lobbyMode === "plugin";
   const fields = [
+    [t("lobbyMode"), t(pluginLobby ? "pluginLobby" : "vestriLobby")],
     [t("teams"), spec.teams.length ? spec.teams.join(", ") : t("noTeams")],
-    [t("teamSize"), spec.teamSize],
-    [t("players"), `${spec.minPlayers} - ${spec.maxPlayers}`],
+    ...(spec.teams.length ? [[t("teamSize"), spec.teamSize]] : []),
+    [t(pluginLobby ? "maxPlayers" : "players"), pluginLobby ? spec.maxPlayers : `${spec.minPlayers} - ${spec.maxPlayers}`],
     [t("readyServers"), spec.readyServers],
     [t("readyTrigger"), t(spec.lifecycle.ready.trigger)],
     [t("joinTimeout"), spec.joinTimeout],
@@ -413,7 +436,7 @@ function MinigameSummary({ spec }: { spec: MinigameSpec }) {
           </div>
         ))}
       </dl>
-      {spec.lifecycle.onAllJoined.length ? (
+      {!pluginLobby && spec.lifecycle.onAllJoined.length ? (
         <div className="mt-2">
           <p className="text-muted-foreground">{t("actions")}</p>
           <ol className="list-inside list-decimal space-y-1">

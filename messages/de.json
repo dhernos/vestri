@@ -1055,7 +1055,10 @@
       "minigameMode": "Minispiel",
       "minigame": {
         "settings": "Minispiel-Einstellungen",
-        "teams": "Teams (1-100 IDs, kommagetrennt)",
+        "lobbyMode": "Lobby-Modus",
+        "vestriLobby": "Vestri-Spielersuche",
+        "pluginLobby": "Spielplugin-Lobby",
+        "teams": "Teams (optional, bis zu 100 IDs, kommagetrennt)",
         "teamsPlaceholder": "rot, blau",
         "noTeams": "Keine Teams",
         "teamSize": "Spieler pro Team",
@@ -1090,11 +1093,12 @@
           "maxInstances": "Die maximale Instanzzahl muss eine ganze Zahl von 1 bis 100 sein.",
           "numbers": "Teamgr\u00f6\u00dfe und Spielerzahlen m\u00fcssen ganze Zahlen von 1 bis 100 sein.",
           "players": "Die minimale Spielerzahl darf die maximale Spielerzahl nicht \u00fcberschreiten.",
-          "teams": "Gib 1-100 eindeutige Team-IDs mit je 1-64 ASCII-Buchstaben, Ziffern, Unterstrichen oder Bindestrichen an. Die ID muss mit einem Buchstaben oder einer Ziffer beginnen.",
+          "teams": "Lass Teams f\u00fcr Free-for-all leer oder gib bis zu 100 eindeutige Team-IDs mit je 1-64 ASCII-Buchstaben, Ziffern, Unterstrichen oder Bindestrichen an. Die ID muss mit einem Buchstaben oder einer Ziffer beginnen.",
           "capacity": "Die maximale Spielerzahl darf die Anzahl der Teams multipliziert mit den Spielern pro Team nicht \u00fcberschreiten.",
           "readyServers": "Bereite Server m\u00fcssen eine ganze Zahl von 0 bis zur maximalen Instanzzahl sein.",
           "duration": "Beitrittszeitlimit und Wartezeit bei leerem Server m\u00fcssen ganze Zahlen von 1 bis 600 Sekunden sein.",
           "actions": "Nutze h\u00f6chstens 100 Befehle mit je 1-1024 Bytes, ohne f\u00fchrenden Schr\u00e4gstrich oder Steuerzeichen. Nur team, player, uuid und matchId in geschlossenen geschweiften Klammern sind erlaubt; player/uuid erfordern Wiederholung pro Spieler, team pro Team oder Spieler.",
+          "teamActions": "Aktionen pro Team und '{team}'-Platzhalter erfordern Teams. F\u00fcge Teams hinzu oder \u00e4ndere die Startaktionen.",
           "end": "Lege ein End-Logmuster fest oder aktiviere die Erkennung leerer Server. Das Muster darf h\u00f6chstens 512 Bytes und keine Steuerzeichen enthalten; die Regex-Syntax wird vom Server gepr\u00fcft."
         }
       },

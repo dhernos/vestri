@@ -1,8 +1,9 @@
 export type TemplateMode = "player" | "minigames";
 export type SetupAction = { command: string; forEach?: "team" | "player" };
 export type MinigameSpec = {
+  lobbyMode?: "vestri" | "plugin";
   teams: string[];
-  teamSize: number;
+  teamSize?: number;
   minPlayers: number;
   maxPlayers: number;
   joinTimeout: string;
@@ -20,6 +21,7 @@ export type MinigameSpec = {
   };
 };
 export type MinigameDraft = {
+  lobbyMode?: "vestri" | "plugin";
   teams: string;
   teamSize: string;
   minPlayers: string;
@@ -41,11 +43,13 @@ export type TemplateValidationError =
   | "readyServers"
   | "duration"
   | "actions"
+  | "teamActions"
   | "end";
 
 export function newMinigameDraft(): MinigameDraft {
   return {
-    teams: "red, blue",
+    lobbyMode: "vestri",
+    teams: "",
     teamSize: "1",
     minPlayers: "2",
     maxPlayers: "2",
@@ -121,31 +125,31 @@ export function buildTemplateSettings(
     return { error: "maxInstances" };
   if (mode === "player") return { spec: { maxInstances } };
 
-  const teamSize = integer(draft.teamSize, 1);
-  const minPlayers = integer(draft.minPlayers, 1);
+  const lobbyMode = draft.lobbyMode ?? "vestri";
+  const teams = draft.teams
+    .split(",")
+    .map((team) => team.trim())
+    .filter(Boolean);
+  const teamSize = teams.length ? integer(draft.teamSize, 1) : undefined;
+  const minPlayers = lobbyMode === "plugin" ? 1 : integer(draft.minPlayers, 1);
   const maxPlayers = integer(draft.maxPlayers, 1);
   if (
-    teamSize === undefined ||
+    (teams.length > 0 && (teamSize === undefined || teamSize > 100)) ||
     minPlayers === undefined ||
     maxPlayers === undefined ||
-    teamSize > 100 ||
     minPlayers > 100 ||
     maxPlayers > 100
   )
     return { error: "numbers" };
   if (minPlayers > maxPlayers) return { error: "players" };
-  const teams = draft.teams
-    .split(",")
-    .map((team) => team.trim())
-    .filter(Boolean);
   if (
-    teams.length < 1 ||
     teams.length > 100 ||
     new Set(teams).size !== teams.length ||
     teams.some((team) => !/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(team))
   )
     return { error: "teams" };
-  if (maxPlayers > teams.length * teamSize) return { error: "capacity" };
+  if (teams.length && maxPlayers > teams.length * teamSize!)
+    return { error: "capacity" };
   const readyServers = integer(draft.readyServers, 0);
   if (readyServers === undefined || readyServers > maxInstances)
     return { error: "readyServers" };
@@ -158,10 +162,15 @@ export function buildTemplateSettings(
     emptyGrace > 600
   )
     return { error: "duration" };
+  const actions = lobbyMode === "plugin" ? [] : draft.actions;
   if (
-    draft.actions.length > 100 ||
-    draft.actions.some((action) => !validSetupAction(action))
+    !teams.length &&
+    actions.some(
+      (action) => action.forEach === "team" || action.command.includes("{team}"),
+    )
   )
+    return { error: "teamActions" };
+  if (actions.length > 100 || actions.some((action) => !validSetupAction(action)))
     return { error: "actions" };
   const logPattern = draft.logPattern.trim();
   if (
@@ -176,15 +185,16 @@ export function buildTemplateSettings(
       maxInstances,
       mode: "minigames",
       minigame: {
+        lobbyMode,
         teams,
-        teamSize,
+        ...(teams.length ? { teamSize } : {}),
         minPlayers,
         maxPlayers,
         joinTimeout: `${joinTimeout}s`,
         readyServers,
         lifecycle: {
           ready: { trigger: draft.readyTrigger },
-          onAllJoined: draft.actions.map((action) => ({
+          onAllJoined: actions.map((action) => ({
             command: action.command.trim(),
             ...(action.forEach ? { forEach: action.forEach } : {}),
           })),

@@ -1055,7 +1055,10 @@
       "minigameMode": "Minigame",
       "minigame": {
         "settings": "Minigame settings",
-        "teams": "Teams (1-100 IDs, comma-separated)",
+        "lobbyMode": "Lobby mode",
+        "vestriLobby": "Vestri matchmaking",
+        "pluginLobby": "Game plugin lobby",
+        "teams": "Teams (optional, up to 100 IDs, comma-separated)",
         "teamsPlaceholder": "red, blue",
         "noTeams": "No teams",
         "teamSize": "Players per team",
@@ -1090,11 +1093,12 @@
           "maxInstances": "Maximum concurrent instances must be a whole number from 1 to 100.",
           "numbers": "Team size and player limits must be whole numbers from 1 to 100.",
           "players": "Minimum players cannot exceed maximum players.",
-          "teams": "Provide 1-100 unique team IDs, each 1-64 ASCII letters, digits, underscores or hyphens, starting with a letter or digit.",
+          "teams": "Leave teams empty for free-for-all, or provide up to 100 unique team IDs, each 1-64 ASCII letters, digits, underscores or hyphens, starting with a letter or digit.",
           "capacity": "Maximum players cannot exceed the number of teams multiplied by players per team.",
           "readyServers": "Ready servers must be a whole number from 0 to the maximum concurrent instances.",
           "duration": "Join timeout and empty-server grace must be whole numbers from 1 to 600 seconds.",
           "actions": "Use at most 100 commands of 1-1024 bytes, without a leading slash or control characters. Only team, player, uuid and matchId placeholders in matched braces are allowed; player/uuid require per-player repetition, team requires per-team or per-player repetition.",
+          "teamActions": "Per-team actions and '{team}' placeholders require teams. Add teams or change the startup actions.",
           "end": "Set an end log pattern or enable empty-server detection. The pattern must be at most 512 bytes with no control characters; regex syntax is validated by the server."
         }
       },
