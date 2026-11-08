@@ -109,7 +109,10 @@ test("invalid numbers, caps, teams, durations and missing termination are reject
     [{ whenEmpty: false }, "end"],
     [{ actions: [{ command: " " }] }, "actions"],
     [{ actions: [{ command: "one\ntwo" }] }, "actions"],
-    [{ teams: "", actions: [{ command: "assign", forEach: "team" }] }, "teamActions"],
+    [
+      { teams: "", actions: [{ command: "assign", forEach: "team" }] },
+      "teamActions",
+    ],
   ];
   for (const [patch, error] of cases)
     assert.deepEqual(
@@ -193,7 +196,11 @@ test("team IDs, counts, player limits and timeouts enforce contract boundaries",
 
 test("commands enforce byte limits, safe syntax and placeholder repetition scopes", () => {
   const check = (actions: Settings.SetupAction[]) =>
-    buildTemplateSettings("minigames", "5", { ...newMinigameDraft(), teams: "red, blue", actions });
+    buildTemplateSettings("minigames", "5", {
+      ...newMinigameDraft(),
+      teams: "red, blue",
+      actions,
+    });
   for (const command of [
     "",
     " ",
@@ -378,19 +385,30 @@ test("FFA still enforces Vestri minimum and maximum player limits", () => {
 });
 
 test("FFA rejects per-team repetition even without placeholders", () => {
-  assert.deepEqual(buildMinigame({ actions: [{ command: "setup", forEach: "team" }] }), { error: "teamActions" });
+  assert.deepEqual(
+    buildMinigame({ actions: [{ command: "setup", forEach: "team" }] }),
+    { error: "teamActions" },
+  );
 });
 
 test("FFA rejects team placeholders for once and per-player commands", () => {
   for (const forEach of [undefined, "player"] as const)
-    assert.deepEqual(buildMinigame({ actions: [{ command: "assign {team}", forEach }] }), { error: "teamActions" });
+    assert.deepEqual(
+      buildMinigame({ actions: [{ command: "assign {team}", forEach }] }),
+      { error: "teamActions" },
+    );
 });
 
 test("FFA supports once and per-player commands without team placeholders", () => {
-  assert.ok("spec" in buildMinigame({ actions: [
-    { command: "setup {matchId}" },
-    { command: "join {player} {uuid}", forEach: "player" },
-  ] }));
+  assert.ok(
+    "spec" in
+      buildMinigame({
+        actions: [
+          { command: "setup {matchId}" },
+          { command: "join {player} {uuid}", forEach: "player" },
+        ],
+      }),
+  );
 });
 
 test("nonempty teams retain capacity and identifier constraints", () => {
@@ -401,7 +419,13 @@ test("nonempty teams retain capacity and identifier constraints", () => {
 
 test("nonempty teams allow team placeholders in team and player scopes", () => {
   for (const forEach of ["team", "player"] as const)
-    assert.ok("spec" in buildMinigame({ teams: "red,blue", actions: [{ command: "assign {team}", forEach }] }));
+    assert.ok(
+      "spec" in
+        buildMinigame({
+          teams: "red,blue",
+          actions: [{ command: "assign {team}", forEach }],
+        }),
+    );
 });
 
 test("plugin lobby bypasses retained invalid or high minimums and sends one", () => {
@@ -414,7 +438,13 @@ test("plugin lobby bypasses retained invalid or high minimums and sends one", ()
 });
 
 test("plugin lobby ignores stale startup syntax, team scopes and action count", () => {
-  const result = buildMinigame({ lobbyMode: "plugin", actions: Array.from({ length: 101 }, () => ({ command: "/bad {team}", forEach: "team" as const })) });
+  const result = buildMinigame({
+    lobbyMode: "plugin",
+    actions: Array.from({ length: 101 }, () => ({
+      command: "/bad {team}",
+      forEach: "team" as const,
+    })),
+  });
   assert.ok("spec" in result);
   assert.deepEqual(result.spec.minigame?.lifecycle.onAllJoined, []);
 });
@@ -426,27 +456,45 @@ test("plugin lobby preserves team capacity, maximum and duration validation", ()
     [{ emptyGrace: "0" }, "duration"],
     [{ emptyGrace: "601" }, "duration"],
   ] as const)
-    assert.deepEqual(buildMinigame({ lobbyMode: "plugin", ...patch }), { error });
+    assert.deepEqual(buildMinigame({ lobbyMode: "plugin", ...patch }), {
+      error,
+    });
 });
 
 test("switching lobby mode preserves actions, order, scope and minimum", () => {
-  const draft = { ...newMinigameDraft(), minPlayers: "2", actions: [
-    { command: " setup " },
-    { command: "join {player}", forEach: "player" as const },
-  ] };
+  const draft = {
+    ...newMinigameDraft(),
+    minPlayers: "2",
+    actions: [
+      { command: " setup " },
+      { command: "join {player}", forEach: "player" as const },
+    ],
+  };
   const before = structuredClone(draft);
-  const native = buildTemplateSettings("minigames", "5", { ...draft, lobbyMode: "plugin" });
+  const native = buildTemplateSettings("minigames", "5", {
+    ...draft,
+    lobbyMode: "plugin",
+  });
   assert.ok("spec" in native);
   assert.deepEqual(native.spec.minigame?.lifecycle.onAllJoined, []);
   assert.deepEqual(draft, before);
-  const restored = buildTemplateSettings("minigames", "5", { ...draft, lobbyMode: "vestri" });
+  const restored = buildTemplateSettings("minigames", "5", {
+    ...draft,
+    lobbyMode: "vestri",
+  });
   assert.ok("spec" in restored);
   assert.equal(restored.spec.minigame?.minPlayers, 2);
-  assert.deepEqual(restored.spec.minigame?.lifecycle.onAllJoined, [{ command: "setup" }, draft.actions[1]]);
+  assert.deepEqual(restored.spec.minigame?.lifecycle.onAllJoined, [
+    { command: "setup" },
+    draft.actions[1],
+  ]);
 });
 
 test("removing and restoring teams surfaces stale scopes without mutating actions", () => {
-  const draft = { ...newMinigameDraft(), actions: [{ command: "assign {team}", forEach: "team" as const }] };
+  const draft = {
+    ...newMinigameDraft(),
+    actions: [{ command: "assign {team}", forEach: "team" as const }],
+  };
   assert.deepEqual(buildMinigame(draft), { error: "teamActions" });
   assert.ok("spec" in buildMinigame({ ...draft, lobbyMode: "plugin" }));
   assert.ok("spec" in buildMinigame({ ...draft, teams: "red,blue" }));

@@ -166,11 +166,15 @@ export function buildTemplateSettings(
   if (
     !teams.length &&
     actions.some(
-      (action) => action.forEach === "team" || action.command.includes("{team}"),
+      (action) =>
+        action.forEach === "team" || action.command.includes("{team}"),
     )
   )
     return { error: "teamActions" };
-  if (actions.length > 100 || actions.some((action) => !validSetupAction(action)))
+  if (
+    actions.length > 100 ||
+    actions.some((action) => !validSetupAction(action))
+  )
     return { error: "actions" };
   const logPattern = draft.logPattern.trim();
   if (
