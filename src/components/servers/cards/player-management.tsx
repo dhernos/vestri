@@ -236,10 +236,11 @@ export default function PlayerManagement({ basePath }: { basePath: string }) {
   })).sort((left, right) => left.name.localeCompare(right.name, locale));
   const noCountryData =
     !!data?.available &&
-    (data.countryLookupAvailable === false || (!data.players.some(
-      (entry) => "lastCountry" in entry || "lastLoginCountry" in entry,
-    ) &&
-    !data.attempts.some((entry) => "country" in entry)));
+    (data.countryLookupAvailable === false ||
+      (!data.players.some(
+        (entry) => "lastCountry" in entry || "lastLoginCountry" in entry,
+      ) &&
+        !data.attempts.some((entry) => "country" in entry)));
   const countryFlag = (code?: string) => {
     const name = countryName(code, locale);
     const Flag = isCountryCode(code)
