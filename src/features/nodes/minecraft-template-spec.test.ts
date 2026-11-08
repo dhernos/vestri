@@ -331,7 +331,17 @@ test("both locales include matching minigame labels and validation messages", ()
     assert.equal("immediateIfZero" in catalog.minigame, false);
     for (const key of ["mode", "playerMode", "minigameMode"])
       assert.equal(typeof catalog[key], "string");
-    for (const key of ["lobbyMode", "vestriLobby", "pluginLobby", "noTeams", "instanceMode", "temporary", "permanent", "minimumRunningServers", "minimumRunningServersHint"])
+    for (const key of [
+      "lobbyMode",
+      "vestriLobby",
+      "pluginLobby",
+      "noTeams",
+      "instanceMode",
+      "temporary",
+      "permanent",
+      "minimumRunningServers",
+      "minimumRunningServersHint",
+    ])
       assert.equal(typeof catalog.minigame[key], "string");
     for (const key of [
       "maxInstances",
@@ -519,7 +529,9 @@ test("permanent instances require an explicit plugin lobby", () => {
       error: "instanceMode",
     });
   assert.deepEqual(
-    buildMinigame({ instanceMode: "invalid" as Settings.MinigameDraft["instanceMode"] }),
+    buildMinigame({
+      instanceMode: "invalid" as Settings.MinigameDraft["instanceMode"],
+    }),
     { error: "instanceMode" },
   );
 });
@@ -561,8 +573,23 @@ test("permanent player, team, minimum running server and timeout constraints rem
     [{ readyServers: "1.5" }, "readyServers"],
     [{ joinTimeout: "601" }, "duration"],
   ] as const)
-    assert.deepEqual(buildMinigame({ lobbyMode: "plugin", instanceMode: "permanent", ...patch }), { error });
-  assert.ok("spec" in buildMinigame({ lobbyMode: "plugin", instanceMode: "permanent", teams: "red,blue", readyServers: "5" }));
+    assert.deepEqual(
+      buildMinigame({
+        lobbyMode: "plugin",
+        instanceMode: "permanent",
+        ...patch,
+      }),
+      { error },
+    );
+  assert.ok(
+    "spec" in
+      buildMinigame({
+        lobbyMode: "plugin",
+        instanceMode: "permanent",
+        teams: "red,blue",
+        readyServers: "5",
+      }),
+  );
 });
 
 test("lifetime switching retains hidden draft settings and restores temporary payloads", () => {
@@ -581,8 +608,24 @@ test("lifetime switching retains hidden draft settings and restores temporary pa
   assert.ok("spec" in permanent);
   assert.equal(permanent.spec.minigame?.lifecycle.end.whenEmpty, false);
   assert.deepEqual(draft, before);
-  assert.deepEqual(buildMinigame({ ...draft, instanceMode: "temporary" }), temporary);
-  assert.deepEqual(buildMinigame({ ...draft, emptyGrace: "invalid" }), { error: "duration" });
-  assert.deepEqual(buildMinigame({ ...draft, whenEmpty: false, logPattern: "" }), { error: "end" });
-  assert.deepEqual(buildTemplateSettings("player", "5", { ...draft, instanceMode: "permanent", lobbyMode: "vestri", readyServers: "invalid" }), { spec: { maxInstances: 5 } });
+  assert.deepEqual(
+    buildMinigame({ ...draft, instanceMode: "temporary" }),
+    temporary,
+  );
+  assert.deepEqual(buildMinigame({ ...draft, emptyGrace: "invalid" }), {
+    error: "duration",
+  });
+  assert.deepEqual(
+    buildMinigame({ ...draft, whenEmpty: false, logPattern: "" }),
+    { error: "end" },
+  );
+  assert.deepEqual(
+    buildTemplateSettings("player", "5", {
+      ...draft,
+      instanceMode: "permanent",
+      lobbyMode: "vestri",
+      readyServers: "invalid",
+    }),
+    { spec: { maxInstances: 5 } },
+  );
 });

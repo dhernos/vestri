@@ -415,43 +415,43 @@ function MinigameSettings({
       ) : null}
       {!permanent ? (
         <fieldset className="min-w-0 space-y-4 border-t pt-3">
-        <legend className="px-1 text-sm font-medium">{t("end")}</legend>
-        <label className="block space-y-2 text-sm">
-          <span>{t("logPattern")}</span>
-          <Input
-            value={draft.logPattern}
-            onChange={(event) =>
-              onChange({ ...draft, logPattern: event.target.value })
-            }
-          />
-        </label>
-        <Label className="flex items-start gap-2">
-          <input
-            type="checkbox"
-            className="mt-0.5"
-            checked={draft.whenEmpty}
-            onChange={(event) =>
-              onChange({ ...draft, whenEmpty: event.target.checked })
-            }
-          />
-          {t(draft.logPattern.trim() ? "emptyFallback" : "whenEmpty")}
-        </Label>
-        <label className="block space-y-2 text-sm">
-          <span>{t("emptyGrace")}</span>
-          <Input
-            type="number"
-            inputMode="numeric"
-            min={1}
-            max={600}
-            step={1}
-            required
-            value={draft.emptyGrace}
-            onChange={(event) =>
-              onChange({ ...draft, emptyGrace: event.target.value })
-            }
-          />
-        </label>
-        <p className="text-sm text-muted-foreground">{t("endOutcome")}</p>
+          <legend className="px-1 text-sm font-medium">{t("end")}</legend>
+          <label className="block space-y-2 text-sm">
+            <span>{t("logPattern")}</span>
+            <Input
+              value={draft.logPattern}
+              onChange={(event) =>
+                onChange({ ...draft, logPattern: event.target.value })
+              }
+            />
+          </label>
+          <Label className="flex items-start gap-2">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={draft.whenEmpty}
+              onChange={(event) =>
+                onChange({ ...draft, whenEmpty: event.target.checked })
+              }
+            />
+            {t(draft.logPattern.trim() ? "emptyFallback" : "whenEmpty")}
+          </Label>
+          <label className="block space-y-2 text-sm">
+            <span>{t("emptyGrace")}</span>
+            <Input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={600}
+              step={1}
+              required
+              value={draft.emptyGrace}
+              onChange={(event) =>
+                onChange({ ...draft, emptyGrace: event.target.value })
+              }
+            />
+          </label>
+          <p className="text-sm text-muted-foreground">{t("endOutcome")}</p>
         </fieldset>
       ) : null}
     </div>
@@ -471,13 +471,19 @@ function MinigameSummary({ spec }: { spec: MinigameSpec }) {
       t(pluginLobby ? "maxPlayers" : "players"),
       pluginLobby ? spec.maxPlayers : `${spec.minPlayers} - ${spec.maxPlayers}`,
     ],
-    [t(permanent ? "minimumRunningServers" : "readyServers"), spec.readyServers],
+    [
+      t(permanent ? "minimumRunningServers" : "readyServers"),
+      spec.readyServers,
+    ],
     [t("readyTrigger"), t(spec.lifecycle.ready.trigger)],
     [t("joinTimeout"), spec.joinTimeout],
     ...(!permanent
       ? [
           [t("logPattern"), spec.lifecycle.end.logPattern || t("notSet")],
-          [t("whenEmpty"), t(spec.lifecycle.end.whenEmpty ? "enabled" : "disabled")],
+          [
+            t("whenEmpty"),
+            t(spec.lifecycle.end.whenEmpty ? "enabled" : "disabled"),
+          ],
           ...(spec.lifecycle.end.whenEmpty
             ? [[t("emptyGrace"), spec.lifecycle.end.emptyGrace]]
             : []),
