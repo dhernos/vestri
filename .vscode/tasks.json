@@ -14,6 +14,13 @@
 			"command": "pushd /home/luis/code/vestri/vestri && npm run typecheck && npm run lint && node --test src/features/servers/*.test.ts src/components/notifications/api.test.ts",
 			"isBackground": false,
 			"problemMatcher": []
+		},
+		{
+			"label": "Country Player Management Preview",
+			"type": "shell",
+			"command": "pushd /home/luis/code/vestri/vestri && ./node_modules/.bin/next dev --hostname 127.0.0.1 --port 3017",
+			"isBackground": true,
+			"problemMatcher": []
 		}
 	]
 }
