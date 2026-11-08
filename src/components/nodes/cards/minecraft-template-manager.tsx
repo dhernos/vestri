@@ -191,7 +191,9 @@ function MinigameSettings({
           required
           value={draft.teams}
           placeholder={t("teamsPlaceholder")}
-          onChange={(event) => onChange({ ...draft, teams: event.target.value })}
+          onChange={(event) =>
+            onChange({ ...draft, teams: event.target.value })
+          }
         />
       </label>
       <div className="grid min-w-0 gap-4 sm:grid-cols-2">
@@ -237,20 +239,22 @@ function MinigameSettings({
                   {t("commandNumber", { number: index + 1 })}
                 </Label>
                 <div className="flex shrink-0 gap-1">
-                  {([
-                    {
-                      direction: -1,
-                      Icon: ArrowUp,
-                      label: "moveUp",
-                      disabled: index === 0,
-                    },
-                    {
-                      direction: 1,
-                      Icon: ArrowDown,
-                      label: "moveDown",
-                      disabled: index === draft.actions.length - 1,
-                    },
-                  ] as const).map(({ direction, Icon, label, disabled }) => (
+                  {(
+                    [
+                      {
+                        direction: -1,
+                        Icon: ArrowUp,
+                        label: "moveUp",
+                        disabled: index === 0,
+                      },
+                      {
+                        direction: 1,
+                        Icon: ArrowDown,
+                        label: "moveDown",
+                        disabled: index === draft.actions.length - 1,
+                      },
+                    ] as const
+                  ).map(({ direction, Icon, label, disabled }) => (
                     <Button
                       key={direction}
                       type="button"
@@ -262,7 +266,11 @@ function MinigameSettings({
                       onClick={() =>
                         onChange({
                           ...draft,
-                          actions: moveSetupAction(draft.actions, index, direction),
+                          actions: moveSetupAction(
+                            draft.actions,
+                            index,
+                            direction,
+                          ),
                         })
                       }
                     >
@@ -278,7 +286,9 @@ function MinigameSettings({
                     onClick={() =>
                       onChange({
                         ...draft,
-                        actions: draft.actions.filter((entry) => entry.id !== action.id),
+                        actions: draft.actions.filter(
+                          (entry) => entry.id !== action.id,
+                        ),
                       })
                     }
                   >
@@ -299,7 +309,10 @@ function MinigameSettings({
                 value={action.forEach || "once"}
                 onChange={(scope) =>
                   updateAction(action.id, {
-                    forEach: scope === "once" ? undefined : scope as "team" | "player",
+                    forEach:
+                      scope === "once"
+                        ? undefined
+                        : (scope as "team" | "player"),
                   })
                 }
                 options={[
@@ -318,7 +331,10 @@ function MinigameSettings({
           onClick={() =>
             onChange({
               ...draft,
-              actions: [...draft.actions, { id: crypto.randomUUID(), command: "" }],
+              actions: [
+                ...draft.actions,
+                { id: crypto.randomUUID(), command: "" },
+              ],
             })
           }
         >
@@ -403,7 +419,8 @@ function MinigameSummary({ spec }: { spec: MinigameSpec }) {
           <ol className="list-inside list-decimal space-y-1">
             {spec.lifecycle.onAllJoined.map((action, index) => (
               <li key={index} className="wrap-anywhere">
-                <code>{action.command}</code>{" · "}
+                <code>{action.command}</code>
+                {" · "}
                 {t(
                   action.forEach === "team"
                     ? "perTeam"
@@ -1337,7 +1354,10 @@ export default function MinecraftTemplateManager({
                   />
                 ) : null}
                 {templateError ? (
-                  <p role="alert" className="break-words text-sm text-destructive">
+                  <p
+                    role="alert"
+                    className="break-words text-sm text-destructive"
+                  >
                     {templateError}
                   </p>
                 ) : null}

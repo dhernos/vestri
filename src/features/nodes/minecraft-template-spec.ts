@@ -85,18 +85,21 @@ function validSetupAction(action: SetupAction) {
   )
     return false;
   let valid = true;
-  const remainder = command.replace(/\{([^{}]*)\}/g, (_, placeholder: string) => {
-    if (
-      !["team", "player", "uuid", "matchId"].includes(placeholder) ||
-      ((placeholder === "player" || placeholder === "uuid") &&
-        action.forEach !== "player") ||
-      (placeholder === "team" &&
-        action.forEach !== "team" &&
-        action.forEach !== "player")
-    )
-      valid = false;
-    return "";
-  });
+  const remainder = command.replace(
+    /\{([^{}]*)\}/g,
+    (_, placeholder: string) => {
+      if (
+        !["team", "player", "uuid", "matchId"].includes(placeholder) ||
+        ((placeholder === "player" || placeholder === "uuid") &&
+          action.forEach !== "player") ||
+        (placeholder === "team" &&
+          action.forEach !== "team" &&
+          action.forEach !== "player")
+      )
+        valid = false;
+      return "";
+    },
+  );
   return valid && !/[{}]/.test(remainder);
 }
 
@@ -106,7 +109,13 @@ export function buildTemplateSettings(
   draft: MinigameDraft,
 ):
   | { error: TemplateValidationError }
-  | { spec: { maxInstances: number; mode?: TemplateMode; minigame?: MinigameSpec } } {
+  | {
+      spec: {
+        maxInstances: number;
+        mode?: TemplateMode;
+        minigame?: MinigameSpec;
+      };
+    } {
   const maxInstances = integer(maxInstancesInput, 1);
   if (maxInstances === undefined || maxInstances > 100)
     return { error: "maxInstances" };
@@ -136,8 +145,7 @@ export function buildTemplateSettings(
     teams.some((team) => !/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(team))
   )
     return { error: "teams" };
-  if (maxPlayers > teams.length * teamSize)
-    return { error: "capacity" };
+  if (maxPlayers > teams.length * teamSize) return { error: "capacity" };
   const readyServers = integer(draft.readyServers, 0);
   if (readyServers === undefined || readyServers > maxInstances)
     return { error: "readyServers" };
