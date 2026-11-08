@@ -20,7 +20,12 @@ import {
 } from "@/components/ui/dialog";
 
 type PluginRelease = { version: string; filename: string };
-type PluginTemplate = { id: string; name: string; platform: string; version: string };
+type PluginTemplate = {
+  id: string;
+  name: string;
+  platform: string;
+  version: string;
+};
 type LinkedPlugin = {
   id: string;
   source: { provider: string; project: string; version?: string };
@@ -32,7 +37,13 @@ type LinkedPlugin = {
   targetRefs?: string[];
 };
 
-async function pluginResponse(response: Response): Promise<{ plugins: LinkedPlugin[]; templates?: PluginTemplate[]; servers?: PluginTemplate[] }> {
+async function pluginResponse(
+  response: Response,
+): Promise<{
+  plugins: LinkedPlugin[];
+  templates?: PluginTemplate[];
+  servers?: PluginTemplate[];
+}> {
   if (!response.ok) {
     const raw = await response.text();
     try {
@@ -140,7 +151,12 @@ export default function LinkedPaperPlugins({
           credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(
-            action === "import" ? { url } : { id: plugin?.id, ...(action === "update" ? { templateIds, serverIds } : {}) },
+            action === "import"
+              ? { url }
+              : {
+                  id: plugin?.id,
+                  ...(action === "update" ? { templateIds, serverIds } : {}),
+                },
           ),
         },
       );
@@ -177,8 +193,10 @@ export default function LinkedPaperPlugins({
     }
   };
 
-  const selectableServers = servers.filter((server) =>
-    !confirmation?.plugin.targetRefs || confirmation.plugin.targetRefs.includes(server.id),
+  const selectableServers = servers.filter(
+    (server) =>
+      !confirmation?.plugin.targetRefs ||
+      confirmation.plugin.targetRefs.includes(server.id),
   );
 
   return (
@@ -352,7 +370,9 @@ export default function LinkedPaperPlugins({
           </DialogHeader>
           {confirmation?.action === "update" ? (
             <fieldset disabled={Boolean(busy)} className="min-w-0 space-y-3">
-              <legend className="mb-2 text-sm font-medium">{t("servers")}</legend>
+              <legend className="mb-2 text-sm font-medium">
+                {t("servers")}
+              </legend>
               {selectableServers.length ? (
                 <>
                   <label className="flex min-w-0 items-center gap-2 text-sm">
@@ -360,61 +380,107 @@ export default function LinkedPaperPlugins({
                       type="checkbox"
                       className="shrink-0"
                       checked={serverIds.length === selectableServers.length}
-                      onChange={(event) => setServerIds(event.target.checked ? selectableServers.map((server) => server.id) : [])}
+                      onChange={(event) =>
+                        setServerIds(
+                          event.target.checked
+                            ? selectableServers.map((server) => server.id)
+                            : [],
+                        )
+                      }
                     />
-                    <span className="min-w-0 wrap-break-word">{t("selectAllServers")}</span>
+                    <span className="min-w-0 wrap-break-word">
+                      {t("selectAllServers")}
+                    </span>
                   </label>
                   <div className="max-h-40 space-y-2 overflow-y-auto">
                     {selectableServers.map((server) => (
-                      <label key={server.id} className="flex min-w-0 items-start gap-2 text-sm">
+                      <label
+                        key={server.id}
+                        className="flex min-w-0 items-start gap-2 text-sm"
+                      >
                         <input
                           type="checkbox"
                           className="mt-1 shrink-0"
                           checked={serverIds.includes(server.id)}
-                          onChange={(event) => setServerIds((selected) => event.target.checked ? [...selected, server.id] : selected.filter((id) => id !== server.id))}
+                          onChange={(event) =>
+                            setServerIds((selected) =>
+                              event.target.checked
+                                ? [...selected, server.id]
+                                : selected.filter((id) => id !== server.id),
+                            )
+                          }
                         />
                         <span className="min-w-0 wrap-break-word">
                           {server.name}
-                          <span className="block text-xs text-muted-foreground">{server.platform} {server.version}</span>
+                          <span className="block text-xs text-muted-foreground">
+                            {server.platform} {server.version}
+                          </span>
                         </span>
                       </label>
                     ))}
                   </div>
                 </>
-              ) : <p className="text-sm text-muted-foreground">{t("noServers")}</p>}
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {t("noServers")}
+                </p>
+              )}
             </fieldset>
           ) : null}
           {confirmation?.action === "update" ? (
             <fieldset disabled={Boolean(busy)} className="min-w-0 space-y-3">
-              <legend className="mb-2 text-sm font-medium">{t("templates")}</legend>
+              <legend className="mb-2 text-sm font-medium">
+                {t("templates")}
+              </legend>
               {templates.length ? (
                 <>
                   <label className="flex items-center gap-2 text-sm">
                     <input
                       type="checkbox"
                       checked={templateIds.length === templates.length}
-                      onChange={(event) => setTemplateIds(event.target.checked ? templates.map((template) => template.id) : [])}
+                      onChange={(event) =>
+                        setTemplateIds(
+                          event.target.checked
+                            ? templates.map((template) => template.id)
+                            : [],
+                        )
+                      }
                     />
                     {t("selectAllTemplates")}
                   </label>
                   <div className="max-h-60 space-y-2 overflow-y-auto">
                     {templates.map((template) => (
-                      <label key={template.id} className="flex min-w-0 items-start gap-2 text-sm">
+                      <label
+                        key={template.id}
+                        className="flex min-w-0 items-start gap-2 text-sm"
+                      >
                         <input
                           type="checkbox"
                           className="mt-1 shrink-0"
                           checked={templateIds.includes(template.id)}
-                          onChange={(event) => setTemplateIds((selected) => event.target.checked ? [...selected, template.id] : selected.filter((id) => id !== template.id))}
+                          onChange={(event) =>
+                            setTemplateIds((selected) =>
+                              event.target.checked
+                                ? [...selected, template.id]
+                                : selected.filter((id) => id !== template.id),
+                            )
+                          }
                         />
                         <span className="min-w-0 wrap-break-word">
                           {template.name}
-                          <span className="block text-xs text-muted-foreground">{template.platform} {template.version}</span>
+                          <span className="block text-xs text-muted-foreground">
+                            {template.platform} {template.version}
+                          </span>
                         </span>
                       </label>
                     ))}
                   </div>
                 </>
-              ) : <p className="text-sm text-muted-foreground">{t("noTemplates")}</p>}
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {t("noTemplates")}
+                </p>
+              )}
             </fieldset>
           ) : null}
           <DialogFooter>
