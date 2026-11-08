@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
+  ArrowDown,
+  ArrowUp,
   Copy,
   FilePlus,
   Files,
@@ -42,6 +44,15 @@ import {
   startUpload,
   subscribeUploadCompletion,
 } from "@/features/uploads/upload-store";
+import {
+  buildTemplateSettings,
+  moveSetupAction,
+  newMinigameDraft,
+  type MinigameDraft,
+  type MinigameSpec,
+  type SetupAction,
+  type TemplateMode,
+} from "@/features/nodes/minecraft-template-spec";
 
 type ResourceKind = "bases" | "worlds" | "plugin-packs" | "templates";
 type View = ResourceKind | "instances" | "keys";
@@ -56,6 +67,8 @@ type Resource = {
     worldId?: string;
     parentId?: string;
     maxInstances?: number;
+    mode?: TemplateMode;
+    minigame?: MinigameSpec;
   };
 };
 type Instance = {
@@ -138,6 +151,273 @@ function Choice({
         </SelectContent>
       </Select>
     </label>
+  );
+}
+
+type MinigameFormDraft = Omit<MinigameDraft, "actions"> & {
+  actions: (SetupAction & { id: string })[];
+};
+
+function MinigameSettings({
+  draft,
+  maxInstances,
+  onChange,
+}: {
+  draft: MinigameFormDraft;
+  maxInstances: string;
+  onChange: (draft: MinigameFormDraft) => void;
+}) {
+  const t = useTranslations("NodeDetailsPage.minecraftTemplates.minigame");
+  const numericFields = [
+    { key: "teamSize", min: 1, max: 100 },
+    { key: "minPlayers", min: 1, max: 100 },
+    { key: "maxPlayers", min: 1, max: 100 },
+    { key: "readyServers", min: 0, max: Number(maxInstances) || 0 },
+    { key: "joinTimeout", min: 1, max: 600 },
+  ] as const;
+  const updateAction = (id: string, patch: Partial<SetupAction>) =>
+    onChange({
+      ...draft,
+      actions: draft.actions.map((action) =>
+        action.id === id ? { ...action, ...patch } : action,
+      ),
+    });
+
+  return (
+    <div className="min-w-0 space-y-4 border-t pt-4">
+      <label className="block space-y-2 text-sm">
+        <span>{t("teams")}</span>
+        <Input
+          required
+          value={draft.teams}
+          placeholder={t("teamsPlaceholder")}
+          onChange={(event) => onChange({ ...draft, teams: event.target.value })}
+        />
+      </label>
+      <div className="grid min-w-0 gap-4 sm:grid-cols-2">
+        {numericFields.map((field) => (
+          <label key={field.key} className="min-w-0 space-y-2 text-sm">
+            <span>{t(field.key)}</span>
+            <Input
+              type="number"
+              inputMode="numeric"
+              step={1}
+              min={field.min}
+              max={"max" in field ? field.max : undefined}
+              required
+              value={draft[field.key]}
+              onChange={(event) =>
+                onChange({ ...draft, [field.key]: event.target.value })
+              }
+            />
+          </label>
+        ))}
+        <Choice
+          label={t("readyTrigger")}
+          value={draft.readyTrigger}
+          onChange={(readyTrigger) =>
+            onChange({
+              ...draft,
+              readyTrigger: readyTrigger as MinigameDraft["readyTrigger"],
+            })
+          }
+          options={[
+            { id: "serverLoad", name: t("serverLoad") },
+            { id: "explicit", name: t("explicit") },
+          ]}
+        />
+      </div>
+      <fieldset className="min-w-0 space-y-3 border-t pt-3">
+        <legend className="px-1 text-sm font-medium">{t("actions")}</legend>
+        <ol className="min-w-0 divide-y">
+          {draft.actions.map((action, index) => (
+            <li key={action.id} className="min-w-0 space-y-2 py-3 first:pt-0">
+              <div className="flex items-center justify-between gap-2">
+                <Label htmlFor={`mc-action-${action.id}`} className="text-sm">
+                  {t("commandNumber", { number: index + 1 })}
+                </Label>
+                <div className="flex shrink-0 gap-1">
+                  {([
+                    {
+                      direction: -1,
+                      Icon: ArrowUp,
+                      label: "moveUp",
+                      disabled: index === 0,
+                    },
+                    {
+                      direction: 1,
+                      Icon: ArrowDown,
+                      label: "moveDown",
+                      disabled: index === draft.actions.length - 1,
+                    },
+                  ] as const).map(({ direction, Icon, label, disabled }) => (
+                    <Button
+                      key={direction}
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      title={t(label)}
+                      aria-label={t(label)}
+                      disabled={disabled}
+                      onClick={() =>
+                        onChange({
+                          ...draft,
+                          actions: moveSetupAction(draft.actions, index, direction),
+                        })
+                      }
+                    >
+                      <Icon />
+                    </Button>
+                  ))}
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    title={t("removeAction")}
+                    aria-label={t("removeAction")}
+                    onClick={() =>
+                      onChange({
+                        ...draft,
+                        actions: draft.actions.filter((entry) => entry.id !== action.id),
+                      })
+                    }
+                  >
+                    <Trash2 />
+                  </Button>
+                </div>
+              </div>
+              <Input
+                id={`mc-action-${action.id}`}
+                required
+                value={action.command}
+                onChange={(event) =>
+                  updateAction(action.id, { command: event.target.value })
+                }
+              />
+              <Choice
+                label={t("scope")}
+                value={action.forEach || "once"}
+                onChange={(scope) =>
+                  updateAction(action.id, {
+                    forEach: scope === "once" ? undefined : scope as "team" | "player",
+                  })
+                }
+                options={[
+                  { id: "once", name: t("once") },
+                  { id: "team", name: t("perTeam") },
+                  { id: "player", name: t("perPlayer") },
+                ]}
+              />
+            </li>
+          ))}
+        </ol>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={draft.actions.length >= 100}
+          onClick={() =>
+            onChange({
+              ...draft,
+              actions: [...draft.actions, { id: crypto.randomUUID(), command: "" }],
+            })
+          }
+        >
+          <Plus />
+          {t("addAction")}
+        </Button>
+      </fieldset>
+      <fieldset className="min-w-0 space-y-4 border-t pt-3">
+        <legend className="px-1 text-sm font-medium">{t("end")}</legend>
+        <label className="block space-y-2 text-sm">
+          <span>{t("logPattern")}</span>
+          <Input
+            value={draft.logPattern}
+            onChange={(event) =>
+              onChange({ ...draft, logPattern: event.target.value })
+            }
+          />
+        </label>
+        <Label className="flex items-start gap-2">
+          <input
+            type="checkbox"
+            className="mt-0.5"
+            checked={draft.whenEmpty}
+            onChange={(event) =>
+              onChange({ ...draft, whenEmpty: event.target.checked })
+            }
+          />
+          {t(draft.logPattern.trim() ? "emptyFallback" : "whenEmpty")}
+        </Label>
+        <label className="block space-y-2 text-sm">
+          <span>{t("emptyGrace")}</span>
+          <Input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={600}
+            step={1}
+            required
+            value={draft.emptyGrace}
+            onChange={(event) =>
+              onChange({ ...draft, emptyGrace: event.target.value })
+            }
+          />
+        </label>
+        <p className="text-sm text-muted-foreground">{t("endOutcome")}</p>
+      </fieldset>
+    </div>
+  );
+}
+
+function MinigameSummary({ spec }: { spec: MinigameSpec }) {
+  const t = useTranslations("NodeDetailsPage.minecraftTemplates.minigame");
+  const fields = [
+    [t("teams"), spec.teams.length ? spec.teams.join(", ") : t("noTeams")],
+    [t("teamSize"), spec.teamSize],
+    [t("players"), `${spec.minPlayers} - ${spec.maxPlayers}`],
+    [t("readyServers"), spec.readyServers],
+    [t("readyTrigger"), t(spec.lifecycle.ready.trigger)],
+    [t("joinTimeout"), spec.joinTimeout],
+    [t("logPattern"), spec.lifecycle.end.logPattern || t("notSet")],
+    [t("whenEmpty"), t(spec.lifecycle.end.whenEmpty ? "enabled" : "disabled")],
+    ...(spec.lifecycle.end.whenEmpty
+      ? [[t("emptyGrace"), spec.lifecycle.end.emptyGrace]]
+      : []),
+  ];
+  return (
+    <details className="mt-2 min-w-0 text-xs">
+      <summary className="w-fit cursor-pointer text-muted-foreground">
+        {t("settings")}
+      </summary>
+      <dl className="mt-2 grid min-w-0 gap-x-4 gap-y-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+        {fields.map(([label, value]) => (
+          <div key={label} className="contents">
+            <dt className="break-words text-muted-foreground">{label}</dt>
+            <dd className="min-w-0 wrap-anywhere">{value}</dd>
+          </div>
+        ))}
+      </dl>
+      {spec.lifecycle.onAllJoined.length ? (
+        <div className="mt-2">
+          <p className="text-muted-foreground">{t("actions")}</p>
+          <ol className="list-inside list-decimal space-y-1">
+            {spec.lifecycle.onAllJoined.map((action, index) => (
+              <li key={index} className="wrap-anywhere">
+                <code>{action.command}</code>{" · "}
+                {t(
+                  action.forEach === "team"
+                    ? "perTeam"
+                    : action.forEach === "player"
+                      ? "perPlayer"
+                      : "once",
+                )}
+              </li>
+            ))}
+          </ol>
+        </div>
+      ) : null}
+      <p className="mt-2 text-muted-foreground">{t("endOutcome")}</p>
+    </details>
   );
 }
 
@@ -457,12 +737,22 @@ export default function MinecraftTemplateManager({
   const [worldId, setWorldId] = useState("");
   const [pluginIds, setPluginIds] = useState<string[]>([]);
   const [parentId, setParentId] = useState("");
-  const [limit, setLimit] = useState(5);
+  const [limit, setLimit] = useState("5");
+  const [mode, setMode] = useState<TemplateMode>("player");
+  const [minigame, setMinigame] = useState<MinigameFormDraft>(() => ({
+    ...newMinigameDraft(),
+    actions: [],
+  }));
   const [agreement, setAgreement] = useState(false);
   const [keyTemplate, setKeyTemplate] = useState("");
   const [keyDays, setKeyDays] = useState(30);
   const [token, setToken] = useState("");
   const spawnRequests = useRef<Record<string, string>>({});
+  const templateSettings = buildTemplateSettings(mode, limit, minigame);
+  const templateError =
+    view === "templates" && "error" in templateSettings
+      ? t(`minigame.errors.${templateSettings.error}`)
+      : "";
 
   const refresh = async () => {
     const body = await responseBody(
@@ -565,6 +855,7 @@ export default function MinecraftTemplateManager({
     }
   };
   const create = async () => {
+    if (view === "templates" && "error" in templateSettings) return;
     const creatingKey = view === "keys";
     const body = creatingKey
       ? { name, templateId: keyTemplate, days: keyDays }
@@ -580,7 +871,10 @@ export default function MinecraftTemplateManager({
             worldId,
             pluginIds,
             parentId,
-            maxInstances: limit,
+            maxInstances: Number(limit),
+            ...(view === "templates" && "spec" in templateSettings
+              ? templateSettings.spec
+              : {}),
           },
         };
     const result = await mutate(
@@ -662,6 +956,9 @@ export default function MinecraftTemplateManager({
               onClick={() => {
                 setName("");
                 setPluginIds([]);
+                setMode("player");
+                setMinigame({ ...newMinigameDraft(), actions: [] });
+                setError("");
                 setCreateOpen(true);
               }}
             >
@@ -815,12 +1112,17 @@ export default function MinecraftTemplateManager({
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{resource.name}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="break-words text-xs text-muted-foreground">
                   {resource.spec.software} {resource.spec.version}
                   {resource.kind === "templates"
-                    ? ` · ${catalog.instances.filter((instance) => instance.templateId === resource.id).length}/${resource.spec.maxInstances}`
+                    ? ` · ${t(resource.spec.mode === "minigames" ? "minigameMode" : "playerMode")} · ${catalog.instances.filter((instance) => instance.templateId === resource.id).length}/${resource.spec.maxInstances}`
                     : ""}
                 </p>
+                {resource.kind === "templates" &&
+                resource.spec.mode === "minigames" &&
+                resource.spec.minigame ? (
+                  <MinigameSummary spec={resource.spec.minigame} />
+                ) : null}
               </div>
               <Button
                 size="icon"
@@ -969,6 +1271,15 @@ export default function MinecraftTemplateManager({
             {view === "templates" ? (
               <>
                 <Choice
+                  label={t("mode")}
+                  value={mode}
+                  onChange={(next) => setMode(next as TemplateMode)}
+                  options={[
+                    { id: "player", name: t("playerMode") },
+                    { id: "minigames", name: t("minigameMode") },
+                  ]}
+                />
+                <Choice
                   label={t("base")}
                   value={baseId}
                   onChange={setBaseId}
@@ -1011,11 +1322,25 @@ export default function MinecraftTemplateManager({
                     type="number"
                     min={1}
                     max={100}
+                    step={1}
+                    inputMode="numeric"
                     required
                     value={limit}
-                    onChange={(event) => setLimit(Number(event.target.value))}
+                    onChange={(event) => setLimit(event.target.value)}
                   />
                 </label>
+                {mode === "minigames" ? (
+                  <MinigameSettings
+                    draft={minigame}
+                    maxInstances={limit}
+                    onChange={setMinigame}
+                  />
+                ) : null}
+                {templateError ? (
+                  <p role="alert" className="break-words text-sm text-destructive">
+                    {templateError}
+                  </p>
+                ) : null}
               </>
             ) : null}
             {view === "keys" ? (
@@ -1051,7 +1376,8 @@ export default function MinecraftTemplateManager({
                   Boolean(busy) ||
                   !name.trim() ||
                   (view === "bases" && (!version || !agreement)) ||
-                  (view === "templates" && (!baseId || !parentId)) ||
+                  (view === "templates" &&
+                    (!baseId || !parentId || Boolean(templateError))) ||
                   (view === "keys" && !keyTemplate)
                 }
               >
