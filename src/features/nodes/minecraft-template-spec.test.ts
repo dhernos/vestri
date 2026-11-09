@@ -35,6 +35,7 @@ test("minigames serialize the complete contract and ordered repetition scopes", 
     readyServers: "5",
     readyTrigger: "explicit",
     logPattern: " Game finished ",
+    loggerName: "GamePlugin",
     actions: [
       { command: " setup " },
       { command: "assign {team}", forEach: "team" },
@@ -46,6 +47,10 @@ test("minigames serialize the complete contract and ordered repetition scopes", 
       maxInstances: 5,
       mode: "minigames",
       minigame: {
+        enabled: true,
+        teamPolicy: "balanced",
+        teamCounts: {},
+        remainderTeam: "",
         lobbyMode: "vestri",
         instanceMode: "temporary",
         teams: ["red", "blue"],
@@ -56,6 +61,8 @@ test("minigames serialize the complete contract and ordered repetition scopes", 
         readyServers: 5,
         lifecycle: {
           ready: { trigger: "explicit" },
+          teamCommands: [],
+          startCommands: [],
           onAllJoined: [
             { command: "setup" },
             { command: "assign {team}", forEach: "team" },
@@ -63,6 +70,7 @@ test("minigames serialize the complete contract and ordered repetition scopes", 
           ],
           end: {
             logPattern: "Game finished",
+            loggerName: "GamePlugin",
             whenEmpty: true,
             emptyGrace: "10s",
             returnPlayersTo: "lobby",
@@ -130,6 +138,7 @@ test("log-only ending supports the minimum one-second empty grace", () => {
     ...newMinigameDraft(),
     whenEmpty: false,
     logPattern: "Finished",
+    loggerName: "GamePlugin",
     emptyGrace: "1",
   });
   assert.ok("spec" in result);
@@ -271,6 +280,7 @@ test("log patterns enforce byte and control limits without parsing Go regex synt
     buildTemplateSettings("minigames", "5", {
       ...newMinigameDraft(),
       logPattern,
+      loggerName: "GamePlugin",
     });
   for (const logPattern of [
     "a".repeat(513),
@@ -370,6 +380,225 @@ test("both locales include matching minigame labels and validation messages", ()
 
 const buildMinigame = (patch: Partial<Settings.MinigameDraft>) =>
   buildTemplateSettings("minigames", "5", { ...newMinigameDraft(), ...patch });
+
+test("edit hydration round-trips complete settings without mutating the source", () => {
+  const built = buildMinigame({
+    enabled: false,
+    teams: "speedrunner,hunter",
+    teamPolicy: "roles",
+    teamCounts: { speedrunner: "2" },
+    remainderTeam: "hunter",
+    minPlayers: "3",
+    maxPlayers: "12",
+    logPattern: "^Game ended$",
+    loggerName: "Manhunt",
+    actions: [{ command: "setup" }],
+    teamCommands: [
+      { team: "speedrunner", command: "manhunt speedrunner add {player}" },
+    ],
+    startCommands: ["manhunt start {matchId}"],
+    variants: [
+      { name: "duo", teamCounts: { speedrunner: "1" }, maxPlayers: "8" },
+    ],
+  });
+  assert.ok("spec" in built);
+  const spec = built.spec.minigame!;
+  const snapshot = structuredClone(spec);
+  const draft = moduleExports.draftFromMinigame(spec);
+  assert.deepEqual(buildMinigame(draft), built);
+  draft.actions[0].command = "changed";
+  draft.teamCommands![0].command = "changed";
+  draft.teamCounts!.speedrunner = "5";
+  assert.deepEqual(spec, snapshot);
+  assert.deepEqual(moduleExports.pausedTemplateSettings(spec, 5), {
+    minigame: { ...snapshot, enabled: false },
+    maxInstances: 5,
+  });
+  assert.equal(
+    moduleExports.draftFromMinigame({ ...spec, enabled: undefined }).enabled,
+    true,
+  );
+});
+
+test("role quotas require exactly one remainder and fit both player bounds", () => {
+  const draft = {
+    teams: "speedrunner,hunter",
+    teamPolicy: "roles" as const,
+    teamCounts: { speedrunner: "2" },
+    remainderTeam: "hunter",
+    minPlayers: "3",
+    maxPlayers: "20",
+    teamSize: "",
+  };
+  const result = buildMinigame(draft);
+  assert.ok("spec" in result);
+  assert.equal(result.spec.minigame?.teamSize, 20);
+  assert.deepEqual(result.spec.minigame?.teamCounts, { speedrunner: 2 });
+  const invalidQuotas: Partial<Settings.MinigameDraft>[] = [
+    { remainderTeam: "" },
+    { remainderTeam: "other" },
+    { teams: "" },
+    { teamCounts: {} },
+    { teamCounts: { speedrunner: "4" } },
+    { teamCounts: { speedrunner: "-1" } },
+    { teamCounts: { speedrunner: "1.5" } },
+  ];
+  for (const patch of invalidQuotas)
+    assert.deepEqual(buildMinigame({ ...draft, ...patch }), { error: "roles" });
+});
+
+test("new phases preserve order, validate teams/placeholders and retain hidden plugin drafts", () => {
+  const draft = {
+    ...newMinigameDraft(),
+    teams: "red,blue",
+    teamSize: "2",
+    teamCommands: [
+      { team: "red", command: "assign {player} {uuid} {team} {matchId}" },
+    ],
+    startCommands: ["first", "second {matchId}"],
+  };
+  const result = buildMinigame(draft);
+  assert.ok("spec" in result);
+  assert.deepEqual(
+    result.spec.minigame?.lifecycle.startCommands,
+    draft.startCommands,
+  );
+  for (const patch of [
+    { teamCommands: [{ team: "missing", command: "assign" }] },
+    { teamCommands: [{ team: "red", command: "/assign {player}" }] },
+    { startCommands: ["start {player}"] },
+    { startCommands: ["start\nnow"] },
+  ])
+    assert.deepEqual(buildMinigame({ ...draft, ...patch }), {
+      error: "actions",
+    });
+  const native = buildMinigame({ ...draft, lobbyMode: "plugin" });
+  assert.ok("spec" in native);
+  assert.deepEqual(native.spec.minigame?.lifecycle.teamCommands, []);
+  assert.deepEqual(native.spec.minigame?.lifecycle.startCommands, []);
+  assert.deepEqual(buildMinigame(draft), result);
+});
+
+test("variants validate inherited settings, identifiers, quotas and the 20-entry limit", () => {
+  const result = buildMinigame({
+    variants: [
+      { name: "2v2", teams: "red,blue", teamSize: "2", maxPlayers: "4" },
+      {
+        name: "4v4v4v4",
+        teams: "red,blue,green,yellow",
+        teamSize: "4",
+        maxPlayers: "16",
+      },
+    ],
+  });
+  assert.ok("spec" in result);
+  assert.deepEqual(result.spec.minigame?.variants?.["2v2"], {
+    teams: ["red", "blue"],
+    teamSize: 2,
+    maxPlayers: 4,
+  });
+  for (const variants of [
+    [{ name: "" }],
+    [{ name: "bad name" }],
+    [{ name: "same" }, { name: "same" }],
+    [{ name: "invalid", maxPlayers: "0" }],
+    [{ name: "invalid", teams: "red", teamSize: "1", maxPlayers: "4" }],
+    Array.from({ length: 21 }, (_, index) => ({ name: `v${index}` })),
+    [
+      {
+        name: "roles",
+        teams: "runner,hunter",
+        teamPolicy: "roles" as const,
+        remainderTeam: "hunter",
+        teamCounts: { runner: "3" },
+      },
+    ],
+  ])
+    assert.deepEqual(buildMinigame({ variants }), { error: "variants" });
+});
+
+test("log regex requires an exact logger on create and hydrated legacy edits", () => {
+  assert.deepEqual(buildMinigame({ logPattern: "^Game ended$" }), {
+    error: "loggerName",
+  });
+  for (const loggerName of ["", " ", "plugin\n", "a".repeat(129), " Game", "Game ", "-Game", "Game Plugin", "Pl\u00fcgin", "Game/logger"])
+    assert.deepEqual(
+      buildMinigame({ logPattern: "^Game ended$", loggerName }),
+      { error: "loggerName" },
+    );
+  const valid = buildMinigame({
+    logPattern: "^Game ended$",
+    loggerName: "Manhunt",
+  });
+  assert.ok("spec" in valid);
+  const legacy = structuredClone(valid.spec.minigame!);
+  delete legacy.lifecycle.end.loggerName;
+  assert.deepEqual(buildMinigame(moduleExports.draftFromMinigame(legacy)), {
+    error: "loggerName",
+  });
+});
+
+test("plugin lobby serializes balanced native teams without mutating retained roles", () => {
+  const draft = {
+    ...newMinigameDraft(), teams: "runner,hunter", teamSize: "4",
+    teamPolicy: "roles" as const, teamCounts: { runner: "1" },
+    remainderTeam: "hunter", maxPlayers: "8",
+    variants: [{ name: "duo", teamPolicy: "roles" as const, teamCounts: { runner: "2" } }],
+  };
+  const managed = buildMinigame(draft);
+  assert.ok("spec" in managed);
+  const native = buildMinigame({ ...draft, lobbyMode: "plugin" });
+  assert.ok("spec" in native);
+  assert.equal(native.spec.minigame!.teamPolicy, "balanced");
+  assert.equal(native.spec.minigame!.teamSize, 4);
+  assert.deepEqual(native.spec.minigame!.teamCounts, {});
+  assert.equal(native.spec.minigame!.remainderTeam, "");
+  assert.deepEqual(native.spec.minigame!.variants!.duo, {
+    teamPolicy: "balanced", teamCounts: {}, remainderTeam: "",
+  });
+  assert.deepEqual(buildMinigame(draft), managed);
+  assert.deepEqual(buildMinigame({ ...draft, lobbyMode: "plugin", teamSize: "1" }), { error: "capacity" });
+});
+
+test("all lifecycle phases share the 100-command budget and generic syntax rules", () => {
+  const draft = {
+    teams: "red,blue", teamSize: "2",
+    actions: Array.from({ length: 98 }, () => ({ command: "setup" })),
+    teamCommands: [{ team: "red", command: "assign {player}" }],
+    startCommands: ["start"],
+  };
+  assert.ok("spec" in buildMinigame(draft));
+  assert.deepEqual(buildMinigame({ ...draft, startCommands: ["start", "extra"] }), { error: "actions" });
+  for (const command of ["/assign", "assign\nnow", "x".repeat(1025), "assign {unknown}", "assign {"])
+    for (const phase of ["teamCommands", "startCommands"] as const)
+      assert.deepEqual(buildMinigame({
+        teams: "red,blue", [phase]: phase === "teamCommands" ? [{ team: "red", command }] : [command],
+      }), { error: "actions" });
+});
+
+test("variants validate inherited command teams and allow generic player setup", () => {
+  const draft = {
+    teams: "red,blue,green,yellow", teamSize: "2", maxPlayers: "4",
+    teamCommands: [{ team: "red", command: "assign {player}" }],
+    variants: [{ name: "duel", teams: "green,yellow" }],
+  };
+  assert.deepEqual(buildMinigame(draft), { error: "variantTeamCommands" });
+  assert.ok("spec" in buildMinigame({ ...draft, variants: [{ name: "duel", teams: "red,blue" }] }));
+  assert.ok("spec" in buildMinigame({ ...draft, teamCommands: [], actions: [{ command: "assign {player} {team}", forEach: "player" }] }));
+});
+
+test("hydration preserves explicit FFA and balanced variant resets", () => {
+  const built = buildMinigame({
+    teams: "runner,hunter", teamPolicy: "roles", teamCounts: { runner: "1" },
+    remainderTeam: "hunter", maxPlayers: "4",
+    variants: [{ name: "ffa", teams: "", teamPolicy: "balanced", teamCounts: {}, remainderTeam: "" }],
+  });
+  assert.ok("spec" in built);
+  assert.deepEqual(built.spec.minigame!.variants!.ffa, { teams: [], teamSize: 0, teamPolicy: "balanced", teamCounts: {}, remainderTeam: "" });
+  assert.deepEqual(buildMinigame(moduleExports.draftFromMinigame(built.spec.minigame!)), built);
+  for (const loggerName of ["Game.Plugin_logger-1:main", "a".repeat(128)])
+    assert.ok("spec" in buildMinigame({ logPattern: "finished", loggerName }));
+});
 
 test("missing lobby mode defaults to Vestri matchmaking", () => {
   const result = buildMinigame({ lobbyMode: undefined });
