@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import {
   moveSetupAction,
+  type CommandSender,
   type MinigameDraft,
   type TeamCommand,
   type VariantDraft,
@@ -61,6 +62,31 @@ export function SettingChoice({
 }
 
 type TeamDraft = Omit<VariantDraft, "name">;
+
+export function CommandSenderChoice({
+  sender,
+  onChange,
+  context,
+}: {
+  sender?: CommandSender;
+  onChange: (sender: CommandSender) => void;
+  context: "once" | "team" | "player" | "assigned" | "join";
+}) {
+  const t = useTranslations("NodeDetailsPage.minecraftTemplates.minigame");
+  return (
+    <div title={`${t(`senderHints.${context}`)} ${t("playerPermissionsHint")}`}>
+      <SettingChoice
+        label={t("sender")}
+        value={sender ?? "server"}
+        onChange={(value) => onChange(value as CommandSender)}
+        options={[
+          { id: "server", name: t("serverSender") },
+          { id: "player", name: t("playerSender") },
+        ]}
+      />
+    </div>
+  );
+}
 
 export function TeamSettingsFields({
   value,
@@ -212,18 +238,22 @@ export function CommandPhaseEditor({
   commands,
   teams,
   onChange,
+  joining = false,
+  commandCount = commands.length,
 }: {
   title: string;
   commands: TeamCommand[];
   teams?: string[];
   onChange: (commands: TeamCommand[]) => void;
+  joining?: boolean;
+  commandCount?: number;
 }) {
   const t = useTranslations("NodeDetailsPage.minecraftTemplates.minigame");
   return (
     <fieldset className="min-w-0 space-y-3 border-t pt-3">
       <legend
         className="px-1 text-sm font-medium"
-        title={t(teams ? "teamCommandsHint" : "startCommandsHint")}
+        title={t(joining ? "joinCommandsHint" : teams ? "teamCommandsHint" : "startCommandsHint")}
       >
         {title}
       </legend>
@@ -271,6 +301,15 @@ export function CommandPhaseEditor({
                 </Button>
               </div>
             </div>
+            <CommandSenderChoice
+              sender={action.sender}
+              context={joining ? "join" : teams ? "assigned" : "once"}
+              onChange={(sender) =>
+                onChange(commands.map((entry, position) =>
+                  position === index ? { ...entry, sender } : entry,
+                ))
+              }
+            />
             {teams ? (
               <SettingChoice
                 label={t("commandTeam")}
@@ -291,7 +330,7 @@ export function CommandPhaseEditor({
               required
               aria-label={`${title}: ${t("commandNumber", { number: index + 1 })}`}
               value={action.command}
-              title={t(teams ? "teamCommandsHint" : "startCommandsHint")}
+              title={t(joining ? "joinCommandsHint" : teams ? "teamCommandsHint" : "startCommandsHint")}
               placeholder={
                 teams ? "manhunt speedrunner add {player}" : "manhunt start"
               }
@@ -312,7 +351,7 @@ export function CommandPhaseEditor({
         type="button"
         variant="outline"
         disabled={
-          commands.length >= 100 || (teams !== undefined && !teams.length)
+          commandCount >= 100 || (teams !== undefined && !teams.length)
         }
         onClick={() =>
           onChange([...commands, { team: teams?.[0] ?? "", command: "" }])

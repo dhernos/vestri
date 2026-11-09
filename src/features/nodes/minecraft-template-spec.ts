@@ -1,6 +1,9 @@
 export type TemplateMode = "player" | "minigames";
-export type SetupAction = { command: string; forEach?: "team" | "player" };
-export type TeamCommand = { team: string; command: string };
+export type CommandSender = "server" | "player";
+export type CommandAction = { command: string; sender?: CommandSender };
+export type StartCommand = string | CommandAction;
+export type SetupAction = CommandAction & { forEach?: "team" | "player" };
+export type TeamCommand = CommandAction & { team: string };
 export type TeamSettings = {
   teams: string[];
   teamSize?: number;
@@ -28,7 +31,8 @@ export type MinigameSpec = {
     ready: { trigger: "serverLoad" | "explicit" };
     onAllJoined: SetupAction[];
     teamCommands?: TeamCommand[];
-    startCommands?: string[];
+    startCommands?: StartCommand[];
+    onPlayerJoin?: CommandAction[];
     end: {
       logPattern?: string;
       loggerName?: string;
@@ -46,7 +50,8 @@ export type MinigameDraft = {
   remainderTeam?: string;
   variants?: VariantDraft[];
   teamCommands?: TeamCommand[];
-  startCommands?: string[];
+  startCommands?: StartCommand[];
+  onPlayerJoin?: CommandAction[];
   loggerName?: string;
   lobbyMode?: "vestri" | "plugin";
   instanceMode?: "temporary" | "permanent";
@@ -128,9 +133,19 @@ function hasControlCharacters(value: string) {
   });
 }
 
-function validSetupAction(action: SetupAction) {
+function validSetupAction(
+  action: SetupAction,
+  context: "setup" | "start" | "join" = "setup",
+) {
+  const joining = context === "join";
+  if (!action || typeof action !== "object" || typeof action.command !== "string")
+    return false;
   const command = action.command.trim();
   if (
+    (action.sender !== undefined &&
+      action.sender !== "server" &&
+      action.sender !== "player") ||
+    (context !== "setup" && action.forEach !== undefined) ||
     !command ||
     new TextEncoder().encode(command).length > 1024 ||
     command.startsWith("/") ||
@@ -147,10 +162,14 @@ function validSetupAction(action: SetupAction) {
       if (
         !["team", "player", "uuid", "matchId"].includes(placeholder) ||
         ((placeholder === "player" || placeholder === "uuid") &&
-          action.forEach !== "player") ||
+          action.forEach !== "player" &&
+          action.sender !== "player" &&
+          !joining) ||
         (placeholder === "team" &&
           action.forEach !== "team" &&
-          action.forEach !== "player")
+          action.forEach !== "player" &&
+          action.sender !== "player" &&
+          !joining)
       )
         valid = false;
       return "";
@@ -253,7 +272,8 @@ export function buildTemplateSettings(
     !teams.length &&
     actions.some(
       (action) =>
-        action.forEach === "team" || action.command.includes("{team}"),
+        action?.forEach === "team" ||
+        (typeof action?.command === "string" && action.command.includes("{team}")),
     )
   )
     return { error: "teamActions" };
@@ -265,16 +285,31 @@ export function buildTemplateSettings(
   const teamCommands = lobbyMode === "plugin" ? [] : (draft.teamCommands ?? []);
   const startCommands =
     lobbyMode === "plugin" ? [] : (draft.startCommands ?? []);
+  const joinCommands = draft.onPlayerJoin ?? [];
+  const startAction = (command: StartCommand): CommandAction =>
+    typeof command === "string" ? { command } : command;
   if (
-    actions.length + teamCommands.length + startCommands.length > 100 ||
+    actions.length + teamCommands.length + startCommands.length + joinCommands.length >
+      100 ||
     teamCommands.some(
       (action) =>
+        !action ||
         !teams.includes(action.team) ||
-        !validSetupAction({ command: action.command, forEach: "player" }),
+        !validSetupAction({ ...action, forEach: "player" }),
     ) ||
-    startCommands.some((command) => !validSetupAction({ command }))
+    startCommands.some(
+      (command) => !validSetupAction(startAction(command), "start"),
+    ) ||
+    joinCommands.some((action) => !validSetupAction(action, "join"))
   )
     return { error: "actions" };
+  if (
+    !teams.length &&
+    [...startCommands.map(startAction), ...joinCommands].some(
+      (action) => action.command.includes("{team}"),
+    )
+  )
+    return { error: "teamActions" };
   const logPattern = permanent ? "" : draft.logPattern.trim();
   if (
     !permanent &&
@@ -308,7 +343,15 @@ export function buildTemplateSettings(
       .split(",")
       .map((team) => team.trim())
       .filter(Boolean);
-    if (teamCommands.some((action) => !variantTeams.includes(action.team)))
+    if (
+      teamCommands.some((action) => !variantTeams.includes(action.team)) ||
+      (!variantTeams.length &&
+        [...actions, ...startCommands.map(startAction), ...joinCommands].some(
+          (action) =>
+            ("forEach" in action && action.forEach === "team") ||
+            action.command.includes("{team}"),
+        ))
+    )
       return { error: "variantTeamCommands" };
     const resolved = buildTemplateSettings("minigames", maxInstancesInput, {
       ...draft,
@@ -366,12 +409,27 @@ export function buildTemplateSettings(
           onAllJoined: actions.map((action) => ({
             command: action.command.trim(),
             ...(action.forEach ? { forEach: action.forEach } : {}),
+            ...(action.sender === "player" ? { sender: action.sender } : {}),
           })),
-          teamCommands: teamCommands.map(({ team, command }) => ({
+          teamCommands: teamCommands.map(({ team, command, sender }) => ({
             team,
             command: command.trim(),
+            ...(sender === "player" ? { sender } : {}),
           })),
-          startCommands: startCommands.map((command) => command.trim()),
+          startCommands: startCommands.map((entry) => {
+            const action = startAction(entry);
+            return action.sender === "player"
+              ? { command: action.command.trim(), sender: action.sender }
+              : action.command.trim();
+          }),
+          ...(joinCommands.length
+            ? {
+                onPlayerJoin: joinCommands.map(({ command, sender }) => ({
+                  command: command.trim(),
+                  ...(sender === "player" ? { sender } : {}),
+                })),
+              }
+            : {}),
           end: {
             ...(logPattern ? { logPattern } : {}),
             ...(logPattern ? { loggerName } : {}),
@@ -446,7 +504,12 @@ export function draftFromMinigame(spec: MinigameSpec): MinigameDraft {
     teamCommands: (spec.lifecycle.teamCommands ?? []).map((action) => ({
       ...action,
     })),
-    startCommands: [...(spec.lifecycle.startCommands ?? [])],
+    startCommands: (spec.lifecycle.startCommands ?? []).map((action) =>
+      typeof action === "string" ? action : { ...action },
+    ),
+    onPlayerJoin: (spec.lifecycle.onPlayerJoin ?? []).map((action) => ({
+      ...action,
+    })),
     logPattern: spec.lifecycle.end.logPattern ?? "",
     loggerName: spec.lifecycle.end.loggerName ?? "",
     whenEmpty: spec.lifecycle.end.whenEmpty,

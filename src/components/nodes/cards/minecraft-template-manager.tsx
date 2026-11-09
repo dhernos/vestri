@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   CommandPhaseEditor,
+  CommandSenderChoice,
   SettingChoice as Choice,
   TeamSettingsFields,
 } from "./minigame-settings-fields";
@@ -135,6 +136,8 @@ function MinigameSettings({
   const t = useTranslations("NodeDetailsPage.minecraftTemplates.minigame");
   const pluginLobby = draft.lobbyMode === "plugin";
   const permanent = draft.instanceMode === "permanent";
+  const commandCount = (draft.onPlayerJoin?.length ?? 0) + (pluginLobby ? 0 :
+    draft.actions.length + (draft.teamCommands?.length ?? 0) + (draft.startCommands?.length ?? 0));
   const hasTeams = draft.teams.split(",").some((team) => team.trim());
   const staleTeamActions =
     !hasTeams &&
@@ -408,6 +411,11 @@ function MinigameSettings({
                     updateAction(action.id, { command: event.target.value })
                   }
                 />
+                <CommandSenderChoice
+                  sender={action.sender}
+                  context={action.forEach ?? "once"}
+                  onChange={(sender) => updateAction(action.id, { sender })}
+                />
                 <Choice
                   label={t("scope")}
                   value={action.forEach || "once"}
@@ -436,7 +444,7 @@ function MinigameSettings({
           <Button
             type="button"
             variant="outline"
-            disabled={draft.actions.length >= 100}
+            disabled={commandCount >= 100}
             onClick={() =>
               onChange({
                 ...draft,
@@ -456,6 +464,7 @@ function MinigameSettings({
         <>
           <CommandPhaseEditor
             title={t("teamCommands")}
+            commandCount={commandCount}
             commands={draft.teamCommands ?? []}
             teams={draft.teams
               .split(",")
@@ -465,19 +474,32 @@ function MinigameSettings({
           />
           <CommandPhaseEditor
             title={t("startCommands")}
-            commands={(draft.startCommands ?? []).map((command) => ({
+            commandCount={commandCount}
+            commands={(draft.startCommands ?? []).map((entry) => ({
               team: "",
-              command,
+              ...(typeof entry === "string" ? { command: entry } : entry),
             }))}
             onChange={(commands) =>
               onChange({
                 ...draft,
-                startCommands: commands.map((action) => action.command),
+                startCommands: commands.map(({ command, sender }) =>
+                  sender === "player" ? { command, sender } : command,
+                ),
               })
             }
           />
         </>
       ) : null}
+      <CommandPhaseEditor
+        title={t("joinCommands")}
+        joining
+        commandCount={commandCount}
+        commands={(draft.onPlayerJoin ?? []).map((action) => ({ ...action, team: "" }))}
+        onChange={(commands) => onChange({
+          ...draft,
+          onPlayerJoin: commands.map(({ command, sender }) => ({ command, ...(sender ? { sender } : {}) })),
+        })}
+      />
       {!permanent ? (
         <fieldset className="min-w-0 space-y-4 border-t pt-3">
           <legend className="px-1 text-sm font-medium">{t("end")}</legend>
@@ -624,20 +646,26 @@ function MinigameSummary({ spec }: { spec: MinigameSpec }) {
                       ? "perPlayer"
                       : "once",
                 )}
+                        {" · "}{t(action.sender === "player" ? "playerSender" : "serverSender")}
               </li>
             ))}
           </ol>
         </div>
       ) : null}
-      {!pluginLobby
-        ? [
+      {[
+          ...(!pluginLobby ? [
             [
               t("teamCommands"),
               (spec.lifecycle.teamCommands ?? []).map(
-                (action) => `${action.team}: ${action.command}`,
+                (action) => `${action.team}: ${action.command} · ${t(action.sender === "player" ? "playerSender" : "serverSender")}`,
               ),
             ],
-            [t("startCommands"), spec.lifecycle.startCommands ?? []],
+            [t("startCommands"), (spec.lifecycle.startCommands ?? []).map((action) =>
+              typeof action === "string" ? `${action} · ${t("serverSender")}` :
+                `${action.command} · ${t(action.sender === "player" ? "playerSender" : "serverSender")}`)],
+          ] : []),
+          [t("joinCommands"), (spec.lifecycle.onPlayerJoin ?? []).map((action) =>
+            `${action.command} · ${t(action.sender === "player" ? "playerSender" : "serverSender")}`)],
           ].map(([label, commands]) =>
             (commands as string[]).length ? (
               <div key={label as string} className="mt-2">
@@ -651,8 +679,7 @@ function MinigameSummary({ spec }: { spec: MinigameSpec }) {
                 </ol>
               </div>
             ) : null,
-          )
-        : null}
+          )}
       {Object.keys(spec.variants ?? {}).length ? (
         <div className="mt-2">
           <p className="text-muted-foreground">{t("variants")}</p>
