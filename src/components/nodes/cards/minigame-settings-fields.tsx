@@ -104,7 +104,8 @@ export function TeamSettingsFields({
     ...inherited,
     ...Object.fromEntries(
       Object.entries(value).filter(
-        ([key, entry]) => entry !== undefined &&
+        ([key, entry]) =>
+          entry !== undefined &&
           (entry !== "" || key === "teams" || key === "remainderTeam"),
       ),
     ),
@@ -253,7 +254,13 @@ export function CommandPhaseEditor({
     <fieldset className="min-w-0 space-y-3 border-t pt-3">
       <legend
         className="px-1 text-sm font-medium"
-        title={t(joining ? "joinCommandsHint" : teams ? "teamCommandsHint" : "startCommandsHint")}
+        title={t(
+          joining
+            ? "joinCommandsHint"
+            : teams
+              ? "teamCommandsHint"
+              : "startCommandsHint",
+        )}
       >
         {title}
       </legend>
@@ -305,9 +312,11 @@ export function CommandPhaseEditor({
               sender={action.sender}
               context={joining ? "join" : teams ? "assigned" : "once"}
               onChange={(sender) =>
-                onChange(commands.map((entry, position) =>
-                  position === index ? { ...entry, sender } : entry,
-                ))
+                onChange(
+                  commands.map((entry, position) =>
+                    position === index ? { ...entry, sender } : entry,
+                  ),
+                )
               }
             />
             {teams ? (
@@ -330,7 +339,13 @@ export function CommandPhaseEditor({
               required
               aria-label={`${title}: ${t("commandNumber", { number: index + 1 })}`}
               value={action.command}
-              title={t(joining ? "joinCommandsHint" : teams ? "teamCommandsHint" : "startCommandsHint")}
+              title={t(
+                joining
+                  ? "joinCommandsHint"
+                  : teams
+                    ? "teamCommandsHint"
+                    : "startCommandsHint",
+              )}
               placeholder={
                 teams ? "manhunt speedrunner add {player}" : "manhunt start"
               }
@@ -350,9 +365,7 @@ export function CommandPhaseEditor({
       <Button
         type="button"
         variant="outline"
-        disabled={
-          commandCount >= 100 || (teams !== undefined && !teams.length)
-        }
+        disabled={commandCount >= 100 || (teams !== undefined && !teams.length)}
         onClick={() =>
           onChange([...commands, { team: teams?.[0] ?? "", command: "" }])
         }

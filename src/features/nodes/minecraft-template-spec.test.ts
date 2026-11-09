@@ -25,9 +25,22 @@ test("mixed senders preserve legacy server strings and conditionally serialize p
       { command: " once {player} {uuid} {team} ", sender: "player" },
       { command: " each {player} {team} ", sender: "player", forEach: "team" },
     ],
-    teamCommands: [{ team: "red", command: " assign {player} {uuid} {team} ", sender: "player" }],
-    startCommands: [" legacy {matchId} ", { command: " console ", sender: "server" }, { command: " go {player} {uuid} {team} ", sender: "player" }],
-    onPlayerJoin: [{ command: " welcome {player} {uuid} {team} " }, { command: " join {player} ", sender: "player" }],
+    teamCommands: [
+      {
+        team: "red",
+        command: " assign {player} {uuid} {team} ",
+        sender: "player",
+      },
+    ],
+    startCommands: [
+      " legacy {matchId} ",
+      { command: " console ", sender: "server" },
+      { command: " go {player} {uuid} {team} ", sender: "player" },
+    ],
+    onPlayerJoin: [
+      { command: " welcome {player} {uuid} {team} " },
+      { command: " join {player} ", sender: "player" },
+    ],
   });
   assert.ok("spec" in result);
   const lifecycle = result.spec.minigame!.lifecycle;
@@ -36,9 +49,18 @@ test("mixed senders preserve legacy server strings and conditionally serialize p
     { command: "once {player} {uuid} {team}", sender: "player" },
     { command: "each {player} {team}", sender: "player", forEach: "team" },
   ]);
-  assert.deepEqual(lifecycle.teamCommands, [{ team: "red", command: "assign {player} {uuid} {team}", sender: "player" }]);
-  assert.deepEqual(lifecycle.startCommands, ["legacy {matchId}", "console", { command: "go {player} {uuid} {team}", sender: "player" }]);
-  assert.deepEqual(lifecycle.onPlayerJoin, [{ command: "welcome {player} {uuid} {team}" }, { command: "join {player}", sender: "player" }]);
+  assert.deepEqual(lifecycle.teamCommands, [
+    { team: "red", command: "assign {player} {uuid} {team}", sender: "player" },
+  ]);
+  assert.deepEqual(lifecycle.startCommands, [
+    "legacy {matchId}",
+    "console",
+    { command: "go {player} {uuid} {team}", sender: "player" },
+  ]);
+  assert.deepEqual(lifecycle.onPlayerJoin, [
+    { command: "welcome {player} {uuid} {team}" },
+    { command: "join {player}", sender: "player" },
+  ]);
 });
 
 test("sender and scope determine random-member and assigned-member placeholder availability", () => {
@@ -46,30 +68,55 @@ test("sender and scope determine random-member and assigned-member placeholder a
     for (const sender of [undefined, "server", "player"] as const) {
       for (const placeholder of ["player", "uuid", "team", "matchId"]) {
         const result = buildTemplateSettings("minigames", "5", {
-          ...newMinigameDraft(), teams: "red,blue",
+          ...newMinigameDraft(),
+          teams: "red,blue",
           [phase]: [{ command: `say {${placeholder}}`, sender }],
         });
-        assert.equal("spec" in result, sender === "player" || placeholder === "matchId", `${phase}/${sender}/${placeholder}`);
+        assert.equal(
+          "spec" in result,
+          sender === "player" || placeholder === "matchId",
+          `${phase}/${sender}/${placeholder}`,
+        );
       }
     }
   }
   for (const sender of [undefined, "server", "player"] as const) {
     for (const forEach of ["team", "player"] as const) {
       const result = buildTemplateSettings("minigames", "5", {
-        ...newMinigameDraft(), teams: "red,blue",
-        actions: [{ command: "say {player} {uuid} {team} {matchId}", sender, forEach }],
+        ...newMinigameDraft(),
+        teams: "red,blue",
+        actions: [
+          { command: "say {player} {uuid} {team} {matchId}", sender, forEach },
+        ],
       });
-      assert.equal("spec" in result, sender === "player" || forEach === "player");
+      assert.equal(
+        "spec" in result,
+        sender === "player" || forEach === "player",
+      );
     }
-    assert.ok("spec" in buildTemplateSettings("minigames", "5", {
-      ...newMinigameDraft(), teams: "red,blue",
-      teamCommands: [{ team: "red", command: "say {player} {uuid} {team} {matchId}", sender }],
-    }));
+    assert.ok(
+      "spec" in
+        buildTemplateSettings("minigames", "5", {
+          ...newMinigameDraft(),
+          teams: "red,blue",
+          teamCommands: [
+            {
+              team: "red",
+              command: "say {player} {uuid} {team} {matchId}",
+              sender,
+            },
+          ],
+        }),
+    );
   }
   for (const phase of ["actions", "startCommands", "onPlayerJoin"] as const) {
-    assert.deepEqual(buildTemplateSettings("minigames", "5", {
-      ...newMinigameDraft(), [phase]: [{ command: "say {team}", sender: "player" }],
-    }), { error: "teamActions" });
+    assert.deepEqual(
+      buildTemplateSettings("minigames", "5", {
+        ...newMinigameDraft(),
+        [phase]: [{ command: "say {team}", sender: "player" }],
+      }),
+      { error: "teamActions" },
+    );
   }
 });
 
@@ -77,36 +124,74 @@ test("join commands always have joining-player context, default to server, and n
   for (const sender of [undefined, "server", "player"] as const) {
     for (const lobbyMode of ["vestri", "plugin"] as const) {
       const result = buildTemplateSettings("minigames", "5", {
-        ...newMinigameDraft(), lobbyMode,
+        ...newMinigameDraft(),
+        lobbyMode,
         onPlayerJoin: [{ command: "hello {player} {uuid} {matchId}", sender }],
       });
       assert.ok("spec" in result);
-      assert.deepEqual(result.spec.minigame!.lifecycle.onPlayerJoin, [{
-        command: "hello {player} {uuid} {matchId}", ...(sender === "player" ? { sender } : {}),
-      }]);
+      assert.deepEqual(result.spec.minigame!.lifecycle.onPlayerJoin, [
+        {
+          command: "hello {player} {uuid} {matchId}",
+          ...(sender === "player" ? { sender } : {}),
+        },
+      ]);
     }
   }
   for (const phase of ["onPlayerJoin", "startCommands"] as const) {
-    assert.deepEqual(buildTemplateSettings("minigames", "5", {
-      ...newMinigameDraft(),
-      [phase]: [{ command: "hello", forEach: "player" }],
-    }), { error: "actions" });
+    assert.deepEqual(
+      buildTemplateSettings("minigames", "5", {
+        ...newMinigameDraft(),
+        [phase]: [{ command: "hello", forEach: "player" }],
+      }),
+      { error: "actions" },
+    );
   }
   const missing = buildTemplateSettings("minigames", "5", newMinigameDraft());
   assert.ok("spec" in missing);
-  assert.equal(Object.hasOwn(missing.spec.minigame!.lifecycle, "onPlayerJoin"), false);
-  assert.deepEqual(moduleExports.draftFromMinigame(missing.spec.minigame!).onPlayerJoin, []);
+  assert.equal(
+    Object.hasOwn(missing.spec.minigame!.lifecycle, "onPlayerJoin"),
+    false,
+  );
+  assert.deepEqual(
+    moduleExports.draftFromMinigame(missing.spec.minigame!).onPlayerJoin,
+    [],
+  );
 });
 
 test("malformed commands and unknown senders are rejected without object coercion", () => {
-  const malformed: unknown[] = [null, 42, true, {}, { command: {} }, { command: 42 },
-    { command: "say", sender: "console" }, { command: "say", sender: null },
-    { command: "say", sender: {} }, { command: "say", sender: "PLAYER" }];
-  for (const phase of ["actions", "teamCommands", "startCommands", "onPlayerJoin"] as const) {
+  const malformed: unknown[] = [
+    null,
+    42,
+    true,
+    {},
+    { command: {} },
+    { command: 42 },
+    { command: "say", sender: "console" },
+    { command: "say", sender: null },
+    { command: "say", sender: {} },
+    { command: "say", sender: "PLAYER" },
+  ];
+  for (const phase of [
+    "actions",
+    "teamCommands",
+    "startCommands",
+    "onPlayerJoin",
+  ] as const) {
     for (const entry of malformed) {
-      const action = phase === "teamCommands" && entry && typeof entry === "object" ? { ...entry, team: "red" } : entry;
-      const draft = { ...newMinigameDraft(), teams: "red,blue", [phase]: [action] } as Settings.MinigameDraft;
-      assert.deepEqual(buildTemplateSettings("minigames", "5", draft), { error: "actions" }, `${phase}/${JSON.stringify(entry)}`);
+      const action =
+        phase === "teamCommands" && entry && typeof entry === "object"
+          ? { ...entry, team: "red" }
+          : entry;
+      const draft = {
+        ...newMinigameDraft(),
+        teams: "red,blue",
+        [phase]: [action],
+      } as Settings.MinigameDraft;
+      assert.deepEqual(
+        buildTemplateSettings("minigames", "5", draft),
+        { error: "actions" },
+        `${phase}/${JSON.stringify(entry)}`,
+      );
     }
   }
 });
@@ -116,23 +201,38 @@ test("join shares the 100-command budget and remains enabled on permanent/native
     ...newMinigameDraft(),
     actions: [{ command: "setup", sender: "player" }],
     startCommands: [{ command: "start {player}", sender: "player" }],
-    onPlayerJoin: Array.from({ length: 98 }, () => ({ command: "join {player}" })),
+    onPlayerJoin: Array.from({ length: 98 }, () => ({
+      command: "join {player}",
+    })),
   };
   const original = structuredClone(draft);
   assert.ok("spec" in buildTemplateSettings("minigames", "5", draft));
-  assert.deepEqual(buildTemplateSettings("minigames", "5", {
-    ...draft, onPlayerJoin: [...draft.onPlayerJoin!, { command: "extra" }],
-  }), { error: "actions" });
+  assert.deepEqual(
+    buildTemplateSettings("minigames", "5", {
+      ...draft,
+      onPlayerJoin: [...draft.onPlayerJoin!, { command: "extra" }],
+    }),
+    { error: "actions" },
+  );
   for (const instanceMode of ["temporary", "permanent"] as const) {
-    const result = buildTemplateSettings("minigames", "5", { ...draft, lobbyMode: "plugin", instanceMode });
+    const result = buildTemplateSettings("minigames", "5", {
+      ...draft,
+      lobbyMode: "plugin",
+      instanceMode,
+    });
     assert.ok("spec" in result);
     assert.deepEqual(result.spec.minigame!.lifecycle.onAllJoined, []);
     assert.deepEqual(result.spec.minigame!.lifecycle.startCommands, []);
     assert.equal(result.spec.minigame!.lifecycle.onPlayerJoin!.length, 98);
-    assert.deepEqual(buildTemplateSettings("minigames", "5", {
-      ...draft, lobbyMode: "plugin", instanceMode,
-      onPlayerJoin: Array.from({ length: 101 }, () => ({ command: "join" })),
-    }), { error: "actions" });
+    assert.deepEqual(
+      buildTemplateSettings("minigames", "5", {
+        ...draft,
+        lobbyMode: "plugin",
+        instanceMode,
+        onPlayerJoin: Array.from({ length: 101 }, () => ({ command: "join" })),
+      }),
+      { error: "actions" },
+    );
   }
   assert.deepEqual(draft, original);
   assert.ok("spec" in buildTemplateSettings("minigames", "5", draft));
@@ -143,7 +243,10 @@ test("hydration clones command objects, preserves mixed starts and joins, and ro
     ...newMinigameDraft(),
     actions: [{ command: "setup {uuid}", sender: "player" }],
     startCommands: ["legacy", { command: "start {player}", sender: "player" }],
-    onPlayerJoin: [{ command: "welcome {uuid}" }, { command: "join {player}", sender: "player" }],
+    onPlayerJoin: [
+      { command: "welcome {uuid}" },
+      { command: "join {player}", sender: "player" },
+    ],
   });
   assert.ok("spec" in result);
   const spec = result.spec.minigame!;
@@ -156,12 +259,24 @@ test("hydration clones command objects, preserves mixed starts and joins, and ro
   hydrated.actions[0].sender = "server";
   assert.deepEqual(spec, snapshot);
   const explicitServer = structuredClone(spec);
-  explicitServer.lifecycle.startCommands![0] = { command: "legacy", sender: "server" };
+  explicitServer.lifecycle.startCommands![0] = {
+    command: "legacy",
+    sender: "server",
+  };
   const serverSnapshot = structuredClone(explicitServer);
   const serverDraft = moduleExports.draftFromMinigame(explicitServer);
-  assert.deepEqual(serverDraft.startCommands![0], { command: "legacy", sender: "server" });
-  assert.notEqual(serverDraft.startCommands![0], explicitServer.lifecycle.startCommands![0]);
-  assert.deepEqual(buildTemplateSettings("minigames", "5", serverDraft), result);
+  assert.deepEqual(serverDraft.startCommands![0], {
+    command: "legacy",
+    sender: "server",
+  });
+  assert.notEqual(
+    serverDraft.startCommands![0],
+    explicitServer.lifecycle.startCommands![0],
+  );
+  assert.deepEqual(
+    buildTemplateSettings("minigames", "5", serverDraft),
+    result,
+  );
   assert.deepEqual(explicitServer, serverSnapshot);
 });
 
@@ -169,21 +284,30 @@ test("variants validate inherited join and player-start team context in all lobb
   for (const phase of ["actions", "startCommands", "onPlayerJoin"] as const) {
     for (const lobbyMode of ["vestri", "plugin"] as const) {
       const draft: Settings.MinigameDraft = {
-        ...newMinigameDraft(), teams: "red,blue", lobbyMode,
+        ...newMinigameDraft(),
+        teams: "red,blue",
+        lobbyMode,
         [phase]: [{ command: "say {team}", sender: "player" }],
         variants: [{ name: "ffa", teams: "" }],
       };
       const result = buildTemplateSettings("minigames", "5", draft);
-      if (lobbyMode === "plugin" && phase !== "onPlayerJoin") assert.ok("spec" in result);
+      if (lobbyMode === "plugin" && phase !== "onPlayerJoin")
+        assert.ok("spec" in result);
       else assert.deepEqual(result, { error: "variantTeamCommands" });
     }
   }
-  assert.deepEqual(buildTemplateSettings("minigames", "5", {
-    ...newMinigameDraft(), teams: "red,blue", teamPolicy: "roles",
-    remainderTeam: "blue", teamCounts: { red: "1" },
-    onPlayerJoin: [{ command: "join {team}" }],
-    variants: [{ name: "ffa", teams: "", teamPolicy: "balanced" }],
-  }), { error: "variantTeamCommands" });
+  assert.deepEqual(
+    buildTemplateSettings("minigames", "5", {
+      ...newMinigameDraft(),
+      teams: "red,blue",
+      teamPolicy: "roles",
+      remainderTeam: "blue",
+      teamCounts: { red: "1" },
+      onPlayerJoin: [{ command: "join {team}" }],
+      variants: [{ name: "ffa", teams: "", teamPolicy: "balanced" }],
+    }),
+    { error: "variantTeamCommands" },
+  );
 });
 
 test("ordinary templates omit minigame and mode, even with invalid hidden settings", () => {

@@ -136,8 +136,13 @@ function MinigameSettings({
   const t = useTranslations("NodeDetailsPage.minecraftTemplates.minigame");
   const pluginLobby = draft.lobbyMode === "plugin";
   const permanent = draft.instanceMode === "permanent";
-  const commandCount = (draft.onPlayerJoin?.length ?? 0) + (pluginLobby ? 0 :
-    draft.actions.length + (draft.teamCommands?.length ?? 0) + (draft.startCommands?.length ?? 0));
+  const commandCount =
+    (draft.onPlayerJoin?.length ?? 0) +
+    (pluginLobby
+      ? 0
+      : draft.actions.length +
+        (draft.teamCommands?.length ?? 0) +
+        (draft.startCommands?.length ?? 0));
   const hasTeams = draft.teams.split(",").some((team) => team.trim());
   const staleTeamActions =
     !hasTeams &&
@@ -494,11 +499,19 @@ function MinigameSettings({
         title={t("joinCommands")}
         joining
         commandCount={commandCount}
-        commands={(draft.onPlayerJoin ?? []).map((action) => ({ ...action, team: "" }))}
-        onChange={(commands) => onChange({
-          ...draft,
-          onPlayerJoin: commands.map(({ command, sender }) => ({ command, ...(sender ? { sender } : {}) })),
-        })}
+        commands={(draft.onPlayerJoin ?? []).map((action) => ({
+          ...action,
+          team: "",
+        }))}
+        onChange={(commands) =>
+          onChange({
+            ...draft,
+            onPlayerJoin: commands.map(({ command, sender }) => ({
+              command,
+              ...(sender ? { sender } : {}),
+            })),
+          })
+        }
       />
       {!permanent ? (
         <fieldset className="min-w-0 space-y-4 border-t pt-3">
@@ -646,40 +659,56 @@ function MinigameSummary({ spec }: { spec: MinigameSpec }) {
                       ? "perPlayer"
                       : "once",
                 )}
-                        {" · "}{t(action.sender === "player" ? "playerSender" : "serverSender")}
+                {" · "}
+                {t(
+                  action.sender === "player" ? "playerSender" : "serverSender",
+                )}
               </li>
             ))}
           </ol>
         </div>
       ) : null}
       {[
-          ...(!pluginLobby ? [
-            [
-              t("teamCommands"),
-              (spec.lifecycle.teamCommands ?? []).map(
-                (action) => `${action.team}: ${action.command} · ${t(action.sender === "player" ? "playerSender" : "serverSender")}`,
-              ),
-            ],
-            [t("startCommands"), (spec.lifecycle.startCommands ?? []).map((action) =>
-              typeof action === "string" ? `${action} · ${t("serverSender")}` :
-                `${action.command} · ${t(action.sender === "player" ? "playerSender" : "serverSender")}`)],
-          ] : []),
-          [t("joinCommands"), (spec.lifecycle.onPlayerJoin ?? []).map((action) =>
-            `${action.command} · ${t(action.sender === "player" ? "playerSender" : "serverSender")}`)],
-          ].map(([label, commands]) =>
-            (commands as string[]).length ? (
-              <div key={label as string} className="mt-2">
-                <p className="text-muted-foreground">{label}</p>
-                <ol className="list-inside list-decimal">
-                  {(commands as string[]).map((command, index) => (
-                    <li key={index} className="wrap-anywhere">
-                      <code>{command}</code>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            ) : null,
-          )}
+        ...(!pluginLobby
+          ? [
+              [
+                t("teamCommands"),
+                (spec.lifecycle.teamCommands ?? []).map(
+                  (action) =>
+                    `${action.team}: ${action.command} · ${t(action.sender === "player" ? "playerSender" : "serverSender")}`,
+                ),
+              ],
+              [
+                t("startCommands"),
+                (spec.lifecycle.startCommands ?? []).map((action) =>
+                  typeof action === "string"
+                    ? `${action} · ${t("serverSender")}`
+                    : `${action.command} · ${t(action.sender === "player" ? "playerSender" : "serverSender")}`,
+                ),
+              ],
+            ]
+          : []),
+        [
+          t("joinCommands"),
+          (spec.lifecycle.onPlayerJoin ?? []).map(
+            (action) =>
+              `${action.command} · ${t(action.sender === "player" ? "playerSender" : "serverSender")}`,
+          ),
+        ],
+      ].map(([label, commands]) =>
+        (commands as string[]).length ? (
+          <div key={label as string} className="mt-2">
+            <p className="text-muted-foreground">{label}</p>
+            <ol className="list-inside list-decimal">
+              {(commands as string[]).map((command, index) => (
+                <li key={index} className="wrap-anywhere">
+                  <code>{command}</code>
+                </li>
+              ))}
+            </ol>
+          </div>
+        ) : null,
+      )}
       {Object.keys(spec.variants ?? {}).length ? (
         <div className="mt-2">
           <p className="text-muted-foreground">{t("variants")}</p>

@@ -138,7 +138,11 @@ function validSetupAction(
   context: "setup" | "start" | "join" = "setup",
 ) {
   const joining = context === "join";
-  if (!action || typeof action !== "object" || typeof action.command !== "string")
+  if (
+    !action ||
+    typeof action !== "object" ||
+    typeof action.command !== "string"
+  )
     return false;
   const command = action.command.trim();
   if (
@@ -273,7 +277,8 @@ export function buildTemplateSettings(
     actions.some(
       (action) =>
         action?.forEach === "team" ||
-        (typeof action?.command === "string" && action.command.includes("{team}")),
+        (typeof action?.command === "string" &&
+          action.command.includes("{team}")),
     )
   )
     return { error: "teamActions" };
@@ -289,7 +294,10 @@ export function buildTemplateSettings(
   const startAction = (command: StartCommand): CommandAction =>
     typeof command === "string" ? { command } : command;
   if (
-    actions.length + teamCommands.length + startCommands.length + joinCommands.length >
+    actions.length +
+      teamCommands.length +
+      startCommands.length +
+      joinCommands.length >
       100 ||
     teamCommands.some(
       (action) =>
@@ -305,8 +313,8 @@ export function buildTemplateSettings(
     return { error: "actions" };
   if (
     !teams.length &&
-    [...startCommands.map(startAction), ...joinCommands].some(
-      (action) => action.command.includes("{team}"),
+    [...startCommands.map(startAction), ...joinCommands].some((action) =>
+      action.command.includes("{team}"),
     )
   )
     return { error: "teamActions" };
