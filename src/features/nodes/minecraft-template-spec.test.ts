@@ -521,7 +521,18 @@ test("log regex requires an exact logger on create and hydrated legacy edits", (
   assert.deepEqual(buildMinigame({ logPattern: "^Game ended$" }), {
     error: "loggerName",
   });
-  for (const loggerName of ["", " ", "plugin\n", "a".repeat(129), " Game", "Game ", "-Game", "Game Plugin", "Pl\u00fcgin", "Game/logger"])
+  for (const loggerName of [
+    "",
+    " ",
+    "plugin\n",
+    "a".repeat(129),
+    " Game",
+    "Game ",
+    "-Game",
+    "Game Plugin",
+    "Pl\u00fcgin",
+    "Game/logger",
+  ])
     assert.deepEqual(
       buildMinigame({ logPattern: "^Game ended$", loggerName }),
       { error: "loggerName" },
@@ -540,10 +551,20 @@ test("log regex requires an exact logger on create and hydrated legacy edits", (
 
 test("plugin lobby serializes balanced native teams without mutating retained roles", () => {
   const draft = {
-    ...newMinigameDraft(), teams: "runner,hunter", teamSize: "4",
-    teamPolicy: "roles" as const, teamCounts: { runner: "1" },
-    remainderTeam: "hunter", maxPlayers: "8",
-    variants: [{ name: "duo", teamPolicy: "roles" as const, teamCounts: { runner: "2" } }],
+    ...newMinigameDraft(),
+    teams: "runner,hunter",
+    teamSize: "4",
+    teamPolicy: "roles" as const,
+    teamCounts: { runner: "1" },
+    remainderTeam: "hunter",
+    maxPlayers: "8",
+    variants: [
+      {
+        name: "duo",
+        teamPolicy: "roles" as const,
+        teamCounts: { runner: "2" },
+      },
+    ],
   };
   const managed = buildMinigame(draft);
   assert.ok("spec" in managed);
@@ -554,48 +575,103 @@ test("plugin lobby serializes balanced native teams without mutating retained ro
   assert.deepEqual(native.spec.minigame!.teamCounts, {});
   assert.equal(native.spec.minigame!.remainderTeam, "");
   assert.deepEqual(native.spec.minigame!.variants!.duo, {
-    teamPolicy: "balanced", teamCounts: {}, remainderTeam: "",
+    teamPolicy: "balanced",
+    teamCounts: {},
+    remainderTeam: "",
   });
   assert.deepEqual(buildMinigame(draft), managed);
-  assert.deepEqual(buildMinigame({ ...draft, lobbyMode: "plugin", teamSize: "1" }), { error: "capacity" });
+  assert.deepEqual(
+    buildMinigame({ ...draft, lobbyMode: "plugin", teamSize: "1" }),
+    { error: "capacity" },
+  );
 });
 
 test("all lifecycle phases share the 100-command budget and generic syntax rules", () => {
   const draft = {
-    teams: "red,blue", teamSize: "2",
+    teams: "red,blue",
+    teamSize: "2",
     actions: Array.from({ length: 98 }, () => ({ command: "setup" })),
     teamCommands: [{ team: "red", command: "assign {player}" }],
     startCommands: ["start"],
   };
   assert.ok("spec" in buildMinigame(draft));
-  assert.deepEqual(buildMinigame({ ...draft, startCommands: ["start", "extra"] }), { error: "actions" });
-  for (const command of ["/assign", "assign\nnow", "x".repeat(1025), "assign {unknown}", "assign {"])
+  assert.deepEqual(
+    buildMinigame({ ...draft, startCommands: ["start", "extra"] }),
+    { error: "actions" },
+  );
+  for (const command of [
+    "/assign",
+    "assign\nnow",
+    "x".repeat(1025),
+    "assign {unknown}",
+    "assign {",
+  ])
     for (const phase of ["teamCommands", "startCommands"] as const)
-      assert.deepEqual(buildMinigame({
-        teams: "red,blue", [phase]: phase === "teamCommands" ? [{ team: "red", command }] : [command],
-      }), { error: "actions" });
+      assert.deepEqual(
+        buildMinigame({
+          teams: "red,blue",
+          [phase]:
+            phase === "teamCommands" ? [{ team: "red", command }] : [command],
+        }),
+        { error: "actions" },
+      );
 });
 
 test("variants validate inherited command teams and allow generic player setup", () => {
   const draft = {
-    teams: "red,blue,green,yellow", teamSize: "2", maxPlayers: "4",
+    teams: "red,blue,green,yellow",
+    teamSize: "2",
+    maxPlayers: "4",
     teamCommands: [{ team: "red", command: "assign {player}" }],
     variants: [{ name: "duel", teams: "green,yellow" }],
   };
   assert.deepEqual(buildMinigame(draft), { error: "variantTeamCommands" });
-  assert.ok("spec" in buildMinigame({ ...draft, variants: [{ name: "duel", teams: "red,blue" }] }));
-  assert.ok("spec" in buildMinigame({ ...draft, teamCommands: [], actions: [{ command: "assign {player} {team}", forEach: "player" }] }));
+  assert.ok(
+    "spec" in
+      buildMinigame({
+        ...draft,
+        variants: [{ name: "duel", teams: "red,blue" }],
+      }),
+  );
+  assert.ok(
+    "spec" in
+      buildMinigame({
+        ...draft,
+        teamCommands: [],
+        actions: [{ command: "assign {player} {team}", forEach: "player" }],
+      }),
+  );
 });
 
 test("hydration preserves explicit FFA and balanced variant resets", () => {
   const built = buildMinigame({
-    teams: "runner,hunter", teamPolicy: "roles", teamCounts: { runner: "1" },
-    remainderTeam: "hunter", maxPlayers: "4",
-    variants: [{ name: "ffa", teams: "", teamPolicy: "balanced", teamCounts: {}, remainderTeam: "" }],
+    teams: "runner,hunter",
+    teamPolicy: "roles",
+    teamCounts: { runner: "1" },
+    remainderTeam: "hunter",
+    maxPlayers: "4",
+    variants: [
+      {
+        name: "ffa",
+        teams: "",
+        teamPolicy: "balanced",
+        teamCounts: {},
+        remainderTeam: "",
+      },
+    ],
   });
   assert.ok("spec" in built);
-  assert.deepEqual(built.spec.minigame!.variants!.ffa, { teams: [], teamSize: 0, teamPolicy: "balanced", teamCounts: {}, remainderTeam: "" });
-  assert.deepEqual(buildMinigame(moduleExports.draftFromMinigame(built.spec.minigame!)), built);
+  assert.deepEqual(built.spec.minigame!.variants!.ffa, {
+    teams: [],
+    teamSize: 0,
+    teamPolicy: "balanced",
+    teamCounts: {},
+    remainderTeam: "",
+  });
+  assert.deepEqual(
+    buildMinigame(moduleExports.draftFromMinigame(built.spec.minigame!)),
+    built,
+  );
   for (const loggerName of ["Game.Plugin_logger-1:main", "a".repeat(128)])
     assert.ok("spec" in buildMinigame({ logPattern: "finished", loggerName }));
 });

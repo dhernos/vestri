@@ -189,7 +189,8 @@ export function buildTemplateSettings(
     .split(",")
     .map((team) => team.trim())
     .filter(Boolean);
-  const teamPolicy = lobbyMode === "plugin" ? "balanced" : (draft.teamPolicy ?? "balanced");
+  const teamPolicy =
+    lobbyMode === "plugin" ? "balanced" : (draft.teamPolicy ?? "balanced");
   const minPlayers = lobbyMode === "plugin" ? 1 : integer(draft.minPlayers, 1);
   const maxPlayers = integer(draft.maxPlayers, 1);
   const teamSize = teams.length
@@ -283,10 +284,7 @@ export function buildTemplateSettings(
   )
     return { error: "end" };
   const loggerName = permanent ? "" : (draft.loggerName ?? "");
-  if (
-    logPattern &&
-    !/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(loggerName)
-  )
+  if (logPattern && !/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(loggerName))
     return { error: "loggerName" };
 
   const variants: Record<string, Partial<TeamSettings>> = {};
@@ -300,7 +298,9 @@ export function buildTemplateSettings(
       return { error: "variants" };
     const overrides = Object.fromEntries(
       Object.entries(variant).filter(
-        ([key, value]) => key !== "name" && value !== undefined &&
+        ([key, value]) =>
+          key !== "name" &&
+          value !== undefined &&
           (value !== "" || key === "teams" || key === "remainderTeam"),
       ),
     );

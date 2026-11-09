@@ -207,11 +207,7 @@ function MinigameSettings({
           {t("variants")}
         </legend>
         {(draft.variants ?? []).map((variant, index) => (
-          <details
-            key={index}
-            className="min-w-0 border-b pb-3"
-            open
-          >
+          <details key={index} className="min-w-0 border-b pb-3" open>
             <summary className="cursor-pointer break-words text-sm">
               {variant.name || t("newVariant")}
             </summary>
@@ -495,7 +491,9 @@ function MinigameSettings({
                 onChange({ ...draft, logPattern: event.target.value })
               }
             />
-            <span className="block text-xs text-muted-foreground">{t("regexHint")}</span>
+            <span className="block text-xs text-muted-foreground">
+              {t("regexHint")}
+            </span>
           </label>
           <label className="block space-y-2 text-sm">
             <span>{t("loggerName")}</span>
@@ -1402,7 +1400,8 @@ export default function MinecraftTemplateManager({
                   {resource.kind === "templates"
                     ? ` · ${t(resource.spec.mode === "minigames" ? "minigameMode" : "playerMode")} · ${catalog.instances.filter((instance) => instance.templateId === resource.id).length}/${resource.spec.maxInstances}`
                     : ""}
-                  {resource.spec.mode === "minigames" && resource.spec.minigame?.enabled === false
+                  {resource.spec.mode === "minigames" &&
+                  resource.spec.minigame?.enabled === false
                     ? ` · ${t("minigame.disabled")}`
                     : ""}
                 </p>
